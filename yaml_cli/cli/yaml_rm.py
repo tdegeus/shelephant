@@ -1,11 +1,11 @@
 '''yaml_rm
-    Remove files listed in a YAML-file.
+    Remove files listed in a (field of a) YAML-file.
 
 Usage:
-    yaml_rm [options] <input>
+    yaml_rm [options] <input.yaml>
 
 Options:
-    -p, --path=N    Path separated by "/". [default: /]
+    -p, --path=N    Path within the YAML-file separated by "/". [default: /]
     -h, --help      Show help.
         --version   Show version.
 
@@ -17,11 +17,13 @@ import click
 import os
 import sys
 import yaml
+import operator
+import functools
 
 from .. import __version__
 
 
-def error(text):
+def Error(text):
     r'''
 Command-line error: show message and quit with exit code "1"
     '''
@@ -30,13 +32,13 @@ Command-line error: show message and quit with exit code "1"
     sys.exit(1)
 
 
-def read_yaml(filename):
+def ReadYaml(filename):
     r'''
 Read YAML file.
     '''
 
     if not os.path.isfile(filename):
-        error('"{0:s} does not exist'.format(filename))
+        Error('"{0:s} does not exist'.format(filename))
 
     return yaml.load(open(filename, 'r').read(), Loader=yaml.FullLoader)
 
@@ -47,12 +49,15 @@ Main program.
     '''
 
     args = docopt.docopt(__doc__, version=__version__)
+    data = ReadYaml(args['<input.yaml>'])
+    path = list(filter(None, args['--path'].split('/')))
+    try:
+        files = functools.reduce(operator.getitem, path, data)
+    except:
+        Error('"{0:s}" not in {1:s}'.format(args['--path'], args['<input.yaml>'])
 
-    data = read_yaml(args['<input>'])
-
-    path = args['--path'].split('/')
-
-    files = data[path[1]]
+    if len(files) == 0:
+        sys.exis(0)
 
     for file in files:
         print('rm {0:s}'.format(file))

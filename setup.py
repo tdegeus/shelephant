@@ -20,4 +20,7 @@ setup(
     packages = find_packages(),
     install_requires = ['docopt>=0.6.2', 'click>=4.0', 'pyyaml>=1.0'],
     entry_points = {
-        'console_scripts': ['yaml_rm = yaml_cli.cli.yaml_rm:main']})
+        'console_scripts': [
+            'yaml_dump = yaml_cli.cli.yaml_dump:main',
+            'yaml_rm = yaml_cli.cli.yaml_rm:main',
+        ]})
