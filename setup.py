@@ -22,6 +22,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'yaml_dumppaths = yaml_cli.cli.yaml_dumppaths:main',
+            'yaml_get_from_remote = yaml_cli.cli.yaml_get_from_remote:main',
             'yaml_hash = yaml_cli.cli.yaml_hash:main',
             'yaml_rm = yaml_cli.cli.yaml_rm:main',
         ]})

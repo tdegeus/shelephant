@@ -1,7 +1,7 @@
 '''yaml_dumppaths
     Dump filenames to a new YAML-file.
 
-Output file:
+Output file (dumppaths.yaml):
 
     working_diectory:
         /path/to/where/this/command/was/run
