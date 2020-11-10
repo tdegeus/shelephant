@@ -7,8 +7,8 @@ def run(cmd):
 open('foo.txt', 'w').write('foo')
 open('bar.txt', 'w').write('bar')
 
-output = run("yaml_dump -f foo.txt bar.txt")
-output = run("yaml_rm -f dump.yaml")
+output = run('yaml_dumppaths -f foo.txt bar.txt')
+output = run('yaml_rm -f -p "/files" dumppaths.yaml')
 
 assert not os.path.isfile('foo.txt')
 assert not os.path.isfile('bar.txt')
