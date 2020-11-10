@@ -23,41 +23,15 @@ import docopt
 import click
 import os
 import sys
-import yaml
-import operator
 import functools
 import subprocess
 
 from .. import __version__
-
-
-def Error(text):
-    r'''
-Command-line error: show message and quit with exit code "1"
-    '''
-
-    print(text)
-    sys.exit(1)
-
-
-def YamlDump(filename, data, force):
-    r'''
-Dump data to YAML file.
-    '''
-
-    if not force:
-        if os.path.isfile(filename):
-            if not click.confirm('Overwrite "{0:s}"?'.format(filename)):
-                sys.exit(1)
-
-    with open(filename, 'w') as file:
-        ret = yaml.dump(data, file)
+from . import Error
+from . import YamlDump
 
 
 def main():
-    r'''
-Main program.
-    '''
 
     args = docopt.docopt(__doc__, version=__version__)
 
@@ -88,6 +62,7 @@ Main program.
         files = [os.path.join(args['--prefix'], file) for file in files]
 
     YamlDump(args['--output'], data, args['--force'])
+
 
 if __name__ == '__main__':
 
