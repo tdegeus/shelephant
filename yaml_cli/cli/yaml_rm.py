@@ -1,11 +1,12 @@
 '''yaml_rm
-    Remove files listed in a YAML-file.
+    Remove files listed in a (field of a) YAML-file.
 
 Usage:
-    yaml_rm [options] <input>
+    yaml_rm [options] <input.yaml>
 
 Options:
-    -p, --path=N    Path separated by "/". [default: /]
+    -p, --path=N    Path within the YAML-file separated by "/". [default: /]
+    -f, --force     Remove without prompt.
     -h, --help      Show help.
         --version   Show version.
 
@@ -16,52 +17,31 @@ import docopt
 import click
 import os
 import sys
-import yaml
 
 from .. import __version__
-
-
-def error(text):
-    r'''
-Command-line error: show message and quit with exit code "1"
-    '''
-
-    print(text)
-    sys.exit(1)
-
-
-def read_yaml(filename):
-    r'''
-Read YAML file.
-    '''
-
-    if not os.path.isfile(filename):
-        error('"{0:s} does not exist'.format(filename))
-
-    return yaml.load(open(filename, 'r').read(), Loader=yaml.FullLoader)
+from . import Error
+from . import GetList
 
 
 def main():
-    r'''
-Main program.
-    '''
 
     args = docopt.docopt(__doc__, version=__version__)
+    path = list(filter(None, args['--path'].split('/')))
+    files = GetList(args['<input.yaml>'], path)
 
-    data = read_yaml(args['<input>'])
-
-    path = args['--path'].split('/')
-
-    files = data[path[1]]
+    if len(files) == 0:
+        sys.exis(0)
 
     for file in files:
         print('rm {0:s}'.format(file))
 
-    if not click.confirm('Proceed?'):
-        sys.exit(1)
+    if not args['--force']:
+        if not click.confirm('Proceed?'):
+            sys.exit(1)
 
     for file in files:
         os.remove(file)
+
 
 if __name__ == '__main__':
 
