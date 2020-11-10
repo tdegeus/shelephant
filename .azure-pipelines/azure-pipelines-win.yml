@@ -1,0 +1,47 @@
+
+jobs:
+  - job: 'Windows_clangcl'
+    pool:
+      vmImage: 'vs2017-win2016'
+    timeoutInMinutes: 360
+    steps:
+
+      # Install Chocolatey (https://chocolatey.org/install#install-with-powershellexe)
+      - powershell: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          Write-Host "##vso[task.setvariable variable=PATH]$env:PATH"
+          choco --version
+        displayName: "Install Chocolatey"
+
+      # Install Miniconda
+      - script: |
+          choco install miniconda3 --yes
+          set PATH=C:\tools\miniconda3\Scripts;C:\tools\miniconda3;C:\tools\miniconda3\Library\bin;%PATH%
+          echo '##vso[task.setvariable variable=PATH]%PATH%'
+          set LIB=C:\tools\miniconda3\Library\lib;%LIB%
+          echo '##vso[task.setvariable variable=LIB]%LIB%'
+          conda --version
+        displayName: "Install Miniconda"
+
+      # Configure Miniconda
+      - script: |
+          conda config --set always_yes yes
+          conda config --append channels conda-forge
+          conda info
+        displayName: "Configure Miniconda"
+
+      # Create conda enviroment
+      # Note: conda activate doesn't work here, because it creates a new shell!
+      - script: |
+          conda env create --file environment.yaml
+        displayName: "Install conda packages"
+
+      # Test
+      - script: |
+          setlocal EnableDelayedExpansion
+          cd test/cli
+          python yaml_rm.py
+          python yaml_hash.py
+        displayName: "Test xtensor"
+        workingDirectory: $(Build.BinariesDirectory)/build/test
