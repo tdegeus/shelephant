@@ -1,9 +1,10 @@
 '''shelephant_rm
     Remove files listed in a (field of a) YAML-file.
+
     By default the filenames are assumed either absolute, or relative to the input YAML-file.
-    To use another prefix use:
-    --dir       Read the prefix from the input YAML-file.
-    --prefix    Specify the prefix it as command-line option.
+    To use another prefix:
+    - Read the prefix from the input YAML-file (--dir).
+    - Specify the prefix it as command-line option (--prefix).
 
 Usage:
     shelephant_rm [options] <input.yaml>
@@ -42,7 +43,8 @@ def main():
     elif args['--prefix']:
         prefix = args['--prefix']
 
-    files = [os.path.normpath(os.path.join(prefix, file)) for file in files]
+    if not all([os.path.isabs(file) for file in files]):
+        files = [os.path.normpath(os.path.join(prefix, file)) for file in files]
 
     if len(files) == 0:
         sys.exis(0)

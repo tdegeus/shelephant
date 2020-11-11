@@ -1,9 +1,10 @@
 '''shelephant_hash
     Get hash of files listed in a (field of a) YAML-file.
-    By default the filenames are assumed either absolute, or relative to the working directory.
-    Using another prefix by:
-    --dir       Reading it from the same YAML-file.
-    --prefix    Specifying it as command-line option.
+
+    By default the filenames are assumed either absolute, or relative to the input YAML-file.
+    To use another prefix:
+    - Read the prefix from the input YAML-file (--dir).
+    - Specify the prefix it as command-line option (--prefix).
 
 Usage:
     shelephant_hash [options] <input.yaml>
@@ -37,15 +38,15 @@ def main():
     args = docopt.docopt(__doc__, version=__version__)
     path = list(filter(None, args['--path'].split('/')))
     files = GetList(args['<input.yaml>'], path)
-    prefix = None
+    prefix = os.path.dirname(args['<input.yaml>'])
 
     if args['--dir']:
-        prefix = GetList(args['<input.yaml>'], args['--dir'])
+        prefix = GetString(args['<input.yaml>'], args['--dir'])
     elif args['--prefix']:
         prefix = args['--prefix']
 
-    if prefix:
-        files = [os.path.join(prefix, file) for file in files]
+    if not all([os.path.isabs(file) for file in files]):
+        files = [os.path.normpath(os.path.join(prefix, file)) for file in files]
 
     data = [GetSHA256(file) for file in files]
 
