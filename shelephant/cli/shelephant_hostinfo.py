@@ -1,4 +1,4 @@
-'''yaml_get_from_remote
+'''shelephant_hostinfo
     Get files from remote host.
     This program needs the specification which files to get from where on the host,
     specified in host.yaml.
@@ -23,17 +23,39 @@ host.yaml:
         - bar.txt
         - directory/foo.txt
 
+Example workflow:
+
+    ssh hostname
+    cd /path/to/files
+    shelephant_dumppaths *
+    shelephant_hash -p "/files" dumppaths.yaml
+    quit
+
+
+
+
+
+
+
 Usage:
-    yaml_get_from_remote [options] <host.yaml>
+    shelephant_hostinfo [options] <host.yaml>
 
 Options:
     -p, --path=N    Path where files are stored in the YAML-file, separated by "/". [default: /files]
         --dir=N     Path where prefix-directory is stored in the YAML-file, separated by "/". [default: /working_diectory]
         --prefix=N  Prefix directory.
         --hash=N    Checksum generated on the host.
+        --host=N    Hostname.
     -h, --help      Show help.
         --version   Show version.
 
-(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/yaml_cli
+(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
+def main():
+
+    pass
+
+if __name__ == '__main__':
+
+    main()

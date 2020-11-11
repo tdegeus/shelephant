@@ -1,6 +1,6 @@
 import subprocess
 import os
-from yaml_cli.cli import GetList
+from shelephant.cli import GetList
 
 def run(cmd):
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -8,8 +8,8 @@ def run(cmd):
 open('foo.txt', 'w').write('foo')
 open('bar.txt', 'w').write('bar')
 
-output = run('yaml_dumppaths -f foo.txt bar.txt')
-output = run('yaml_hash -f -p "/files" dumppaths.yaml')
+output = run('shelephant_dump -f foo.txt bar.txt')
+output = run('shelephant_hash -f -p "/files" dump.yaml')
 data = GetList('hash.yaml')
 
 keys = [

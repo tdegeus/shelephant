@@ -1,4 +1,4 @@
-'''yaml_hash
+'''shelephant_hash
     Get hash of files listed in a (field of a) YAML-file.
     By default the filenames are assumed either absolute, or relative to the working directory.
     Using another prefix by:
@@ -6,7 +6,7 @@
     --prefix    Specifying it as command-line option.
 
 Usage:
-    yaml_hash [options] <input.yaml>
+    shelephant_hash [options] <input.yaml>
 
 Options:
     -o, --output=N  Output YAML-file. [default: hash.yaml]
@@ -17,7 +17,7 @@ Options:
     -h, --help      Show help.
         --version   Show version.
 
-(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/yaml_cli
+(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
 import docopt

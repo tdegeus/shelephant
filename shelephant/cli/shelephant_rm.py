@@ -1,4 +1,4 @@
-'''yaml_rm
+'''shelephant_rm
     Remove files listed in a (field of a) YAML-file.
     By default the filenames are assumed either absolute, or relative to the working directory.
     Using another prefix by:
@@ -6,7 +6,7 @@
     --prefix    Specifying it as command-line option.
 
 Usage:
-    yaml_rm [options] <input.yaml>
+    shelephant_rm [options] <input.yaml>
 
 Options:
     -p, --path=N    Path where files are stored in the YAML-file, separated by "/". [default: /]
@@ -16,7 +16,7 @@ Options:
     -h, --help      Show help.
         --version   Show version.
 
-(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/yaml_cli
+(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
 import docopt

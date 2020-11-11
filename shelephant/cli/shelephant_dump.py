@@ -1,4 +1,4 @@
-'''yaml_dumppaths
+'''shelephant_dump
     Dump filenames to a new YAML-file.
 
 Output file (dumppaths.yaml):
@@ -10,17 +10,17 @@ Output file (dumppaths.yaml):
         - bar.txt
 
 Usage:
-    yaml_dumppaths [options] <file>...
+    shelephant_dump [options] <file>...
 
 Options:
-    -o, --output=N      Output YAML-file. [default: dumppaths.yaml]
+    -o, --output=N      Output YAML-file. [default: dump.yaml]
     -c, --command       Interpret the input as a command.
     -f, --force         Force overwrite.
     -a, --abspath       Store absolute paths (default: relative to working directory).
     -h, --help          Show help.
         --version       Show version.
 
-(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/yaml_cli
+(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
 import docopt
