@@ -8,7 +8,9 @@ open('foo.txt', 'w').write('foo')
 open('bar.txt', 'w').write('bar')
 
 output = run('shelephant_dump -f foo.txt bar.txt')
-output = run('shelephant_rm -f -p "/files" dump.yaml')
+output = run('shelephant_rm -f dump.yaml')
 
 assert not os.path.isfile('foo.txt')
 assert not os.path.isfile('bar.txt')
+
+os.remove('dump.yaml')

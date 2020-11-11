@@ -1,14 +1,6 @@
 '''shelephant_dump
     Dump filenames to a new YAML-file.
 
-Output file (dumppaths.yaml):
-
-    working_diectory:
-        /path/to/where/this/command/was/run
-    files:
-        - foo.txt
-        - bar.txt
-
 Usage:
     shelephant_dump [options] <file>...
 
@@ -16,7 +8,8 @@ Options:
     -o, --output=N      Output YAML-file. [default: dump.yaml]
     -c, --command       Interpret the input as a command.
     -f, --force         Force overwrite.
-    -a, --abspath       Store absolute paths (default: relative to working directory).
+    -a, --abspath       Store absolute paths (default: relative to the output-file).
+    -s, --sort          Sort filenames.
     -h, --help          Show help.
         --version       Show version.
 
@@ -38,22 +31,24 @@ from . import YamlDump
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-
-    data = {'working_diectory': os.getcwd()}
+    cwd = os.path.dirname(args['--output'])
 
     if args['--command']:
         command = ' '.join(args['<file>'])
-        data['files'] = sorted(list(filter(None, subprocess.check_output(
+        files = sorted(list(filter(None, subprocess.check_output(
             command, shell=True).decode('utf-8').split('\n'))))
     else:
-        data['files'] = args['<file>']
+        files = args['<file>']
 
     if args['--abspath']:
-        data['files'] = [os.path.abspath(file) for file in data['files']]
+        files = [os.path.abspath(file) for file in files]
     else:
-        data['files'] = [os.path.relpath(file) for file in data['files']]
+        files = [os.path.relpath(file, cwd) for file in files]
 
-    YamlDump(args['--output'], data, args['--force'])
+    if args['--sort']:
+        files = sorted(files)
+
+    YamlDump(args['--output'], files, args['--force'])
 
 
 if __name__ == '__main__':

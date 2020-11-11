@@ -9,7 +9,7 @@ open('foo.txt', 'w').write('foo')
 open('bar.txt', 'w').write('bar')
 
 output = run('shelephant_dump -f foo.txt bar.txt')
-output = run('shelephant_hash -f -p "/files" dump.yaml')
+output = run('shelephant_hash -f dump.yaml')
 data = GetList('hash.yaml')
 
 keys = [
@@ -18,3 +18,8 @@ keys = [
 ]
 
 assert data == keys
+
+os.remove('foo.txt')
+os.remove('bar.txt')
+os.remove('dump.yaml')
+os.remove('hash.yaml')
