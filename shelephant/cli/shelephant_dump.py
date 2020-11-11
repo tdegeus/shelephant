@@ -6,9 +6,9 @@ Usage:
 
 Options:
     -o, --output=N      Output YAML-file. [default: dump.yaml]
-    -c, --command       Interpret the input as a command.
-    -f, --force         Force overwrite.
-    -a, --abspath       Store absolute paths (default: relative to the output-file).
+    -f, --force         Force overwrite of output file.
+    -c, --command       Interpret the input as a command (instead of filenames).
+    -a, --abspath       Store absolute paths (default: relative to the output file).
     -s, --sort          Sort filenames.
     -h, --help          Show help.
         --version       Show version.
@@ -31,7 +31,7 @@ from . import YamlDump
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    cwd = os.path.dirname(args['--output'])
+    prefix = os.path.dirname(args['--output'])
 
     if args['--command']:
         command = ' '.join(args['<file>'])
@@ -43,7 +43,7 @@ def main():
     if args['--abspath']:
         files = [os.path.abspath(file) for file in files]
     else:
-        files = [os.path.relpath(file, cwd) for file in files]
+        files = [os.path.relpath(file, prefix) for file in files]
 
     if args['--sort']:
         files = sorted(files)

@@ -45,6 +45,14 @@ Get list of paths.
 
     return data
 
+def GetString(filename, path=[]):
+    r'''
+Get a single path.
+    '''
+    files = GetList(filename, path)
+    assert len(files) == 1
+    return filename[0]
+
 
 def YamlDump(filename, data, force=False):
     r'''
