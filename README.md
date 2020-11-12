@@ -39,7 +39,7 @@ cd "/path/where/to/copy/to"
 # and store in a (temporary) local file
 # note that all paths are on the remote system, 
 # and that they are now copied using secure-copy (scp)
-shelephant_remoteinfo \ 
+shelephant_remote \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/files/are/stored/on/remote" \  
@@ -57,6 +57,17 @@ is that `shelephant_get` can be stopped and restarted:
 **only files that do not exist locally, or that were only partially copied 
 (whose checksum does not match the remotely computed checksum), will be copied;
 all fully copied files will be skipped**.
+
+>   Suppose that you did not supply the checksums initially, but you want to add them
+>   later. 
+>   In that case you have two options: You can regenerate `remote_info.yaml` using
+>   the command above. 
+>   Alternatively, you can append the existing file with:
+>   ```bash
+>   shelephant_remote \ 
+>       -a remote_info.yaml \ 
+>       --hash "files_checksum.yaml"
+>   ````
 
 Let's further illustrate with a complete example. On the host, suppose that we have
 ```none
@@ -118,7 +129,7 @@ Then, we will specify some basic information about the host
 ```bash
 # specify basic information about the host
 # and store in a (temporary) local file
-shelephant_remoteinfo \ 
+shelephant_remote \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/to/copy/to/on/remote" \  
@@ -156,7 +167,7 @@ exit # or press Ctrl + D
 
 Now we will complement the basic host-info:
 ```bash
-shelephant_remoteinfo \ 
+shelephant_remote \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/to/copy/to/on/remote" \  
@@ -165,7 +176,7 @@ shelephant_remoteinfo \
 ```
 which we can shorten by appending the existing file:
 ```bash
-shelephant_remoteinfo \ 
+shelephant_remote \ 
     -a remote_info.yaml \ 
     --files "files_to_copy.yaml " \
     --hash "files_checksum.yaml"

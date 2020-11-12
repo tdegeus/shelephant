@@ -24,6 +24,7 @@ setup(
             'shelephant_dump = shelephant.cli.shelephant_dump:main',
             'shelephant_get = shelephant.cli.shelephant_get:main',
             'shelephant_hash = shelephant.cli.shelephant_hash:main',
-            'shelephant_hostinfo = shelephant.cli.shelephant_hostinfo:main',
+            'shelephant_remote = shelephant.cli.shelephant_remote:main',
             'shelephant_rm = shelephant.cli.shelephant_rm:main',
+            'shelephant_send = shelephant.cli.shelephant_send:main',
         ]})

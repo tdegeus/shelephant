@@ -26,9 +26,10 @@ import os
 import sys
 
 from .. import __version__
-from . import Error
 from . import GetList
 from . import GetString
+from . import Error
+from . import PrefixPaths
 
 
 def main():
@@ -43,8 +44,7 @@ def main():
     elif args['--prefix']:
         prefix = args['--prefix']
 
-    if not all([os.path.isabs(file) for file in files]):
-        files = [os.path.normpath(os.path.join(prefix, file)) for file in files]
+    files = PrefixPaths(prefix, files)
 
     if len(files) == 0:
         sys.exis(0)

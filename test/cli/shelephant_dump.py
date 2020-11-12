@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shutil
 
 def run(cmd):
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -19,9 +20,6 @@ assert open('dump_1.yaml', 'r').read() == open('tmp/dump_3.yaml', 'r').read()
 
 os.remove('foo.txt')
 os.remove('bar.txt')
-os.remove('tmp/foo.txt')
-os.remove('tmp/bar.txt')
 os.remove('dump_1.yaml')
 os.remove('dump_2.yaml')
-os.remove('tmp/dump_3.yaml')
-os.rmdir('tmp')
+shutil.rmtree('mydir')

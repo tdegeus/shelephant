@@ -5,7 +5,7 @@ Usage:
     shelephant_dump [options] <file>...
 
 Options:
-    -o, --output=N      Output YAML-file. [default: dump.yaml]
+    -o, --output=N      Output YAML-file. [default: selephant_dump.yaml]
     -f, --force         Force overwrite of output file.
     -c, --command       Interpret the input as a command (instead of filenames).
     -a, --abspath       Store absolute paths (default: relative to the output file).
@@ -24,7 +24,6 @@ import functools
 import subprocess
 
 from .. import __version__
-from . import Error
 from . import YamlDump
 
 

@@ -10,7 +10,7 @@ Usage:
     shelephant_hash [options] <input.yaml>
 
 Options:
-    -o, --output=N  Output YAML-file. [default: hash.yaml]
+    -o, --output=N  Output YAML-file. [default: selephant_hash.yaml]
     -p, --path=N    Path where files are stored in the YAML-file, separated by "/". [default: /]
         --dir=N     Path where prefix-directory is stored in the YAML-file, separated by "/".
         --prefix=N  Prefix directory.
@@ -27,7 +27,6 @@ import os
 import sys
 
 from .. import __version__
-from . import Error
 from . import GetList
 from . import YamlDump
 from . import GetSHA256
