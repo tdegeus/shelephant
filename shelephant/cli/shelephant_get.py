@@ -41,12 +41,14 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
     data = ReadYaml(args['<remote.yaml>'])
-    dest = PrefixPaths(os.path.dirname(args['<remote.yaml>']), data['files'])
+    files = data['files']
+    prefix = data['prefix']
+    dest = PrefixPaths(os.path.dirname(args['<remote.yaml>']), files)
     n = len(dest)
     overwrite = [False for i in range(n)]
     create = [False for i in range(n)]
     skip = [False for i in range(n)]
-    src = PrefixPaths(data['prefix'], data['files'])
+    src = PrefixPaths(prefix, files)
     theme = Theme(args['--colors'].lower())
 
     for i in range(n):
@@ -59,65 +61,29 @@ def main():
             continue
         create[i] = True
 
-    # local copy
+    if 'host' in data:
+        print(data['host'] + ':' + os.path.normpath(prefix) + '/')
+    else:
+        print(os.path.normpath(prefix) + '/')
 
-    if 'host' not in data:
-
-        l = max([len(file) for file in src])
-
-        for i in range(n):
-            if create[i]:
-                print('{0:s} {1:s} {2:s}'.format(
-                    String(src[i], width=l, color=theme['new']).format(),
-                    String('->', color=theme['new']).format(),
-                    String(dest[i]).format()
-                ))
-            elif skip[i]:
-                print('{0:s} {1:s} {2:s}'.format(
-                    String(src[i], width=l, color=theme['skip']).format(),
-                    String('==', color=theme['skip']).format(),
-                    String(dest[i], color=theme['skip']).format()
-                ))
-            elif overwrite[i]:
-                print('{0:s} {1:s} {2:s}'.format(
-                    String(src[i], width=l, color=theme['new']).format(),
-                    String('->', color=theme['new']).format(),
-                    String(dest[i], color=theme['overwrite']).format()
-                ))
-
-        if all(skip):
-            return 0
-
-        if not args['--force']:
-            if not click.confirm('Proceed?'):
-                return 1
-
-        for i in range(n):
-            if not skip[i]:
-                shutil.copy(src[i], dest[i])
-
-        return 0
-
-    # remote copy
-
-    l = max([len(file) + len(data['host'] + ':') for file in src])
+    l = max([len(file) for file in files])
 
     for i in range(n):
         if create[i]:
             print('{0:s} {1:s} {2:s}'.format(
-                String(data['host'] + ':' + src[i], width=l, color=theme['new']).format(),
+                String(files[i], width=l, color=theme['new']).format(),
                 String('->', color=theme['new']).format(),
                 String(dest[i]).format()
             ))
         elif skip[i]:
             print('{0:s} {1:s} {2:s}'.format(
-                String(data['host'] + ':' + src[i], width=l, color=theme['skip']).format(),
+                String(files[i], width=l, color=theme['skip']).format(),
                 String('==', color=theme['skip']).format(),
                 String(dest[i], color=theme['skip']).format()
             ))
         elif overwrite[i]:
             print('{0:s} {1:s} {2:s}'.format(
-                String(data['host'] + ':' + src[i], width=l, color=theme['new']).format(),
+                String(files[i], width=l, color=theme['new']).format(),
                 String('->', color=theme['new']).format(),
                 String(dest[i], color=theme['overwrite']).format()
             ))
@@ -131,9 +97,12 @@ def main():
 
     for i in range(n):
         if not skip[i]:
-            ExecCommand('scp {0:s}:{1:s} {2:s}'.format(data['host'], src[i], dest[i]), args['--verbose'])
-
-    return 0
+            if 'host' in data:
+                ExecCommand(
+                    'scp {0:s}:{1:s} {2:s}'.format(data['host'], src[i], dest[i]),
+                    args['--verbose'])
+            else:
+                shutil.copy(src[i], dest[i])
 
 
 if __name__ == '__main__':
