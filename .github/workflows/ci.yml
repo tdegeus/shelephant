@@ -25,7 +25,7 @@ jobs:
       with:
         auto-update-conda: true
         activate-environment: myenv
-        enviroment-activate: environment.yaml
+    - run: conda env update -n base --file environment.yaml
     - run: python -m pip install .
     - run: python test/cli/shelephant_dump.py
     - run: python test/cli/shelephant_hash.py
