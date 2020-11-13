@@ -4,11 +4,11 @@ from setuptools import find_packages
 
 import re
 
-filepath = 'yaml_cli/__init__.py'
+filepath = 'shelephant/__init__.py'
 __version__ = re.findall(r'__version__ = \'(.*)\'', open(filepath).read())[0]
 
 setup(
-    name = 'yaml_cli',
+    name = 'shelephant',
     version = __version__,
     license = 'MIT',
     author = 'Tom de Geus',
@@ -16,12 +16,15 @@ setup(
     description = 'YAML based shell commands',
     long_description = 'YAML based shell commands',
     keywords = 'YAML, Bash',
-    url = 'https://github.com/tdegeus/yaml_cli',
+    url = 'https://github.com/tdegeus/shelephant',
     packages = find_packages(),
     install_requires = ['docopt>=0.6.2', 'click>=4.0', 'pyyaml>=1.0'],
     entry_points = {
         'console_scripts': [
-            'yaml_dump = yaml_cli.cli.yaml_dump:main',
-            'yaml_hash = yaml_cli.cli.yaml_hash:main',
-            'yaml_rm = yaml_cli.cli.yaml_rm:main',
+            'shelephant_dump = shelephant.cli.shelephant_dump:main',
+            'shelephant_get = shelephant.cli.shelephant_get:main',
+            'shelephant_hash = shelephant.cli.shelephant_hash:main',
+            'shelephant_remote = shelephant.cli.shelephant_remote:main',
+            'shelephant_rm = shelephant.cli.shelephant_rm:main',
+            'shelephant_send = shelephant.cli.shelephant_send:main',
         ]})
