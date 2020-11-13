@@ -23,6 +23,7 @@ import sys
 from .. import __version__
 from . import GetList
 from . import YamlDump
+from . import PrefixPaths
 from . import GetSHA256
 
 

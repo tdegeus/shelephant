@@ -84,11 +84,7 @@ def main():
     if 'host' in data:
         shutil.rmtree(temp_dir)
 
-    if args['--append']:
-        filename = args['--append']
-    else:
-        filename = args['--output']
-    YamlDump(filename, data, args['--force'])
+    YamlDump(args['--output'], data, args['--force'])
 
 
 if __name__ == '__main__':

@@ -13,4 +13,4 @@ output = run('shelephant_rm -f selephant_dump.yaml')
 assert not os.path.isfile('foo.txt')
 assert not os.path.isfile('bar.txt')
 
-os.remove('dump.yaml')
+os.remove('selephant_dump.yaml')

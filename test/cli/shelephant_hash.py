@@ -21,5 +21,5 @@ assert data == keys
 
 os.remove('foo.txt')
 os.remove('bar.txt')
-os.remove('dump.yaml')
-os.remove('hash.yaml')
+os.remove('selephant_dump.yaml')
+os.remove('selephant_hash.yaml')
