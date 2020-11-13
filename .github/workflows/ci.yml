@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+      - stable
+      - v*
+
+jobs:
+  standard:
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest]
+
+    name: "${{ matrix.runs-on }} • x64 ${{ matrix.args }}"
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: s-weigand/setup-conda@v1
+    - run: conda --version
+    - run: conda env update -n base --file environment.yaml
+    - run: python -m pip install .
+    - run: python test/cli/shelephant_dump.py
+    - run: python test/cli/shelephant_hash.py
+    - run: python test/cli/shelephant_remote.py
+    - run: python test/cli/shelephant_rm.py
