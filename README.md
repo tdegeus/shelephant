@@ -1,5 +1,7 @@
 # shelephant
 
+[![CI](https://github.com/tdegeus/shelephant/workflows/CI/badge.svg)](https://github.com/tdegeus/shelephant/actions)
+
 Command-line arguments with a memory (stored in YAML-files).
 
 # Features
