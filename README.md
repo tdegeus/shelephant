@@ -174,13 +174,6 @@ shelephant_remote \
     --files "files_to_copy.yaml " \
     --hash "files_checksum.yaml"
 ```
-which we can shorten by appending the existing file:
-```bash
-shelephant_remote \ 
-    -a remote_info.yaml \ 
-    --files "files_to_copy.yaml " \
-    --hash "files_checksum.yaml"
-```
 
 And restart the partial copy:
 ```bash

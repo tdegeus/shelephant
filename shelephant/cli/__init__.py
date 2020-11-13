@@ -143,6 +143,7 @@ Return dictionary of colors.
             'new' : '1;32',
             'overwrite': '1;31',
             'skip' : '1;30',
+            'bright' : '1;37',
         }
 
     return \
@@ -150,6 +151,7 @@ Return dictionary of colors.
         'new' : '',
         'overwrite': '',
         'skip' : '',
+        'bright' : '',
     }
 
 

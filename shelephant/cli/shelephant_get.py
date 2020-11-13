@@ -5,9 +5,10 @@ Usage:
     shelephant_get [options] <remote.yaml>
 
 Options:
-    -f, --force         Force overwrite of output file.
+    -f, --force         Force overwrite of all existing (but not matching) files.
         --colors=M      Select color scheme from: none, dark. [default: dark]
         --verbose       Verbose all commands.
+    -q, --quiet         Do not print progress.
     -h, --help          Show help.
         --version       Show version.
 
@@ -18,23 +19,16 @@ import docopt
 import click
 import os
 import sys
-import tempfile
 import shutil
+import math
 
 from .. import __version__
-from . import Error
-from . import GetList
 from . import ReadYaml
-from . import YamlDump
 from . import ExecCommand
 from . import PrefixPaths
 from . import GetSHA256
 from . import Theme
 from . import String
-
-
-def strike(text):
-    return ''.join([u'\u0336{}'.format(c) for c in text])
 
 
 def main():
@@ -71,9 +65,9 @@ def main():
     for i in range(n):
         if create[i]:
             print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['new']).format(),
-                String('->', color=theme['new']).format(),
-                String(dest[i]).format()
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('->', color=theme['bright']).format(),
+                String(dest[i], color=theme['new']).format()
             ))
         elif skip[i]:
             print('{0:s} {1:s} {2:s}'.format(
@@ -83,8 +77,8 @@ def main():
             ))
         elif overwrite[i]:
             print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['new']).format(),
-                String('->', color=theme['new']).format(),
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('=>', color=theme['bright']).format(),
                 String(dest[i], color=theme['overwrite']).format()
             ))
 
@@ -95,8 +89,14 @@ def main():
         if not click.confirm('Proceed?'):
             return 1
 
+    ncp = n - sum(skip)
+    l = int(math.log10(ncp) + 1)
+    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+
     for i in range(n):
         if not skip[i]:
+            if not args['--quiet']:
+                print(fmt.format(i, dest[i]))
             if 'host' in data:
                 ExecCommand(
                     'scp {0:s}:{1:s} {2:s}'.format(data['host'], src[i], dest[i]),

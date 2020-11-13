@@ -6,7 +6,6 @@ Usage:
 
 Options:
     -o, --output=N      Output YAML-file. [default: selephant_remote.yaml]
-    -a, --append=N      Append existing file.
     -f, --force         Force overwrite of output file.
         --host=N        Host-name.
         --prefix=N      Directory on remote, from which to copy.
@@ -42,13 +41,8 @@ def main():
     args = docopt.docopt(__doc__, version=__version__)
     data = {}
 
-    if args['--append']:
-        extra = ReadYaml(args['--append'])
-        for key in extra:
-            data[key] = extra[key]
-
     for key in ['host', 'prefix']:
-        if args['--' + key] and key not in data:
+        if args['--' + key]:
             data[key] = args['--' + key]
 
     if not args['--ignore']:
@@ -66,7 +60,7 @@ def main():
         temp_file = os.path.join(temp_dir, 'shelephant_remote.yaml')
 
     for key in ['files', 'hash']:
-        if args['--' + key] and key not in data:
+        if args['--' + key]:
 
             path = list(filter(None, args['--' + key + '-path'].split('/')))
             filename = args['--' + key]
