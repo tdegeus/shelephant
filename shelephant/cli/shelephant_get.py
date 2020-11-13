@@ -36,13 +36,14 @@ def main():
     args = docopt.docopt(__doc__, version=__version__)
     data = ReadYaml(args['<remote.yaml>'])
     files = data['files']
-    prefix = data['prefix']
-    dest = PrefixPaths(os.path.dirname(args['<remote.yaml>']), files)
-    n = len(dest)
+    src_dir = data['prefix']
+    dest_dir = os.path.dirname(args['<remote.yaml>'])
+    src = PrefixPaths(src_dir, files)
+    dest = PrefixPaths(dest_dir, files)
+    n = len(src)
     overwrite = [False for i in range(n)]
     create = [False for i in range(n)]
     skip = [False for i in range(n)]
-    src = PrefixPaths(prefix, files)
     theme = Theme(args['--colors'].lower())
 
     for i in range(n):
@@ -55,10 +56,15 @@ def main():
             continue
         create[i] = True
 
+    print('-----')
     if 'host' in data:
-        print(data['host'] + ':' + os.path.normpath(prefix) + '/')
+        print('- from host          : ' + data['host'])
+        print('- from dir. (remote) : ' + os.path.normpath(src_dir))
+        print('- to dir. (local)    : ' + os.path.normpath(dest_dir))
     else:
-        print(os.path.normpath(prefix) + '/')
+        print('- from dir. : ' + os.path.normpath(src_dir))
+        print('- to dir.   : ' + os.path.normpath(dest_dir))
+    print('-----')
 
     l = max([len(file) for file in files])
 
@@ -67,19 +73,19 @@ def main():
             print('{0:s} {1:s} {2:s}'.format(
                 String(files[i], width=l, color=theme['bright']).format(),
                 String('->', color=theme['bright']).format(),
-                String(dest[i], color=theme['new']).format()
+                String(files[i], color=theme['new']).format()
             ))
         elif skip[i]:
             print('{0:s} {1:s} {2:s}'.format(
                 String(files[i], width=l, color=theme['skip']).format(),
                 String('==', color=theme['skip']).format(),
-                String(dest[i], color=theme['skip']).format()
+                String(files[i], color=theme['skip']).format()
             ))
         elif overwrite[i]:
             print('{0:s} {1:s} {2:s}'.format(
                 String(files[i], width=l, color=theme['bright']).format(),
                 String('=>', color=theme['bright']).format(),
-                String(dest[i], color=theme['overwrite']).format()
+                String(files[i], color=theme['overwrite']).format()
             ))
 
     if all(skip):
