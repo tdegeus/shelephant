@@ -5,7 +5,7 @@ Usage:
     shelephant_get [options] <files.yaml> <remote.yaml>
 
 Options:
-    -p, --path=N        Path where files are stored in the YAML-file, separated by "/". [default: /]
+    -k, --key=N         Path where files are stored in the YAML-file, separated by "/". [default: /]
     -f, --force         Force overwrite of all existing (but not matching) files.
         --colors=M      Select color scheme from: none, dark. [default: dark]
         --verbose       Verbose all commands.
@@ -38,8 +38,8 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
     data = ReadYaml(args['<remote.yaml>'])
-    path = list(filter(None, args['--path'].split('/')))
-    files = GetList(args['<files.yaml>'], path)
+    key = list(filter(None, args['--key'].split('/')))
+    files = GetList(args['<files.yaml>'], key)
     src_dir = os.path.dirname(args['<files.yaml>'])
     dest_dir = data['prefix']
     src = PrefixPaths(src_dir, files)
@@ -57,9 +57,9 @@ def main():
 
         for i in range(n):
             if files[i] in data['files']:
-                if 'hash' in data:
+                if 'checksum' in data:
                     j = np.argwhere([file == files[i] for file in data['files']]).ravel()[0]
-                    if GetSHA256(src[i]) == data['hash'][j]:
+                    if GetSHA256(src[i]) == data['checksum'][j]:
                         skip[i] = True
                         continue
                 overwrite[i] = True

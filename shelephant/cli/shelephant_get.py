@@ -48,8 +48,8 @@ def main():
 
     for i in range(n):
         if os.path.isfile(dest[i]):
-            if 'hash' in data:
-                if GetSHA256(dest[i]) == data['hash'][i]:
+            if 'checksum' in data:
+                if GetSHA256(dest[i]) == data['checksum'][i]:
                     skip[i] = True
                     continue
             overwrite[i] = True

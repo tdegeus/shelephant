@@ -11,9 +11,9 @@ os.mkdir('mydir')
 open('mydir/foo.txt', 'w').write('foo')
 open('mydir/bar.txt', 'w').write('bar')
 
-output = run('shelephant_dump -s -o dump_1.yaml -f foo.txt bar.txt')
-output = run('shelephant_dump -s -o dump_2.yaml -f *.txt')
-output = run('shelephant_dump -s -o mydir/dump_3.yaml -f mydir/*.txt')
+output = run('shelephant_dump -s -o dump_1.yaml foo.txt bar.txt')
+output = run('shelephant_dump -s -o dump_2.yaml *.txt')
+output = run('shelephant_dump -s -o mydir/dump_3.yaml mydir/*.txt')
 
 assert open('dump_1.yaml', 'r').read() == open('dump_2.yaml', 'r').read()
 assert open('dump_1.yaml', 'r').read() == open('mydir/dump_3.yaml', 'r').read()

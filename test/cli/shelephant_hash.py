@@ -8,9 +8,9 @@ def run(cmd):
 open('foo.txt', 'w').write('foo')
 open('bar.txt', 'w').write('bar')
 
-output = run('shelephant_dump -f foo.txt bar.txt')
-output = run('shelephant_hash -f selephant_dump.yaml')
-data = GetList('selephant_hash.yaml')
+output = run('shelephant_dump foo.txt bar.txt')
+output = run('shelephant_checksum shelephant_dump.yaml')
+data = GetList('shelephant_checksum.yaml')
 
 keys = [
     '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
@@ -21,5 +21,5 @@ assert data == keys
 
 os.remove('foo.txt')
 os.remove('bar.txt')
-os.remove('selephant_dump.yaml')
-os.remove('selephant_hash.yaml')
+os.remove('shelephant_dump.yaml')
+os.remove('shelephant_checksum.yaml')
