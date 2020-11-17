@@ -9,8 +9,8 @@ Options:
         --force             Force overwrite of output file.
         --host=N            Host-name.
         --prefix=N          Directory on remote, from which to copy.
-    -f, --files=N           Read files from remote.
-    -c, --checksum=N        Read checksums from remote.
+    -f, --files=[N]         Read files from remote. [default: shelephant_dump.yaml]
+    -c, --checksum=[N]      Read checksums from remote. [default: shelephant_checksum.yaml]
         --files-key=N       Path in the YAML-file, separated by "/". [default: /]
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
     -i, --ignore            Skip basic check.
