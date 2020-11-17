@@ -16,12 +16,12 @@ Run command, optionally verbose command and output, and return output.
     if verbose:
         print(cmd)
 
-    out = subprocess.check_output(cmd, shell=True).decode('utf-8')
+    ret = subprocess.check_output(cmd, shell=True).decode('utf-8')
 
     if verbose:
-        print(out)
+        print(ret)
 
-    return out
+    return ret
 
 
 def Error(text):
@@ -116,6 +116,30 @@ Skip if all paths are absolute paths.
 
     return [os.path.normpath(os.path.join(prefix, file)) for file in files]
 
+def IsOnRemote(host, source, verbose=False):
+    r'''
+Check if a file exists on a remote.
+    '''
+
+    cmd = 'ssh {host:s} test -f "{source:s}" && echo found || echo not found'.format(
+        host=host, source=source)
+
+    ret = ExecCommand(cmd, args['--verbose'])
+
+    if ret == 'found':
+        return True
+
+    return False
+
+def CopyFromRemote(host, source, dest, verbose=False):
+    r'''
+Copy a file from a remote.
+    '''
+
+    cmd = 'scp {host:s}:{source:s} {dest:s}'.format(
+        host=host, source=source, dest=dest)
+
+    ExecCommand(cmd, verbose)
 
 def Theme(theme=None):
     r'''

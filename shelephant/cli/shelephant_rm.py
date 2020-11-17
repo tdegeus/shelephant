@@ -6,7 +6,7 @@ Usage:
     shelephant_rm [options] <input.yaml>
 
 Options:
-    -p, --path=N    Path where files are stored in the YAML-file, separated by "/". [default: /]
+    -k, --key=N     Path where files are stored in the YAML-file, separated by "/". [default: /]
     -f, --force     Remove without prompt.
     -h, --help      Show help.
         --version   Show version.
@@ -29,8 +29,8 @@ from . import PrefixPaths
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    path = list(filter(None, args['--path'].split('/')))
-    files = GetList(args['<input.yaml>'], path)
+    key = list(filter(None, args['--key'].split('/')))
+    files = GetList(args['<input.yaml>'], key)
     prefix = os.path.dirname(args['<input.yaml>'])
     files = PrefixPaths(prefix, files)
 
