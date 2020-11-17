@@ -29,6 +29,7 @@ from . import PrefixPaths
 from . import GetSHA256
 from . import Theme
 from . import String
+from . import CopyFromRemote
 
 
 def main():
@@ -104,9 +105,7 @@ def main():
             if not args['--quiet']:
                 print(fmt.format(i, dest[i]))
             if 'host' in data:
-                ExecCommand(
-                    'scp {0:s}:{1:s} {2:s}'.format(data['host'], src[i], dest[i]),
-                    args['--verbose'])
+                CopyFromRemote(data['host'], src[i], dest[i], args['--verbose'])
             else:
                 shutil.copy(src[i], dest[i])
 
