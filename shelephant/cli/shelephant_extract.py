@@ -1,0 +1,62 @@
+'''shelephant_extract
+    Extract a field from a YAML-file.
+
+    Unless you use --no-path, the function assumes that all data are paths,
+    and changes all relative paths from being relative to <input.yaml>
+    to being relative to --output.
+
+Usage:
+    shelephant_extract [options] <input.yaml>
+    shelephant_extract [options] <input.yaml> <key>...
+
+Options:
+    -o, --output=N  Output file. (default: <input.yaml>)
+        --no-path   Do not interpret data as paths.
+    -f, --force     Overwrite without prompt.
+    -h, --help      Show help.
+        --version   Show version.
+
+(c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
+'''
+
+import docopt
+import click
+import os
+import sys
+import mergedeep
+import functools
+
+from .. import __version__
+from . import GetList
+from . import Error
+from . import YamlDump
+from . import ChangeRootRelativePaths
+
+
+def main():
+
+    args = docopt.docopt(__doc__, version=__version__)
+    indir = os.path.dirname(args['<input.yaml>'])
+    output = args['--output'] if args['--output'] else args['<input.yaml>']
+    outdir = os.path.dirname(output)
+    data = {}
+
+    if len(args['<key>']) == 0:
+        args['<key>'] = ['/']
+
+    for key in args['<key>']:
+        key = list(filter(None, key.split('/')))
+        files = GetList(args['<input.yaml>'], key)
+        if not args['--no-path']:
+            files = ChangeRootRelativePaths(files, indir, outdir)
+        if len(args['<key>']) == 1:
+            YamlDump(output, files, args['--force'])
+            return 0
+        container = functools.reduce(lambda x, y: {y: x}, key[:-1], {key[-1]: files})
+        mergedeep.merge(data, container)
+
+    YamlDump(output, data, args['--force'])
+
+if __name__ == '__main__':
+
+    main()

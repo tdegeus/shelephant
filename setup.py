@@ -21,9 +21,10 @@ setup(
     install_requires = ['docopt', 'click', 'pyyaml', 'mergedeep', 'numpy'],
     entry_points = {
         'console_scripts': [
-            'shelephant_dump = shelephant.cli.shelephant_dump:main',
-            'shelephant_get = shelephant.cli.shelephant_get:main',
             'shelephant_checksum = shelephant.cli.shelephant_checksum:main',
+            'shelephant_dump = shelephant.cli.shelephant_dump:main',
+            'shelephant_extract = shelephant.cli.shelephant_extract:main',
+            'shelephant_get = shelephant.cli.shelephant_get:main',
             'shelephant_merge = shelephant.cli.shelephant_merge:main',
             'shelephant_remote = shelephant.cli.shelephant_remote:main',
             'shelephant_rm = shelephant.cli.shelephant_rm:main',
