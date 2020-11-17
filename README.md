@@ -24,7 +24,7 @@ cd "/path/where/files/are/stored/on/remote"
 shelephant_dump -o files_to_copy.yaml *.txt
 
 # optional but useful, get the checksum of the files to copy 
-shelephant_hash -o files_checksum.yaml files_to_copy.yaml 
+shelephant_checksum -o files_checksum.yaml files_to_copy.yaml 
 
 # disconnect
 exit # or press Ctrl + D
@@ -46,7 +46,7 @@ shelephant_remote \
     --host "hostname" \ 
     --prefix "/path/where/files/are/stored/on/remote" \  
     --files "files_to_copy.yaml " \
-    --hash "files_checksum.yaml"
+    --checksum "files_checksum.yaml"
 
 # finally, get the files using secure copy
 # (the files are stored relative to the path of 'remote_info.yaml',
@@ -54,22 +54,15 @@ shelephant_remote \
 shelephant_get remote_info.yaml
 ```
 
+>   If you use the default filenames for `shelephant_dump` (`shelephant_dump.yaml`) and 
+>   `shelephant_checksum` (`shelephant_checksum.yaml`) remotely, 
+>   you can also specify `--files` and ``--checksum` without an argument.
+
 An interesting benefit that derives from having computed the checksums on the host,
 is that `shelephant_get` can be stopped and restarted:
 **only files that do not exist locally, or that were only partially copied 
 (whose checksum does not match the remotely computed checksum), will be copied;
 all fully copied files will be skipped**.
-
->   Suppose that you did not supply the checksums initially, but you want to add them
->   later. 
->   In that case you have two options: You can regenerate `remote_info.yaml` using
->   the command above. 
->   Alternatively, you can append the existing file with:
->   ```bash
->   shelephant_remote \ 
->       -a remote_info.yaml \ 
->       --hash "files_checksum.yaml"
->   ````
 
 Let's further illustrate with a complete example. On the host, suppose that we have
 ```none
@@ -98,7 +91,7 @@ root: /path/where/files/are/stored/on/remote
 files:
     - foo.txt
     - bar.txt
-hash:
+checksum:
     - 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
     - fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9
 ```
@@ -161,7 +154,7 @@ cd "/path/where/to/copy/to/on/remote"
 shelephant_dump -o files_to_copy.yaml *.txt
 
 # get the checksum of the files to copy 
-shelephant_hash -o files_checksum.yaml files_to_copy.yaml 
+shelephant_checksum -o files_checksum.yaml files_to_copy.yaml 
 
 # disconnect
 exit # or press Ctrl + D
@@ -174,7 +167,7 @@ shelephant_remote \
     --host "hostname" \ 
     --prefix "/path/where/to/copy/to/on/remote" \  
     --files "files_to_copy.yaml " \
-    --hash "files_checksum.yaml"
+    --checksum "files_checksum.yaml"
 ```
 
 And restart the partial copy:
