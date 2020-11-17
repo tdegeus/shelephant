@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shutil
 from shelephant.cli import ReadYaml
 
 def run(cmd):
@@ -18,3 +19,20 @@ os.remove('foo.txt')
 os.remove('bar.txt')
 os.remove('main.yaml')
 os.remove('branch.yaml')
+
+os.mkdir('dira')
+open('dira/foo.txt', 'w').write('foo')
+open('dira/bar.txt', 'w').write('bar')
+
+os.mkdir('dirb')
+open('dirb/foo.txt', 'w').write('foo')
+open('dirb/bar.txt', 'w').write('bar')
+
+output = run('shelephant_dump -o dira/dump.yaml dira/foo.txt dira/bar.txt')
+output = run('shelephant_dump -o dirb/dump.yaml dirb/foo.txt dirb/bar.txt')
+output = run('shelephant_merge --force dira/dump.yaml dirb/dump.yaml')
+
+assert ReadYaml('dirb/dump.yaml') == ['foo.txt', 'bar.txt', '../dira/foo.txt', '../dira/bar.txt']
+
+shutil.rmtree('dira')
+shutil.rmtree('dirb')

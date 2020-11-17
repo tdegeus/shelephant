@@ -116,6 +116,30 @@ Skip if all paths are absolute paths.
 
     return [os.path.normpath(os.path.join(prefix, file)) for file in files]
 
+
+def ChangeRootRelativePaths(files, old_root, new_root, in_place=False):
+    r'''
+Change the root of relative paths.
+Skip if all paths are absolute paths.
+    '''
+
+    isabs = [os.path.isabs(file) for file in files]
+
+    if any(isabs) and not all(isabs):
+        Error('Specify either relative or absolute files-paths')
+
+    if all(isabs):
+        return files
+
+    if not in_place:
+        return [os.path.relpath(os.path.abspath(os.path.join(old_root, file)), new_root) for file in files]
+
+    for i in range(len(files)):
+        files[i] = os.path.relpath(os.path.abspath(os.path.join(old_root, files[i])), new_root)
+
+    return files
+
+
 def IsOnRemote(host, source, verbose=False):
     r'''
 Check if a file exists on a remote.
@@ -131,6 +155,7 @@ Check if a file exists on a remote.
 
     return False
 
+
 def CopyFromRemote(host, source, dest, verbose=False):
     r'''
 Copy a file from a remote.
@@ -140,6 +165,7 @@ Copy a file from a remote.
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
+
 
 def Theme(theme=None):
     r'''
