@@ -6,3 +6,4 @@ dependencies:
   - pyyaml
   - click
   - numpy
+  - mergedeep
