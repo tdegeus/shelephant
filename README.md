@@ -1,10 +1,121 @@
 # shelephant
 
 [![CI](https://github.com/tdegeus/shelephant/workflows/CI/badge.svg)](https://github.com/tdegeus/shelephant/actions)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/shelephant.svg)](https://anaconda.org/conda-forge/shelephant)
+[![PyPi release](https://img.shields.io/pypi/v/shelephant.svg)](https://pypi.org/project/shelephant/)
+
 
 Command-line arguments with a memory (stored in YAML-files).
 
-# Features
+<!-- MarkdownTOC -->
+
+- [Overview](#overview)
+    - [Hallmark feature: Copy with restart](#hallmark-feature-copy-with-restart)
+    - [Command-line tools](#command-line-tools)
+        - [File information](#file-information)
+        - [File operations](#file-operations)
+        - [YAML file operations](#yaml-file-operations)
+- [Disclaimer](#disclaimer)
+- [Getting shelephant](#getting-shelephant)
+    - [Using conda](#using-conda)
+    - [Using PyPi](#using-pypi)
+    - [From source](#from-source)
+- [Detailed examples](#detailed-examples)
+    - [Get files from remote, allowing restarts](#get-files-from-remote-allowing-restarts)
+    - [Send files to host](#send-files-to-host)
+        - [Basic copy](#basic-copy)
+        - [Restart](#restart)
+
+<!-- /MarkdownTOC -->
+
+# Overview
+
+## Hallmark feature: Copy with restart
+
+*shelephant* presents you with a way to copy files (from a remote, using SSH) in two steps:
+1.  Collect a list of files that should be copied in a YAML-file, 
+    allowing you to **review and customise** the copy operation 
+    (e.g. by *changing the order* and making last-minute manual changes).
+2.  Perform the copy, efficiently skipping files that are identical.
+
+Typical workflow:
+
+```bash
+# Collect files to copy & compute their checksum (e.g. on remote system)
+shelephant_dump *.hdf5
+shelephant_checksum shelephant_dump.yaml
+
+# Combine all needed info (locally)
+shelephant_remote --host myhost --prefix /some/path --files --checksum
+
+# Copy from remote (can be restarted and any time, existing files are skipped)
+shelephant_get shelephant_remote.yaml
+```
+
+>   *   To copy *to* a remote system use `shelephant_send`.
+>   *   Get details in the help of the respective commands, e.g. `shelephant_dump --help`.
+>   *   *shelephant* works for both local as remote copy actions.
+
+## Command-line tools
+
+### File information
+
+*   `shelephant_dump`: list filenames in a YAML file.
+*   `shelephant_checksum`: get the checksums of files listed in a YAML file.
+*   `shelephant_remote`: collect host information (from a remote system).
+
+### File operations
+
+*   `shelephant_get`: copy from remote, based on earlier stored information.
+*   `shelephant_send`: copy to remote, based on earlier stored information.
+*   `shelephant_rm`: remove files listed in a YAML file.
+
+### YAML file operations
+
+*   `shelephant_extract`: isolate a (number of) field(s) in a (new) YAML file.
+*   `shelephant_merge`: merge two YAML-files.
+
+# Disclaimer
+
+This library is free to use under the [MIT license](https://github.com/tdegeus/shelephant/blob/master/LICENSE). Any additions are very much appreciated, in terms of suggested functionality, code, documentation, testimonials, word-of-mouth advertisement, etc. Bug reports or feature requests can be filed on [GitHub](https://github.com/tdegeus/shelephant). As always, the code comes with no guarantee. None of the developers can be held responsible for possible mistakes.
+
+Download: [.zip file](https://github.com/tdegeus/shelephant/zipball/master) | [.tar.gz file](https://github.com/tdegeus/shelephant/tarball/master).
+
+(c - [MIT](https://github.com/tdegeus/shelephant/blob/master/LICENSE)) T.W.J. de Geus (Tom) | tom@geus.me | www.geus.me | [github.com/tdegeus/shelephant](https://github.com/tdegeus/shelephant)
+
+# Getting shelephant
+
+## Using conda
+
+```bash
+conda install -c conda-forge shelephant
+```
+
+This will also download and install all necessary dependencies.
+
+## Using PyPi
+
+```bash
+pip install shelephant
+```
+
+This will also download and install the necessary Python modules.
+
+## From source
+
+```bash
+# Download shelephant
+git checkout https://github.com/tdegeus/shelephant.git
+cd shelephant
+
+# Install
+python -m pip install .
+```
+
+This will also download and install the necessary Python modules.
+
+
+# Detailed examples
 
 ## Get files from remote, allowing restarts
 
@@ -56,7 +167,7 @@ shelephant_get remote_info.yaml
 
 >   If you use the default filenames for `shelephant_dump` (`shelephant_dump.yaml`) and 
 >   `shelephant_checksum` (`shelephant_checksum.yaml`) remotely, 
->   you can also specify `--files` and ``--checksum` without an argument.
+>   you can also specify `--files` and `--checksum` without an argument.
 
 An interesting benefit that derives from having computed the checksums on the host,
 is that `shelephant_get` can be stopped and restarted:
