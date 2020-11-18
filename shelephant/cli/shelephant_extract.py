@@ -12,7 +12,7 @@ Usage:
 Options:
     -o, --output=N  Output file. (default: <input.yaml>)
         --no-path   Do not interpret data as paths.
-    -f, --force     Overwrite without prompt.
+    -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
         --version   Show version.
 
@@ -20,25 +20,22 @@ Options:
 '''
 
 import docopt
-import click
 import os
-import sys
 import mergedeep
 import functools
 
 from .. import __version__
-from . import GetList
-from . import Error
+from . import YamlGetItem
 from . import YamlDump
-from . import ChangeRootRelativePaths
+from . import ChangeRootOfRelativePaths
 
 
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    indir = os.path.dirname(args['<input.yaml>'])
+    input_dir = os.path.dirname(args['<input.yaml>'])
     output = args['--output'] if args['--output'] else args['<input.yaml>']
-    outdir = os.path.dirname(output)
+    output_dir = os.path.dirname(output)
     data = {}
 
     if len(args['<key>']) == 0:
@@ -46,9 +43,9 @@ def main():
 
     for key in args['<key>']:
         key = list(filter(None, key.split('/')))
-        files = GetList(args['<input.yaml>'], key)
+        files = YamlGetItem(args['<input.yaml>'], key)
         if not args['--no-path']:
-            files = ChangeRootRelativePaths(files, indir, outdir)
+            files = ChangeRootOfRelativePaths(files, input_dir, output_dir)
         if len(args['<key>']) == 1:
             YamlDump(output, files, args['--force'])
             return 0

@@ -13,7 +13,7 @@ Options:
         --replace   Replace fields in <main.yaml> that are also in <branch.yaml>. (default: append)
         --skip      Skip fields in <branch.yaml> that are also in <main.yaml>
         --no-path   Do not interpret data as paths.
-    -f, --force     Overwrite without prompt.
+    -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
         --version   Show version.
 
@@ -21,16 +21,14 @@ Options:
 '''
 
 import docopt
-import click
 import mergedeep
 import os
-import sys
 
 from .. import __version__
-from . import ReadYaml
+from . import YamlRead
 from . import YamlDump
 from . import Error
-from . import ChangeRootRelativePaths
+from . import ChangeRootOfRelativePaths
 
 def recursive_items(dictionary):
     for key, value in dictionary.items():
@@ -43,10 +41,10 @@ def recursive_items(dictionary):
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    main = ReadYaml(args['<main.yaml>'])
-    branch = ReadYaml(args['<branch.yaml>'])
+    main = YamlRead(args['<main.yaml>'])
+    branch = YamlRead(args['<branch.yaml>'])
     output = args['--output'] if args['--output'] else args['<main.yaml>']
-    outdir = os.path.dirname(output)
+    output_dir = os.path.dirname(output)
 
     if not args['--no-path']:
 
@@ -54,10 +52,10 @@ def main():
 
         for var, path in zip([main, branch], paths):
             if type(var) == list:
-                ChangeRootRelativePaths(var, path, outdir, in_place=True)
+                ChangeRootOfRelativePaths(var, path, output_dir, in_place=True)
             elif type(var) == dict:
                 for key, value in recursive_items(var):
-                    ChangeRootRelativePaths(value, path, outdir, in_place=True)
+                    ChangeRootOfRelativePaths(value, path, output_dir, in_place=True)
             else:
                 Error('Files have an incompatible structure')
 

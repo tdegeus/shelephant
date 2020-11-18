@@ -1,19 +1,19 @@
 '''shelephant_remote
-    Collect information from remote location (or host).
+    Collect file information from remote location (or host).
 
 Usage:
     shelephant_remote [options]
 
 Options:
-    -o, --output=N          Output YAML-file. [default: shelephant_remote.yaml]
-        --force             Force overwrite of output file.
+    -o, --output=N          Output YAML-file. [default: shelephant_remote.yaml].
         --host=N            Host-name.
-        --prefix=N          Directory on remote, from which to copy.
-    -f, --files=[N]         Read files from remote. [default: shelephant_dump.yaml]
-    -c, --checksum=[N]      Read checksums from remote. [default: shelephant_checksum.yaml]
+        --prefix=N          Directory on remote from which to copy.
+    -f, --files=[N]         YAML-file with list of files, on remote. [default: shelephant_dump.yaml]
+    -c, --checksum=[N]      YAML-file with checksums, on remote. [default: shelephant_checksum.yaml]
         --files-key=N       Path in the YAML-file, separated by "/". [default: /]
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
-    -i, --ignore            Skip basic check.
+    -i, --ignore            Skip basic checks.
+        --force             Overwrite output file without prompt
         --verbose           Verbose all commands.
     -h, --help              Show help.
         --version           Show version.
@@ -22,18 +22,14 @@ Options:
 '''
 
 import argparse
-import click
 import os
-import sys
 import tempfile
 import shutil
 
 from .. import __version__
 from . import Error
-from . import GetList
-from . import ReadYaml
+from . import YamlGetItem
 from . import YamlDump
-from . import ExecCommand
 from . import CopyFromRemote
 
 
@@ -117,7 +113,7 @@ def main():
                     args['--verbose'])
                 filename = temp_file
 
-            data[item] = GetList(filename, key)
+            data[item] = YamlGetItem(filename, key)
 
     # Run basic checks
 

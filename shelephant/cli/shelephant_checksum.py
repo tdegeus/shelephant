@@ -7,8 +7,8 @@ Usage:
 
 Options:
     -o, --output=N  Output YAML-file. [default: shelephant_checksum.yaml]
-    -k, --key=N     Path where files are stored in the YAML-file, separated by "/". [default: /]
-    -f, --force     Remove without prompt.
+    -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
+    -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
         --version   Show version.
 
@@ -16,12 +16,10 @@ Options:
 '''
 
 import docopt
-import click
 import os
-import sys
 
 from .. import __version__
-from . import GetList
+from . import YamlGetItem
 from . import YamlDump
 from . import PrefixPaths
 from . import GetSHA256
@@ -31,7 +29,7 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
     key = list(filter(None, args['--key'].split('/')))
-    files = GetList(args['<input.yaml>'], key)
+    files = YamlGetItem(args['<input.yaml>'], key)
     prefix = os.path.dirname(args['<input.yaml>'])
     files = PrefixPaths(prefix, files)
     data = [GetSHA256(file) for file in files]

@@ -10,7 +10,7 @@ import subprocess
 
 def ExecCommand(cmd, verbose=False):
     r'''
-Run command, optionally verbose command and output, and return output.
+Run command, optionally verbose command and its output, and return output.
     '''
 
     if verbose:
@@ -26,54 +26,29 @@ Run command, optionally verbose command and output, and return output.
 
 def Error(text):
     r'''
-Command-line error: show message and quit with exit code "1"
+Command-line error: show message and quit the program with exit code "1"
     '''
 
     print(text)
     sys.exit(1)
 
 
-def ReadYaml(filename):
+def YamlRead(filename):
     r'''
-Read YAML file.
+Read YAML file and return its content as ``list`` or ``dict``.
     '''
 
     if not os.path.isfile(filename):
         Error('"{0:s} does not exist'.format(filename))
 
-    return yaml.load(open(filename, 'r').read(), Loader=yaml.FullLoader)
-
-
-def GetList(filename, path=[]):
-    r'''
-Get list of paths.
-    '''
-
-    data = ReadYaml(filename)
-
-    if len(path) == 0 and type(data) != list:
-        Error('Specify path for "{1:s}"'.format(filename))
-
-    if len(path) > 0:
-        try:
-            return functools.reduce(operator.getitem, path, data)
-        except:
-            Error('"{0:s}" not in "{1:s}"'.format(path, filename))
-
-    return data
-
-def GetString(filename, path=[]):
-    r'''
-Get a single path.
-    '''
-    files = GetList(filename, path)
-    assert len(files) == 1
-    return filename[0]
+    with open(filename, 'r') as file:
+        return yaml.load(file.read(), Loader=yaml.FullLoader)
 
 
 def YamlDump(filename, data, force=False):
     r'''
-Dump data to YAML file.
+Dump data (as ``list`` or ``dict``) to YAML file.
+Unless ``force = True`` the function prompts before overwriting an existing file.
     '''
 
     if not force:
@@ -83,6 +58,29 @@ Dump data to YAML file.
 
     with open(filename, 'w') as file:
         ret = yaml.dump(data, file)
+
+
+def YamlGetItem(filename, key=[]):
+    r'''
+Get an item from a YAML file.
+Optionally the key to the item can be specified as a list. E.g.
+*   ``[]`` for a YAML file containing only a list.
+*   ``['foo']`` for a plain YAML file.
+*   ``['key', 'to', foo']`` for a YAML file with nested items.
+    '''
+
+    data = YamlRead(filename)
+
+    if len(key) == 0 and type(data) != list:
+        Error('Specify key for "{1:s}"'.format(filename))
+
+    if len(key) > 0:
+        try:
+            return functools.reduce(operator.getitem, key, data)
+        except:
+            Error('"{0:s}" not in "{1:s}"'.format(key, filename))
+
+    return data
 
 
 def GetSHA256(filename):
@@ -102,7 +100,7 @@ Get SHA256 for a file.
 
 def PrefixPaths(prefix, files):
     r'''
-Add prefix to list of filenames.
+Add prefix to a list of filenames.
 Skip if all paths are absolute paths.
     '''
 
@@ -117,10 +115,13 @@ Skip if all paths are absolute paths.
     return [os.path.normpath(os.path.join(prefix, file)) for file in files]
 
 
-def ChangeRootRelativePaths(files, old_root, new_root, in_place=False):
+def ChangeRootOfRelativePaths(files, old_root, new_root, in_place=False):
     r'''
 Change the root of relative paths.
 Skip if all paths are absolute paths.
+
+If ``in_place = True`` the input list is modified 'in place' (and a pointer to it is returned),
+otherwise a new list is returned.
     '''
 
     isabs = [os.path.isabs(file) for file in files]
@@ -142,7 +143,7 @@ Skip if all paths are absolute paths.
 
 def IsOnRemote(host, source, verbose=False):
     r'''
-Check if a file exists on a remote.
+Check if a file exists on a remote system. Uses ``ssh``.
     '''
 
     cmd = 'ssh {host:s} test -f "{source:s}" && echo found || echo not found'.format(
@@ -158,10 +159,21 @@ Check if a file exists on a remote.
 
 def CopyFromRemote(host, source, dest, verbose=False):
     r'''
-Copy a file from a remote.
+Copy a file from a remote system. Uses ``scp``.
     '''
 
     cmd = 'scp {host:s}:{source:s} {dest:s}'.format(
+        host=host, source=source, dest=dest)
+
+    ExecCommand(cmd, verbose)
+
+
+def CopyToRemote(host, source, dest, verbose=False):
+    r'''
+Copy a file to a remote system. Uses ``scp``.
+    '''
+
+    cmd = 'scp {source:s} {host:s}:{dest:s}'.format(
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
@@ -174,11 +186,10 @@ Return dictionary of colors.
 .. code-block:: python
 
     {
-        'selection' : '...',
-        'free' : '...',
-        'error' : '...',
-        'warning' : '...',
-        'low' : '...',
+        'new' : '...',
+        'overwrite' : '...',
+        'skip' : '...',
+        'bright' : '...',
     }
 
 :options:

@@ -1,14 +1,14 @@
 '''shelephant_get
-    Copy files.
+    Copy files using earlier collected information on which files to copy from where.
 
 Usage:
     shelephant_get [options] <remote.yaml>
 
 Options:
-    -f, --force         Force overwrite of all existing (but not matching) files.
         --colors=M      Select color scheme from: none, dark. [default: dark]
-        --verbose       Verbose all commands.
     -q, --quiet         Do not print progress.
+    -f, --force         Force overwrite of all existing (but not matching) files.
+        --verbose       Verbose all commands.
     -h, --help          Show help.
         --version       Show version.
 
@@ -18,13 +18,11 @@ Options:
 import docopt
 import click
 import os
-import sys
 import shutil
 import math
 
 from .. import __version__
-from . import ReadYaml
-from . import ExecCommand
+from . import YamlRead
 from . import PrefixPaths
 from . import GetSHA256
 from . import Theme
@@ -35,7 +33,7 @@ from . import CopyFromRemote
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    data = ReadYaml(args['<remote.yaml>'])
+    data = YamlRead(args['<remote.yaml>'])
     files = data['files']
     src_dir = data['prefix']
     dest_dir = os.path.dirname(args['<remote.yaml>'])
