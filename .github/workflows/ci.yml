@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - main
-      - stable
-      - v*
 
 jobs:
 
@@ -26,8 +24,12 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+
+    - name: Basic GitHub action setup
+      uses: actions/checkout@v2
+
+    - name: Set conda environment "test"
+      uses: conda-incubator/setup-miniconda@v2
       with:
         mamba-version: "*"
         channels: conda-forge,defaults
@@ -35,8 +37,9 @@ jobs:
         environment-file: environment.yaml
         activate-environment: test
         auto-activate-base: false
-    - run: python -m pip install .
-    - run: python test/cli/shelephant_dump.py
-    - run: python test/cli/shelephant_checksum.py
-    - run: python test/cli/shelephant_remote.py
-    - run: python test/cli/shelephant_rm.py
+
+    - name: Install library
+      run: python -m pip install .
+
+    - name: Run tests
+      run: python test/main.py
