@@ -1,15 +1,15 @@
 '''shelephant_send
-    Copy files to a remote.
+    Copy files to a remote, using earlier collected information on which files to copy where.
 
 Usage:
     shelephant_get [options] <files.yaml> <remote.yaml>
 
 Options:
-    -k, --key=N         Path where files are stored in the YAML-file, separated by "/". [default: /]
-    -f, --force         Force overwrite of all existing (but not matching) files.
+    -k, --key=N         Path in the YAML-file, separated by "/". [default: /]
         --colors=M      Select color scheme from: none, dark. [default: dark]
-        --verbose       Verbose all commands.
     -q, --quiet         Do not print progress.
+    -f, --force         Force overwrite of all existing (but not matching) files.
+        --verbose       Verbose all commands.
     -h, --help          Show help.
         --version       Show version.
 
@@ -19,27 +19,26 @@ Options:
 import docopt
 import click
 import os
-import sys
 import shutil
 import math
 import numpy as np
 
 from .. import __version__
-from . import ReadYaml
-from . import ExecCommand
+from . import YamlRead
 from . import PrefixPaths
-from . import GetList
+from . import YamlGetItem
 from . import GetSHA256
 from . import Theme
 from . import String
+from . import CopyToRemote
 
 
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    data = ReadYaml(args['<remote.yaml>'])
+    data = YamlRead(args['<remote.yaml>'])
     key = list(filter(None, args['--key'].split('/')))
-    files = GetList(args['<files.yaml>'], key)
+    files = YamlGetItem(args['<files.yaml>'], key)
     src_dir = os.path.dirname(args['<files.yaml>'])
     dest_dir = data['prefix']
     src = PrefixPaths(src_dir, files)
@@ -114,9 +113,7 @@ def main():
             if not args['--quiet']:
                 print(fmt.format(i, dest[i]))
             if 'host' in data:
-                ExecCommand(
-                    'scp {0:s} {1:s}:{2:s}'.format(src[i], data['host'], dest[i]),
-                    args['--verbose'])
+                CopyToRemote(data['host'], src[i], dest[i], args['--verbose'])
             else:
                 shutil.copy(src[i], dest[i])
 
