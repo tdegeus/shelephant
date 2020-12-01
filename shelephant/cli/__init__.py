@@ -83,19 +83,19 @@ Optionally the key to the item can be specified as a list. E.g.
     return data
 
 
-def GetSHA256(filename):
+def GetSHA256(filename, size = 2 ** 10):
     r'''
 Get SHA256 for a file.
     '''
 
     import hashlib
 
-    sha256_hash = hashlib.sha256()
+    h = hashlib.sha256()
 
     with open(filename, 'rb') as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-        return sha256_hash.hexdigest()
+        for byte_block in iter(lambda: f.read(size * h.block_size), b""):
+            h.update(byte_block)
+        return h.hexdigest()
 
 
 def PrefixPaths(prefix, files):
