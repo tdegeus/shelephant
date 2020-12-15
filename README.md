@@ -25,6 +25,8 @@ Command-line arguments with a memory (stored in YAML-files).
     - [Send files to host](#send-files-to-host)
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
+- [Change-log](#change-log)
+    - [v0.4.0](#v040)
 
 <!-- /MarkdownTOC -->
 
@@ -286,4 +288,12 @@ And restart the partial copy:
 shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
+# Change-log
+
+## v0.4.0
+
+*   shelephant_remote: allow update of existing remote file
+*   shelephant_get: fixing counter
+*   shelephant_checksum: accepting default source-file
+*   Checksum: updating chunk size
 
