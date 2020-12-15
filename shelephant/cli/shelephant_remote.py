@@ -13,6 +13,7 @@ Options:
         --files-key=N       Path in the YAML-file, separated by "/". [default: /]
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
     -i, --ignore            Skip basic checks.
+    -u, --update=[N]        Use host and prefix from existing file. [default: shelephant_remote.yaml]
         --force             Overwrite output file without prompt
         --verbose           Verbose all commands.
     -h, --help              Show help.
@@ -30,6 +31,7 @@ from .. import __version__
 from . import Error
 from . import YamlGetItem
 from . import YamlDump
+from . import YamlRead
 from . import CopyFromRemote
 
 
@@ -49,6 +51,7 @@ def main():
     parser.add_argument('-p', '--prefix', required=False, default=None)
     parser.add_argument('-f', '--files', required=False, default=None, nargs='?', const='shelephant_dump.yaml')
     parser.add_argument('-c', '--checksum', required=False, default=None, nargs='?', const='shelephant_checksum.yaml')
+    parser.add_argument('-u', '--update', required=False, default=None, nargs='?', const='shelephant_remote.yaml')
     parser.add_argument(      '--files-key', required=False, default='/')
     parser.add_argument(      '--checksum-key', required=False, default='/')
     parser.add_argument('-i', '--ignore', required=False, action='store_true')
@@ -64,6 +67,7 @@ def main():
         '--prefix' : p.prefix,
         '--files' : p.files,
         '--checksum' : p.checksum,
+        '--update' : p.update,
         '--files-key' : p.files_key,
         '--checksum-key' : p.checksum_key,
         '--ignore' : p.ignore,
@@ -77,6 +81,12 @@ def main():
     for item in ['host', 'prefix']:
         if args['--' + item]:
             data[item] = args['--' + item]
+
+    if args['--update']:
+        overwrite = YamlRead(args['--update'])
+        for item in ['host', 'prefix']:
+            if item in overwrite:
+                data[item] = overwrite[item]
 
     # Basic IO-checks
 
