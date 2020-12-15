@@ -3,7 +3,11 @@
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
 Usage:
+    shelephant_checksum [options]
     shelephant_checksum [options] <input.yaml>
+
+Arguments:
+    YAML-file with file-paths. Default: shelephant_dump.yaml
 
 Options:
     -o, --output=N  Output YAML-file. [default: shelephant_checksum.yaml]
@@ -28,9 +32,10 @@ from . import GetSHA256
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
+    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
     key = list(filter(None, args['--key'].split('/')))
-    files = YamlGetItem(args['<input.yaml>'], key)
-    prefix = os.path.dirname(args['<input.yaml>'])
+    files = YamlGetItem(source, key)
+    prefix = os.path.dirname(source)
     files = PrefixPaths(prefix, files)
     data = [GetSHA256(file) for file in files]
     YamlDump(args['--output'], data, args['--force'])
