@@ -96,7 +96,7 @@ def main():
 
     ncp = n - sum(skip)
     l = int(math.log10(ncp) + 1)
-    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(n) + ') {1:s}'
 
     for i in range(n):
         if not skip[i]:
