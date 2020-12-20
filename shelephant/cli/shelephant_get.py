@@ -2,6 +2,7 @@
     Copy files using earlier collected information on which files to copy from where.
 
 Usage:
+    shelephant_get [options]
     shelephant_get [options] <remote.yaml>
 
 Options:
@@ -33,10 +34,11 @@ from . import CopyFromRemote
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    data = YamlRead(args['<remote.yaml>'])
+    source = args['<remote.yaml>'] if args['<remote.yaml>'] else 'shelephant_remote.yaml'
+    data = YamlRead(source)
     files = data['files']
     src_dir = data['prefix']
-    dest_dir = os.path.dirname(args['<remote.yaml>'])
+    dest_dir = os.path.dirname(source)
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
