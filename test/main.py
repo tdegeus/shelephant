@@ -165,7 +165,6 @@ class Test_merge(unittest.TestCase):
         shutil.rmtree('dirb')
 
 
-
 class Test_remote(unittest.TestCase):
 
     def test_basic(self):
@@ -222,6 +221,26 @@ class Test_rm(unittest.TestCase):
         self.assertFalse(os.path.isfile('bar.txt'))
 
         os.remove('shelephant_dump.yaml')
+
+
+class Test_parse(unittest.TestCase):
+
+    def test_basic(self):
+
+        with open('foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('bar.txt', 'w') as file:
+            file.write('bar')
+
+        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_parse shelephant_dump.yaml')
+
+        self.assertEqual(list(filter(None, output.split('\n'))), ['- foo.txt', '- bar.txt'])
+
+        os.remove('shelephant_dump.yaml')
+        os.remove('foo.txt')
+        os.remove('bar.txt')
 
 
 if __name__ == '__main__':
