@@ -77,6 +77,7 @@ shelephant_get shelephant_remote.yaml
 
 *   `shelephant_extract`: isolate a (number of) field(s) in a (new) YAML file.
 *   `shelephant_merge`: merge two YAML-files.
+*   `shelephant_parse`: parse a YAML-files and print to screen.
 
 # Disclaimer
 
