@@ -60,6 +60,13 @@ Unless ``force = True`` the function prompts before overwriting an existing file
         ret = yaml.dump(data, file)
 
 
+def YamlPrint(data):
+    r'''
+Print data formatted as YAML.
+    '''
+    print(yaml.dump(data, default_flow_style=False, default_style=''))
+
+
 def YamlGetItem(filename, key=[]):
     r'''
 Get an item from a YAML file.

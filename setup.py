@@ -26,6 +26,7 @@ setup(
             'shelephant_extract = shelephant.cli.shelephant_extract:main',
             'shelephant_get = shelephant.cli.shelephant_get:main',
             'shelephant_merge = shelephant.cli.shelephant_merge:main',
+            'shelephant_parse = shelephant.cli.shelephant_parse:main',
             'shelephant_remote = shelephant.cli.shelephant_remote:main',
             'shelephant_rm = shelephant.cli.shelephant_rm:main',
             'shelephant_send = shelephant.cli.shelephant_send:main',
