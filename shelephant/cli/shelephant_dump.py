@@ -4,6 +4,9 @@
 Usage:
     shelephant_dump [options] <file>...
 
+Argument(s):
+    Files to dump. By default the filenames are written relative to the output file.
+
 Options:
     -o, --output=N      Output YAML-file. [default: shelephant_dump.yaml]
     -c, --command       Interpret the input as a command (instead of as filenames).

@@ -5,6 +5,9 @@ Usage:
     shelephant_get [options]
     shelephant_get [options] <remote.yaml>
 
+Argument:
+    YAML-file with host information. Default: shelephant_remote.yaml
+
 Options:
         --colors=M      Select color scheme from: none, dark. [default: dark]
     -q, --quiet         Do not print progress.

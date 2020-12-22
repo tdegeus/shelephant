@@ -8,10 +8,14 @@
 Usage:
     shelephant_merge [options] <branch.yaml> <main.yaml>
 
+Arguments:
+    branch.yaml     File to merge into main.yaml.
+    main.yaml       Main source.
+
 Options:
     -o, --output=N  Output file. (default: <main.yaml>)
         --replace   Replace fields in <main.yaml> that are also in <branch.yaml>. (default: append)
-        --skip      Skip fields in <branch.yaml> that are also in <main.yaml>
+        --skip      Skip fields in <branch.yaml> that are also in <main.yaml>.
         --no-path   Do not interpret data as paths.
     -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
