@@ -9,6 +9,10 @@ Usage:
     shelephant_extract [options] <input.yaml>
     shelephant_extract [options] <input.yaml> <key>...
 
+Arguments:
+    input.yaml      The file to read.
+    key             The keys to read from the file.
+
 Options:
     -o, --output=N  Output file. (default: <input.yaml>)
         --no-path   Do not interpret data as paths.

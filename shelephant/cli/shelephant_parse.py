@@ -4,6 +4,9 @@
 Usage:
     shelephant_parse <file.yaml>
 
+Argument:
+    File path.
+
 Options:
     -h, --help          Show help.
         --version       Show version.

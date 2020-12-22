@@ -14,7 +14,7 @@ Options:
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
     -i, --ignore            Skip basic checks.
     -u, --update=[N]        Use host and prefix from existing file. [default: shelephant_remote.yaml]
-        --force             Overwrite output file without prompt
+        --force             Overwrite output file without prompt.
         --verbose           Verbose all commands.
     -h, --help              Show help.
         --version           Show version.
