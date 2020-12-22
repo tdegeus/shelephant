@@ -6,10 +6,10 @@ Usage:
 
 Options:
     -o, --output=N          Output YAML-file. [default: shelephant_remote.yaml].
-        --host=N            Host-name.
-        --prefix=N          Directory on remote from which to copy.
-    -f, --files=[N]         YAML-file with list of files, on remote. [default: shelephant_dump.yaml]
-    -c, --checksum=[N]      YAML-file with checksums, on remote. [default: shelephant_checksum.yaml]
+    -r, --host=N            Host-name.
+    -p, --prefix=N          Directory on remote from which to copy.
+    -f, --files=[N]         YAML-file with list of files (on remote). [default: shelephant_dump.yaml]
+    -c, --checksum=[N]      YAML-file with checksums (on remote). [default: shelephant_checksum.yaml]
         --files-key=N       Path in the YAML-file, separated by "/". [default: /]
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
     -i, --ignore            Skip basic checks.
