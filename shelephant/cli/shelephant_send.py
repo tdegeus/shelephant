@@ -2,7 +2,12 @@
     Copy files to a remote, using earlier collected information on which files to copy where.
 
 Usage:
+    shelephant_get [options]
     shelephant_get [options] <files.yaml> <remote.yaml>
+
+Arguments:
+    files.yaml          YAML-file with files to send. Default: shelephant_dump.yaml
+    remote.yaml         YAML-file with host information. Default: shelephant_remote.yaml
 
 Options:
     -k, --key=N         Path in the YAML-file, separated by "/". [default: /]
@@ -36,10 +41,12 @@ from . import CopyToRemote
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    data = YamlRead(args['<remote.yaml>'])
+    source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
+    remote = args['<remote.yaml>'] if args['<remote.yaml>'] else 'shelephant_remote.yaml'
+    data = YamlRead(remote)
     key = list(filter(None, args['--key'].split('/')))
-    files = YamlGetItem(args['<files.yaml>'], key)
-    src_dir = os.path.dirname(args['<files.yaml>'])
+    files = YamlGetItem(source, key)
+    src_dir = os.path.dirname(source)
     dest_dir = data['prefix']
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)

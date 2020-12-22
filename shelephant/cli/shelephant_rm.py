@@ -3,7 +3,11 @@
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
 Usage:
+    shelephant_rm [options]
     shelephant_rm [options] <input.yaml>
+
+Argument:
+    YAML-file with filenames. Default: shelephant_dump.yaml
 
 Options:
     -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
@@ -27,8 +31,9 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
     key = list(filter(None, args['--key'].split('/')))
-    files = YamlGetItem(args['<input.yaml>'], key)
-    prefix = os.path.dirname(args['<input.yaml>'])
+    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+    files = YamlGetItem(source, key)
+    prefix = os.path.dirname(source)
     files = PrefixPaths(prefix, files)
 
     if len(files) == 0:
