@@ -9,8 +9,9 @@ Argument(s):
 
 Options:
     -o, --output=N      Output YAML-file. [default: shelephant_dump.yaml]
+    -a, --append        Append existing file.
     -c, --command       Interpret the input as a command (instead of as filenames).
-    -a, --abspath       Store absolute paths (default: relative to the output file).
+        --abspath       Store absolute paths (default: relative to the output file).
     -s, --sort          Sort filenames.
     -f, --force         Overwrite output file without prompt.
     -h, --help          Show help.
@@ -25,6 +26,7 @@ import subprocess
 
 from .. import __version__
 from . import YamlDump
+from . import YamlRead
 
 
 def main():
@@ -45,6 +47,11 @@ def main():
 
     if args['--sort']:
         files = sorted(files)
+
+    if args['--append']:
+        main = YamlRead(args['--output'])
+        files = main + files
+        args['--force'] = True
 
     YamlDump(args['--output'], files, args['--force'])
 
