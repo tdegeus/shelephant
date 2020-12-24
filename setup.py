@@ -28,6 +28,8 @@ setup(
             'shelephant_merge = shelephant.cli.shelephant_merge:main',
             'shelephant_parse = shelephant.cli.shelephant_parse:main',
             'shelephant_remote = shelephant.cli.shelephant_remote:main',
+            'shelephant_cp = shelephant.cli.shelephant_cp:main',
+            'shelephant_mv = shelephant.cli.shelephant_mv:main',
             'shelephant_rm = shelephant.cli.shelephant_rm:main',
             'shelephant_send = shelephant.cli.shelephant_send:main',
         ]})
