@@ -236,6 +236,25 @@ Copy a file to a remote system. Uses ``scp``.
     ExecCommand(cmd, verbose)
 
 
+def MakeDir(dirname, force=False):
+    r'''
+Create a directory if it does not yet exist.
+    '''
+
+    if len(dirname) == 0:
+        return 0
+
+    if os.path.isdir(dirname):
+        return 0
+
+    if not force:
+        print('mkdir -p {0:s}'.format(dirname))
+        if not click.confirm('Proceed?'):
+            return 1
+
+    os.makedirs(dirname)
+
+
 def ShelephantCopy(operation, source, key, dest_dir, theme_name, checksum, quiet, force):
     r'''
 Copy/move files.
@@ -272,12 +291,8 @@ Copy/move files.
     files = YamlGetItem(source, key)
     src_dir = os.path.dirname(source)
 
-    if not os.path.isdir(dest_dir):
-        if not force:
-            print('mkdir -p {0:s}'.format(dest_dir))
-            if not click.confirm('Proceed?'):
-                return 1
-        os.makedirs(dest_dir)
+    if MakeDir(dest_dir, force):
+        return 1
 
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)

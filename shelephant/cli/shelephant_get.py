@@ -32,6 +32,7 @@ from . import GetSHA256
 from . import Theme
 from . import String
 from . import CopyFromRemote
+from . import MakeDir
 
 
 def main():
@@ -43,12 +44,8 @@ def main():
     src_dir = data['prefix']
     dest_dir = os.path.dirname(source)
 
-    if not os.path.isdir(dest_dir):
-        if not args['--force']:
-            print('mkdir -p {0:s}'.format(dest_dir))
-            if not click.confirm('Proceed?'):
-                return 1
-        os.makedirs(dest_dir)
+    if MakeDir(dest_dir, args['--force']):
+        return 1
 
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)

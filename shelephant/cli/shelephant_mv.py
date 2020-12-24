@@ -35,7 +35,7 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
 
-    ShelephantCopy(
+    return ShelephantCopy(
         operation = 'move',
         source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml',
         key = list(filter(None, args['--key'].split('/'))),
