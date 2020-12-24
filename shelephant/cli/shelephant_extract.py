@@ -16,6 +16,7 @@ Arguments:
 Options:
     -o, --output=N  Output file. (default: <input.yaml>)
         --no-path   Do not interpret data as paths.
+    -s, --squash    Squash fields into a single field.
     -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
         --version   Show version.
@@ -32,6 +33,7 @@ from .. import __version__
 from . import YamlGetItem
 from . import YamlDump
 from . import ChangeRootOfRelativePaths
+from . import Squash
 
 
 def main():
@@ -55,6 +57,9 @@ def main():
             return 0
         container = functools.reduce(lambda x, y: {y: x}, key[:-1], {key[-1]: files})
         mergedeep.merge(data, container)
+
+    if args['--squash']:
+        data = Squash(data)
 
     YamlDump(output, data, args['--force'])
 

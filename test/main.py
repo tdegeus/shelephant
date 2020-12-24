@@ -11,6 +11,27 @@ def run(cmd):
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
 
 
+class Test_tools(unittest.TestCase):
+
+    def test_FlattenList(self):
+
+        from shelephant.cli import FlattenList
+
+        arg = [1, [2, 2, 2], 4]
+        ret = [1, 2, 2, 2, 4]
+
+        self.assertEqual(ret, FlattenList(arg))
+
+    def test_Squash(self):
+
+        from shelephant.cli import Squash
+
+        arg = {'foo': [1, 2], 'bar': {'foo': [3, 4], 'bar': 5}}
+        ret = [1, 2, 3, 4, 5]
+
+        self.assertEqual(ret, Squash(arg))
+
+
 class Test_checksum(unittest.TestCase):
 
     def test_basic(self):
@@ -115,6 +136,27 @@ class Test_extract(unittest.TestCase):
         output = run('shelephant_extract --force dump.yaml "/sub/foo" "foo"')
 
         self.assertEqual(YamlRead('dump.yaml'), {'foo': ['foo.txt', 'bar.txt'], 'sub': {'foo': ['foo.txt', 'bar.txt']}})
+
+        os.remove('dump.yaml')
+
+    def test_multiple_paths_squash(self):
+
+        data = {
+            'foo' : ['foo.txt', 'bar.txt'],
+            'bar' : ['foo.pdf', 'bar.pdf'],
+            'key' : ['foo.key', 'bar.key'],
+            'sub' : {
+                'foo' : ['foo2.txt', 'bar2.txt'],
+                'bar' : ['foo2.pdf', 'bar2.pdf'],
+                'key' : ['foo2.key', 'bar2.key'],
+            },
+        }
+
+        YamlDump('dump.yaml', data, force=True)
+
+        output = run('shelephant_extract --force dump.yaml --squash "/sub/foo" "foo"')
+
+        self.assertEqual(YamlRead('dump.yaml'), ['foo2.txt', 'bar2.txt', 'foo.txt', 'bar.txt'])
 
         os.remove('dump.yaml')
 

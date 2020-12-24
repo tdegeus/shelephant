@@ -6,6 +6,54 @@ import yaml
 import operator
 import functools
 import subprocess
+import collections.abc
+
+
+def FlattenList_detail(data):
+    r'''
+See https://stackoverflow.com/a/17485785/2646505
+    '''
+
+    for item in data:
+        if isinstance(item, collections.abc.Iterable) and not isinstance(item, str):
+            for x in FlattenList(item):
+                yield x
+        else:
+            yield item
+
+
+def FlattenList(data):
+    r'''
+Flatten a nested list to a one dimensional list.
+    '''
+    return list(FlattenList_detail(data))
+
+
+def Squash_detail(data, parent_key='', sep='_'):
+    r'''
+See https://stackoverflow.com/a/6027615/2646505
+    '''
+
+    items = []
+
+    for k, v in data.items():
+
+        new_key = parent_key + sep + k if parent_key else k
+
+        if isinstance(v, collections.abc.MutableMapping):
+            items.extend(Squash_detail(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+
+    return dict(items)
+
+
+def Squash(data):
+    r'''
+Squash a dictionary to a single list.
+    '''
+
+    return FlattenList(list(Squash_detail(data).values()))
 
 
 def ExecCommand(cmd, verbose=False):
