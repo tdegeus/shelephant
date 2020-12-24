@@ -99,6 +99,31 @@ class Test_dump(unittest.TestCase):
         os.remove('dump_2.yaml')
         shutil.rmtree('mydir')
 
+    def test_append(self):
+
+        with open('foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('bar.txt', 'w') as file:
+            file.write('bar')
+
+        with open('foo.pdf', 'w') as file:
+            file.write('foo')
+
+        with open('bar.pdf', 'w') as file:
+            file.write('bar')
+
+        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_dump -a foo.pdf bar.pdf')
+
+        self.assertEqual(YamlRead('shelephant_dump.yaml'), ['foo.txt', 'bar.txt', 'foo.pdf', 'bar.pdf'])
+
+        os.remove('foo.txt')
+        os.remove('bar.txt')
+        os.remove('foo.pdf')
+        os.remove('bar.pdf')
+        os.remove('shelephant_dump.yaml')
+
 
 class Test_extract(unittest.TestCase):
 
