@@ -26,6 +26,7 @@ Command-line arguments with a memory (stored in YAML-files).
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
 - [Change-log](#change-log)
+    - [v0.8.0](#v080)
     - [v0.7.0](#v070)
     - [v0.6.0](#v060)
     - [v0.5.0](#v050)
@@ -293,6 +294,12 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
 # Change-log
+
+## v0.8.0
+
+*    Adding "shelephant_cp" and "shelephant_mv"
+*    Adding append option to "shelephant_dump"
+*    Adding squash option to "shelephant_extract"
 
 ## v0.7.0
 

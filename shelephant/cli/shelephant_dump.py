@@ -49,7 +49,11 @@ def main():
         files = sorted(files)
 
     if args['--append']:
+
         main = YamlRead(args['--output'])
+        if type(main) != list:
+            Error('Can only append a "flat" file')
+
         files = main + files
         args['--force'] = True
 
