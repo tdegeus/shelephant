@@ -271,6 +271,60 @@ class Test_remote(unittest.TestCase):
         shutil.rmtree('mydest')
 
 
+class Test_mv(unittest.TestCase):
+
+    def test_basic(self):
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        output = run('shelephant_dump -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_mv --force mysrc/files.yaml mydest')
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+
+
+class Test_cp(unittest.TestCase):
+
+    def test_basic(self):
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        output = run('shelephant_dump -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_cp --force mysrc/files.yaml mydest')
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+        self.assertTrue(os.path.isfile('mysrc/foo.txt'))
+        self.assertTrue(os.path.isfile('mysrc/bar.txt'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+
+
 class Test_rm(unittest.TestCase):
 
     def test_basic(self):

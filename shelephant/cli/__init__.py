@@ -7,6 +7,8 @@ import operator
 import functools
 import subprocess
 import collections.abc
+import shutil
+import math
 
 
 def FlattenList_detail(data):
@@ -232,6 +234,125 @@ Copy a file to a remote system. Uses ``scp``.
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
+
+
+def ShelephantCopy(operation, source, key, dest_dir, theme_name, checksum, quiet, force):
+    r'''
+Copy/move files.
+
+:arguments:
+
+    **operation** (``'copy'`` | ``'move'``)
+        Select type of operation.
+
+    **source** (``<str>``)
+        YAML-file with filenames.
+        The filenames are assumed either absolute, or relative to the input YAML-file.
+
+    **key** (``<str>``)
+        Path in the YAML-file, separated by "/".
+        Use "/" for root.
+
+    **dest_dir** (``<str>``)
+        The destination.
+
+    **theme_name** (``<str>``)
+        The name of the color-theme. See ``Theme``.
+
+    **checksum** (``True`` | ``False`` | ``<list<str>>``)
+        Use checksum to skip files that are the same.
+
+    **quiet** (``True`` | ``False``)
+        Proceed without printing progress.
+
+    **force** (``True`` | ``False``)
+        Continue without prompt.
+    '''
+
+    files = YamlGetItem(source, key)
+    src_dir = os.path.dirname(source)
+
+    if not os.path.isdir(dest_dir):
+        if not force:
+            print('mkdir -p {0:s}'.format(dest_dir))
+            if not click.confirm('Proceed?'):
+                return 1
+        os.makedirs(dest_dir)
+
+    src = PrefixPaths(src_dir, files)
+    dest = PrefixPaths(dest_dir, files)
+    n = len(src)
+    overwrite = [False for i in range(n)]
+    create = [False for i in range(n)]
+    skip = [False for i in range(n)]
+    theme = Theme(theme_name.lower())
+
+    if checksum == True:
+        checksum = [GetSHA256(file) for file in files]
+
+    for i in range(n):
+        if os.path.isfile(dest[i]):
+            if checksum:
+                if GetSHA256(dest[i]) == GetSHA256(src[i]):
+                    skip[i] = True
+                    continue
+            overwrite[i] = True
+            continue
+        create[i] = True
+
+    print('-----')
+    print('- from dir. : ' + os.path.normpath(src_dir))
+    print('- to dir.   : ' + os.path.normpath(dest_dir))
+    print('-----')
+
+    l = max([len(file) for file in files])
+
+    for i in range(n):
+        if create[i]:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('->', color=theme['bright']).format(),
+                String(files[i], color=theme['new']).format()
+            ))
+        elif skip[i]:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['skip']).format(),
+                String('==', color=theme['skip']).format(),
+                String(files[i], color=theme['skip']).format()
+            ))
+        elif overwrite[i]:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('=>', color=theme['bright']).format(),
+                String(files[i], color=theme['overwrite']).format()
+            ))
+
+    if all(skip):
+        return 0
+
+    if not force:
+        if not click.confirm('Proceed?'):
+            return 1
+
+    ncp = n - sum(skip)
+    l = int(math.log10(ncp) + 1)
+    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+
+    if operation == 'move':
+
+        for i in range(n):
+            if not skip[i]:
+                if not quiet:
+                    print(fmt.format(i, dest[i]))
+                os.rename(src[i], dest[i])
+
+    elif operation == 'copy':
+
+        for i in range(n):
+            if not skip[i]:
+                if not quiet:
+                    print(fmt.format(i, dest[i]))
+                shutil.copy(src[i], dest[i])
 
 
 def Theme(theme=None):
