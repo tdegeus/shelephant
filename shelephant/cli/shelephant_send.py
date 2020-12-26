@@ -118,7 +118,7 @@ def main():
     for i in range(n):
         if not skip[i]:
             if not args['--quiet']:
-                print(fmt.format(i, dest[i]))
+                print(fmt.format(i + 1 - nskip, dest[i]))
             if 'host' in data:
                 CopyToRemote(data['host'], src[i], dest[i], args['--verbose'])
             else:
