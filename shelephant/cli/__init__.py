@@ -290,10 +290,6 @@ Copy/move files.
 
     files = YamlGetItem(source, key)
     src_dir = os.path.dirname(source)
-
-    if MakeDir(dest_dir, force):
-        return 1
-
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -301,6 +297,13 @@ Copy/move files.
     create = [False for i in range(n)]
     skip = [False for i in range(n)]
     theme = Theme(theme_name.lower())
+
+    for file in src:
+        if not os.path.isfile(file):
+            Error('"{0:s}" does not exists')
+
+    if MakeDir(dest_dir, force):
+        return 1
 
     if checksum == True:
         checksum = [GetSHA256(file) for file in files]
