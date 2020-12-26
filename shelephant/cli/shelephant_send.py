@@ -2,8 +2,8 @@
     Copy files to a remote, using earlier collected information on which files to copy where.
 
 Usage:
-    shelephant_get [options]
-    shelephant_get [options] <files.yaml> <remote.yaml>
+    shelephant_send [options]
+    shelephant_send [options] <files.yaml> <remote.yaml>
 
 Arguments:
     files.yaml          YAML-file with files to send. Default: shelephant_dump.yaml
@@ -14,6 +14,7 @@ Options:
         --colors=M      Select color scheme from: none, dark. [default: dark]
     -q, --quiet         Do not print progress.
     -f, --force         Force overwrite of all existing (but not matching) files.
+    -l, --local=N       Add local 'host' information to use precomputed checksums.
         --verbose       Verbose all commands.
     -h, --help          Show help.
         --version       Show version.
@@ -36,6 +37,39 @@ from . import GetSHA256
 from . import Theme
 from . import String
 from . import CopyToRemote
+
+
+def ReadChecksums(shelephant_remote, dest):
+
+    import numpy as np
+
+    data = YamlRead(shelephant_remote)
+    files = data['files']
+    prefix = data['prefix']
+    checksum = data['checksum']
+    paths = PrefixPaths(prefix, files)
+
+    n = len(dest)
+    ret = [False for i in range(n)]
+
+    for i in range(n):
+        if os.path.isfile(dest[i]):
+            j = np.argwhere([file == dest[i] for file in paths]).ravel()[0]
+            ret[i] = checksum[j]
+
+    return ret
+
+
+def ComputeChecksums(dest):
+
+    n = len(dest)
+    ret = [False for i in range(n)]
+
+    for i in range(n):
+        if os.path.isfile(dest[i]):
+            ret[i] = GetSHA256(dest[i])
+
+    return ret
 
 
 def main():
@@ -61,11 +95,16 @@ def main():
         if len(set(data['files'])) != len(data['files']):
             Error('files in remote must be unique')
 
+        if args['--local']:
+            local_checksums = ReadChecksums(args['--local'], src)
+        elif 'checksum' in data:
+            local_checksums = ComputeChecksums(src)
+
         for i in range(n):
             if files[i] in data['files']:
                 if 'checksum' in data:
                     j = np.argwhere([file == files[i] for file in data['files']]).ravel()[0]
-                    if GetSHA256(src[i]) == data['checksum'][j]:
+                    if local_checksums[i] == data['checksum'][j]:
                         skip[i] = True
                         continue
                 overwrite[i] = True
@@ -83,6 +122,8 @@ def main():
     print('-----')
 
     l = max([len(file) for file in files])
+    nskip = sum(skip)
+    pskip = nskip <= 20
 
     for i in range(n):
         if create[i]:
@@ -91,7 +132,7 @@ def main():
                 String('->', color=theme['bright']).format(),
                 String(files[i], color=theme['new']).format()
             ))
-        elif skip[i]:
+        elif skip[i] and pskip:
             print('{0:s} {1:s} {2:s}'.format(
                 String(files[i], width=l, color=theme['skip']).format(),
                 String('==', color=theme['skip']).format(),
@@ -103,6 +144,9 @@ def main():
                 String('=>', color=theme['bright']).format(),
                 String(files[i], color=theme['overwrite']).format()
             ))
+
+    if not pskip:
+        print('{0:d} skipped files'.format(nskip))
 
     if all(skip):
         return 0
