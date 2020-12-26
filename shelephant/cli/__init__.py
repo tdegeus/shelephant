@@ -366,7 +366,7 @@ Copy/move files.
         for i in range(n):
             if not skip[i]:
                 if not quiet:
-                    print(fmt.format(i, dest[i]))
+                    print(fmt.format(i + 1 - nskip, dest[i]))
                 os.rename(src[i], dest[i])
 
     elif operation == 'copy':
@@ -374,7 +374,7 @@ Copy/move files.
         for i in range(n):
             if not skip[i]:
                 if not quiet:
-                    print(fmt.format(i, dest[i]))
+                    print(fmt.format(i + 1 - nskip, dest[i]))
                 shutil.copy(src[i], dest[i])
 
 

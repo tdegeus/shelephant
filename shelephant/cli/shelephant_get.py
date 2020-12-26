@@ -150,12 +150,12 @@ def main():
 
     ncp = n - sum(skip)
     l = int(math.log10(ncp) + 1)
-    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(n) + ') {1:s}'
+    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
 
     for i in range(n):
         if not skip[i]:
             if not args['--quiet']:
-                print(fmt.format(i, dest[i]))
+                print(fmt.format(i + 1 - nskip, dest[i]))
             if 'host' in data:
                 CopyFromRemote(data['host'], src[i], dest[i], args['--verbose'])
             else:
