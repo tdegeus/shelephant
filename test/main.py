@@ -69,6 +69,10 @@ class Test_dump(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
+        for dirname in ['mydir']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
         os.mkdir('mydir')
 
         with open('mydir/foo.txt', 'w') as file:
@@ -236,6 +240,10 @@ class Test_remote(unittest.TestCase):
 
     def test_basic(self):
 
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
         os.mkdir('mysrc')
         os.mkdir('mydest')
 
@@ -252,20 +260,140 @@ class Test_remote(unittest.TestCase):
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
 
-        with open('mysrc/files.yaml', 'r') as file:
-            src_files = file.read()
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
 
-        with open('mysrc/checksum.yaml', 'r') as file:
-            src_checksum = file.read()
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
 
-        with open('mydest/files.yaml', 'r') as file:
-            dest_files = file.read()
 
-        with open('mydest/checksum.yaml', 'r') as file:
-            dest_checksum = file.read()
+class Test_get(unittest.TestCase):
 
-        self.assertEqual(src_files, dest_files)
-        self.assertEqual(src_checksum, dest_checksum)
+    def test_basic(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt -> foo.txt',
+            'mydest/bar.txt',
+            'mydest/foo.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_get --colors none --force mydest/remote.yaml')
+
+        output = output.split('\n')
+        output = output[4:-1]
+        output[-2] = output[-2].split(') ')[1]
+        output[-1] = output[-1].split(') ')[1]
+        self.assertEqual(output, operations)
+
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+
+    def test_partial(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        shutil.copy('mysrc/foo.txt', 'mydest/foo.txt')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt == foo.txt',
+            'mydest/bar.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_get --colors none --force mydest/remote.yaml')
+
+        output = output.split('\n')
+        output = output[4:-1]
+        output[-1] = output[-1].split(') ')[1]
+        self.assertEqual(output, operations)
+
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+
+    def test_partial_localchecksum(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        shutil.copy('mysrc/foo.txt', 'mydest/foo.txt')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt == foo.txt',
+            'mydest/bar.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_remote -o mydest/local.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
+        output = run('shelephant_get --colors none --force --local mydest/local.yaml mydest/remote.yaml')
+
+        output = output.split('\n')
+        output = output[4:-1]
+        output[-1] = output[-1].split(') ')[1]
+        self.assertEqual(output, operations)
+
+        output = run('shelephant_dump --sort --force -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum --force -o mydest/checksum.yaml mydest/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
 
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
@@ -274,6 +402,10 @@ class Test_remote(unittest.TestCase):
 class Test_mv(unittest.TestCase):
 
     def test_basic(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
 
         os.mkdir('mysrc')
         os.mkdir('mydest')
@@ -300,6 +432,10 @@ class Test_mv(unittest.TestCase):
 class Test_cp(unittest.TestCase):
 
     def test_basic(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
 
         os.mkdir('mysrc')
         os.mkdir('mydest')
