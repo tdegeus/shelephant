@@ -35,13 +35,13 @@ def main():
 
     return ShelephantCopy(
         copy_function = shutil.copy,
-        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml',
-        key = list(filter(None, args['--key'].split('/'))),
+        yaml_src = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml',
+        yaml_key = list(filter(None, args['--key'].split('/'))),
         dest_dir = args['<destination>'],
-        theme_name = args['--colors'].lower(),
         checksum = args['--checksum'],
         quiet = args['--quiet'],
-        force = args['--force'])
+        force = args['--force'],
+        theme_name = args['--colors'].lower())
 
 
 if __name__ == '__main__':
