@@ -26,6 +26,7 @@ Command-line arguments with a memory (stored in YAML-files).
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
 - [Change-log](#change-log)
+    - [v0.8.1](#v081)
     - [v0.8.0](#v080)
     - [v0.7.0](#v070)
     - [v0.6.0](#v060)
@@ -294,6 +295,10 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
 # Change-log
+
+## v0.8.1
+
+*   Bugfix in directory creation. Switching to central function.
 
 ## v0.8.0
 
