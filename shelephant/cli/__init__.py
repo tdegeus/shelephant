@@ -324,6 +324,8 @@ Copy/move files.
     print('-----')
 
     l = max([len(file) for file in files])
+    nskip = sum(skip)
+    pskip = nskip <= 100
 
     for i in range(n):
         if create[i]:
@@ -332,7 +334,7 @@ Copy/move files.
                 String('->', color=theme['bright']).format(),
                 String(files[i], color=theme['new']).format()
             ))
-        elif skip[i]:
+        elif skip[i] and pskip:
             print('{0:s} {1:s} {2:s}'.format(
                 String(files[i], width=l, color=theme['skip']).format(),
                 String('==', color=theme['skip']).format(),
@@ -345,6 +347,9 @@ Copy/move files.
                 String(files[i], color=theme['overwrite']).format()
             ))
 
+    if not pskip:
+        print('{0:d} skipped files'.format(nskip))
+
     if all(skip):
         return 0
 
@@ -352,7 +357,7 @@ Copy/move files.
         if not click.confirm('Proceed?'):
             return 1
 
-    ncp = n - sum(skip)
+    ncp = n - nskip
     l = int(math.log10(ncp) + 1)
     fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
 
