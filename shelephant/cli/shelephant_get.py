@@ -12,6 +12,7 @@ Options:
         --colors=M      Select color scheme from: none, dark. [default: dark]
     -q, --quiet         Do not print progress.
     -f, --force         Force overwrite of all existing (but not matching) files.
+    -l, --local=N       Add local 'host' information to use precomputed checksums.
         --verbose       Verbose all commands.
     -h, --help          Show help.
         --version       Show version.
@@ -35,6 +36,39 @@ from . import CopyFromRemote
 from . import MakeDir
 
 
+def ReadChecksums(shelephant_remote, dest):
+
+    import numpy as np
+
+    data = YamlRead(shelephant_remote)
+    files = data['files']
+    prefix = data['prefix']
+    checksum = data['checksum']
+    paths = PrefixPaths(prefix, files)
+
+    n = len(dest)
+    ret = [False for i in range(n)]
+
+    for i in range(n):
+        if os.path.isfile(dest[i]):
+            j = np.argwhere([file == dest[i] for file in paths]).ravel()[0]
+            ret[i] = checksum[j]
+
+    return ret
+
+
+def ComputeChecksums(dest):
+
+    n = len(dest)
+    ret = [False for i in range(n)]
+
+    for i in range(n):
+        if os.path.isfile(dest[i]):
+            ret[i] = GetSHA256(dest[i])
+
+    return ret
+
+
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
@@ -55,10 +89,15 @@ def main():
     skip = [False for i in range(n)]
     theme = Theme(args['--colors'].lower())
 
+    if args['--local']:
+        local_checksums = ReadChecksums(args['--local'], dest)
+    elif 'checksum' in data:
+        local_checksums = ComputeChecksums(dest)
+
     for i in range(n):
         if os.path.isfile(dest[i]):
             if 'checksum' in data:
-                if GetSHA256(dest[i]) == data['checksum'][i]:
+                if local_checksums[i] == data['checksum'][i]:
                     skip[i] = True
                     continue
             overwrite[i] = True
