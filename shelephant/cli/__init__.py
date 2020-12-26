@@ -9,6 +9,7 @@ import subprocess
 import collections.abc
 import shutil
 import math
+import numpy as np
 
 
 def FlattenList_detail(data):
@@ -255,7 +256,69 @@ Create a directory if it does not yet exist.
     os.makedirs(dirname)
 
 
-def ShelephantCopy(copy_function, source, key, dest_dir, theme_name, checksum, quiet, force):
+def GetChecksums(filepaths, yaml_hostinfo = None):
+    r'''
+Compute the checksums for ``filepaths``.
+
+:arguments:
+
+    **filepaths** (``<list<str>>``)
+        List of file-paths.
+
+:option:
+
+    **yaml_hostinfo** (``<str>```)
+        File-path of a host-info file (see ``shelephant_remote``).
+        If specified the checksums are **not** computed, but exclusively read from the
+        host-file. The user is responsible for keeping them up-to-date.
+
+:returns:
+
+    (``<list<str>>``)
+        List of checksums, of same length as ``filepaths``.
+        The entry is ``None`` if no checksum was found/read.
+    '''
+
+    n = len(filepaths)
+    ret = [None for i in range(n)]
+
+    # Compute
+
+    if not yaml_hostinfo:
+
+        for i in range(n):
+            if os.path.isfile(filepaths[i]):
+                ret[i] = GetSHA256(filepaths[i])
+
+        return ret
+
+    # Read pre-computed
+
+    data = YamlRead(yaml_hostinfo)
+    files = data['files']
+    prefix = data['prefix']
+    checksum = data['checksum']
+    paths = PrefixPaths(prefix, files)
+
+    for i in range(n):
+        if filepaths[i] in paths:
+            j = np.argwhere([path == filepaths[i] for path in paths]).ravel()[0]
+            ret[i] = checksum[j]
+
+    return ret
+
+
+def ShelephantCopy(
+    copy_function,
+    yaml_src,
+    yaml_key,
+    dest_dir,
+    checksum = False,
+    quiet = False,
+    force = False,
+    theme_name = 'none',
+    yaml_hostinfo_src = None,
+    yaml_hostinfo_dest = None):
     r'''
 Copy/move files.
 
@@ -264,21 +327,18 @@ Copy/move files.
     **copy_function** (``<function>``)
         Function to perform the copy. E.g. `os.rename` or `shutil.copy`.
 
-    **source** (``<str>``)
+    **yaml_src** (``<str>``)
         YAML-file with filenames.
         The filenames are assumed either absolute, or relative to the input YAML-file.
 
-    **key** (``<str>``)
-        Path in the YAML-file, separated by "/".
+    **yaml_key** (``<str>``)
+        Path in the YAML-file in ``yaml_src``, separated by "/".
         Use "/" for root.
 
     **dest_dir** (``<str>``)
-        The destination.
+        The destination directory.
 
-    **theme_name** (``<str>``)
-        The name of the color-theme. See ``Theme``.
-
-    **checksum** (``True`` | ``False`` | ``<list<str>>``)
+    **checksum** (``True`` | ``False``)
         Use checksum to skip files that are the same.
 
     **quiet** (``True`` | ``False``)
@@ -286,10 +346,18 @@ Copy/move files.
 
     **force** (``True`` | ``False``)
         Continue without prompt.
+
+    **theme_name** (``<str>``)
+        The name of the color-theme. See ``Theme``.
+
+    **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
+        Filename of host-files for the source and destination.
+        These files contain existing files and optionally checksums, see ``shelephant_remote``.
+        Specify these files *only* to use precomputed checksums.
     '''
 
-    files = YamlGetItem(source, key)
-    src_dir = os.path.dirname(source)
+    files = YamlGetItem(yaml_src, yaml_key)
+    src_dir = os.path.dirname(yaml_src)
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -306,12 +374,13 @@ Copy/move files.
         return 1
 
     if checksum == True:
-        checksum = [GetSHA256(file) for file in files]
+        src_checksums = GetChecksums(src, yaml_hostinfo_src)
+        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest)
 
     for i in range(n):
         if os.path.isfile(dest[i]):
             if checksum:
-                if GetSHA256(dest[i]) == GetSHA256(src[i]):
+                if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
                     skip[i] = True
                     continue
             overwrite[i] = True
@@ -366,6 +435,112 @@ Copy/move files.
             if not quiet:
                 print(fmt.format(i + 1 - nskip, dest[i]))
             copy_function(src[i], dest[i])
+
+
+def ShelephantCopySSH(
+    copy_function,
+    host,
+    files,
+    src_dir,
+    dest_dir,
+    checksum = False,
+    quiet = False,
+    force = False,
+    verbose = False,
+    theme_name = 'none',
+    yaml_hostinfo_src = None,
+    yaml_hostinfo_dest = None):
+
+    src = PrefixPaths(src_dir, files)
+    dest = PrefixPaths(dest_dir, files)
+    n = len(src)
+    overwrite = [False for i in range(n)]
+    create = [False for i in range(n)]
+    skip = [False for i in range(n)]
+    dest_exists = [False for i in range(n)]
+    theme = Theme(theme_name)
+
+    if checksum == True:
+        src_checksums = GetChecksums(src, yaml_hostinfo_src)
+        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest)
+
+    if copy_function == CopyToRemote:
+        if yaml_hostinfo_dest:
+            f = YamlRead(yaml_hostinfo_dest)['files']
+            for i in range(n):
+                if files[i] in f:
+                    dest_exists[i] = True
+    else:
+        for i in range(n):
+            if os.path.isfile(dest[i]):
+                dest_exists[i] = True
+
+    for i in range(n):
+        if dest_exists[i]:
+            if checksum:
+                if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
+                    skip[i] = True
+                    continue
+            overwrite[i] = True
+            continue
+        create[i] = True
+
+    print('-----')
+    if copy_function == CopyToRemote:
+        print('- to host           : ' + host)
+        print('- from dir. (local) : ' + os.path.normpath(src_dir))
+        print('- to dir. (remote)  : ' + os.path.normpath(dest_dir))
+    else:
+        print('- from host          : ' + host)
+        print('- from dir. (remote) : ' + os.path.normpath(src_dir))
+        print('- to dir. (local)    : ' + os.path.normpath(dest_dir))
+    print('-----')
+
+    l = max([len(file) for file in files])
+    nskip = sum(skip)
+    pskip = nskip <= 100
+
+    for i in range(n):
+        if create[i]:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('->', color=theme['bright']).format(),
+                String(files[i], color=theme['new']).format()
+            ))
+        elif skip[i] and pskip:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['skip']).format(),
+                String('==', color=theme['skip']).format(),
+                String(files[i], color=theme['skip']).format()
+            ))
+        elif overwrite[i]:
+            print('{0:s} {1:s} {2:s}'.format(
+                String(files[i], width=l, color=theme['bright']).format(),
+                String('=>', color=theme['bright']).format(),
+                String(files[i], color=theme['overwrite']).format()
+            ))
+
+    if not pskip:
+        print('{0:d} skipped files'.format(nskip))
+
+    if all(skip):
+        return 0
+
+    if not force:
+        if not click.confirm('Proceed?'):
+            return 1
+
+    ncp = n - sum(skip)
+    l = int(math.log10(ncp) + 1)
+    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+
+    for i in range(n):
+        if not skip[i]:
+            if not quiet:
+                print(fmt.format(i + 1 - nskip, files[i]))
+            copy_function(host, src[i], dest[i], verbose)
+
+
 
 
 def Theme(theme=None):
