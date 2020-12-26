@@ -77,10 +77,6 @@ def main():
     files = data['files']
     src_dir = data['prefix']
     dest_dir = os.path.dirname(source)
-
-    if MakeDir(dest_dir, args['--force']):
-        return 1
-
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -88,6 +84,9 @@ def main():
     create = [False for i in range(n)]
     skip = [False for i in range(n)]
     theme = Theme(args['--colors'].lower())
+
+    if MakeDir(dest_dir, args['--force']):
+        return 1
 
     if args['--local']:
         local_checksums = ReadChecksums(args['--local'], dest)

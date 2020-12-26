@@ -23,9 +23,7 @@ Options:
 '''
 
 import docopt
-import click
 import os
-import math
 
 from .. import __version__
 from . import ShelephantCopy
@@ -36,7 +34,7 @@ def main():
     args = docopt.docopt(__doc__, version=__version__)
 
     return ShelephantCopy(
-        operation = 'move',
+        copy_function = os.rename,
         source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml',
         key = list(filter(None, args['--key'].split('/'))),
         dest_dir = args['<destination>'],

@@ -255,14 +255,14 @@ Create a directory if it does not yet exist.
     os.makedirs(dirname)
 
 
-def ShelephantCopy(operation, source, key, dest_dir, theme_name, checksum, quiet, force):
+def ShelephantCopy(copy_function, source, key, dest_dir, theme_name, checksum, quiet, force):
     r'''
 Copy/move files.
 
 :arguments:
 
-    **operation** (``'copy'`` | ``'move'``)
-        Select type of operation.
+    **copy_function** (``<function>``)
+        Function to perform the copy. E.g. `os.rename` or `shutil.copy`.
 
     **source** (``<str>``)
         YAML-file with filenames.
@@ -361,21 +361,11 @@ Copy/move files.
     l = int(math.log10(ncp) + 1)
     fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
 
-    if operation == 'move':
-
-        for i in range(n):
-            if not skip[i]:
-                if not quiet:
-                    print(fmt.format(i + 1 - nskip, dest[i]))
-                os.rename(src[i], dest[i])
-
-    elif operation == 'copy':
-
-        for i in range(n):
-            if not skip[i]:
-                if not quiet:
-                    print(fmt.format(i + 1 - nskip, dest[i]))
-                shutil.copy(src[i], dest[i])
+    for i in range(n):
+        if not skip[i]:
+            if not quiet:
+                print(fmt.format(i + 1 - nskip, dest[i]))
+            copy_function(src[i], dest[i])
 
 
 def Theme(theme=None):
