@@ -3,11 +3,11 @@
 
 Usage:
     shelephant_send [options]
-    shelephant_send [options] <files.yaml> <remote.yaml>
+    shelephant_send [options] <files.yaml> <hostinfo.yaml>
 
 Arguments:
     files.yaml          YAML-file with files to send. Default: shelephant_dump.yaml
-    remote.yaml         YAML-file with host information. Default: shelephant_remote.yaml
+    hostinfo.yaml       YAML-file with host information. Default: shelephant_hostinfo.yaml
 
 Options:
     -k, --key=N         Path in <files.yaml>, separated by "/". [default: /]
@@ -41,8 +41,8 @@ def main():
 
     args = docopt.docopt(__doc__, version=__version__)
     source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
-    remote = args['<remote.yaml>'] if args['<remote.yaml>'] else 'shelephant_remote.yaml'
-    data = YamlRead(remote)
+    hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
+    data = YamlRead(hostinfo)
     key = list(filter(None, args['--key'].split('/')))
     files = YamlGetItem(source, key)
     src_dir = os.path.dirname(source)
@@ -60,7 +60,7 @@ def main():
             force = args['--force'],
             theme_name = args['--colors'].lower(),
             yaml_hostinfo_src = args['--local'],
-            yaml_hostinfo_dest = remote)
+            yaml_hostinfo_dest = hostinfo)
 
     else:
 
@@ -76,7 +76,7 @@ def main():
             verbose = args['--verbose'],
             theme_name = args['--colors'].lower(),
             yaml_hostinfo_src = args['--local'],
-            yaml_hostinfo_dest = remote)
+            yaml_hostinfo_dest = hostinfo)
 
 
 if __name__ == '__main__':

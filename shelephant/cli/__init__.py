@@ -268,7 +268,7 @@ Compute the checksums for ``filepaths``.
 :option:
 
     **yaml_hostinfo** (``<str>```)
-        File-path of a host-info file (see ``shelephant_remote``).
+        File-path of a host-info file (see ``shelephant_hostinfo``).
         If specified the checksums are **not** computed, but exclusively read from the
         host-file. The user is responsible for keeping them up-to-date.
 
@@ -352,7 +352,7 @@ Copy/move files.
 
     **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
         Filename of host-files for the source and destination.
-        These files contain existing files and optionally checksums, see ``shelephant_remote``.
+        These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
         Specify these files *only* to use precomputed checksums.
     '''
 
@@ -495,7 +495,7 @@ Send/get files.
 
     **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
         Filename of host-files for the source and destination.
-        These files contain existing files and optionally checksums, see ``shelephant_remote``.
+        These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
         Specify these files *only* to use precomputed checksums.
     '''
 

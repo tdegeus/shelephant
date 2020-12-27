@@ -1,19 +1,19 @@
-'''shelephant_remote
-    Collect file information from remote location (or host).
+'''shelephant_hostinfo
+    Collect file information from location (on a remote host).
 
 Usage:
-    shelephant_remote [options]
+    shelephant_hostinfo [options]
 
 Options:
-    -o, --output=N          Output YAML-file. [default: shelephant_remote.yaml].
+    -o, --output=N          Output YAML-file. [default: shelephant_hostinfo.yaml].
     -r, --host=N            Host-name.
-    -p, --prefix=N          Directory on remote from which to copy.
+    -p, --prefix=N          Directory (on host) from which to copy.
     -f, --files=[N]         YAML-file with list of files (on remote). [default: shelephant_dump.yaml]
     -c, --checksum=[N]      YAML-file with checksums (on remote). [default: shelephant_checksum.yaml]
         --files-key=N       Path in the YAML-file, separated by "/". [default: /]
         --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
     -i, --ignore            Skip basic checks.
-    -u, --update=[N]        Use host and prefix from existing file. [default: shelephant_remote.yaml]
+    -u, --update=[N]        Use host and prefix from existing file. [default: shelephant_hostinfo.yaml]
         --force             Overwrite output file without prompt.
         --verbose           Verbose all commands.
     -h, --help              Show help.
@@ -45,13 +45,13 @@ def main():
             print(__doc__)
 
     parser = Parser()
-    parser.add_argument('-o', '--output', required=False, default='shelephant_remote.yaml')
+    parser.add_argument('-o', '--output', required=False, default='shelephant_hostinfo.yaml')
     parser.add_argument(      '--force', required=False, action='store_true')
     parser.add_argument(      '--host', required=False, default=None)
     parser.add_argument('-p', '--prefix', required=False, default=None)
     parser.add_argument('-f', '--files', required=False, default=None, nargs='?', const='shelephant_dump.yaml')
     parser.add_argument('-c', '--checksum', required=False, default=None, nargs='?', const='shelephant_checksum.yaml')
-    parser.add_argument('-u', '--update', required=False, default=None, nargs='?', const='shelephant_remote.yaml')
+    parser.add_argument('-u', '--update', required=False, default=None, nargs='?', const='shelephant_hostinfo.yaml')
     parser.add_argument(      '--files-key', required=False, default='/')
     parser.add_argument(      '--checksum-key', required=False, default='/')
     parser.add_argument('-i', '--ignore', required=False, action='store_true')
@@ -104,7 +104,7 @@ def main():
 
     if 'host' in data:
         temp_dir = tempfile.mkdtemp()
-        temp_file = os.path.join(temp_dir, 'shelephant_remote.yaml')
+        temp_file = os.path.join(temp_dir, 'shelephant_hostinfo.yaml')
 
     # Read files and checksums
 
