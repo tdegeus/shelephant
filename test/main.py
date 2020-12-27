@@ -237,7 +237,7 @@ class Test_merge(unittest.TestCase):
         shutil.rmtree('dirb')
 
 
-class Test_remote(unittest.TestCase):
+class Test_hostinfo(unittest.TestCase):
 
     def test_basic(self):
 
@@ -256,8 +256,8 @@ class Test_remote(unittest.TestCase):
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --force mydest/remote.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_get --force mydest/hostinfo.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
 
@@ -294,8 +294,8 @@ class Test_get(unittest.TestCase):
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --colors none --force mydest/remote.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_get --colors none --force mydest/hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -337,8 +337,8 @@ class Test_get(unittest.TestCase):
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --colors none --force mydest/remote.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_get --colors none --force mydest/hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -381,9 +381,9 @@ class Test_get(unittest.TestCase):
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_remote -o mydest/remote.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_remote -o mydest/local.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_get --colors none --force --local mydest/local.yaml mydest/remote.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_hostinfo -o mydest/local.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
+        output = run('shelephant_get --colors none --force --local mydest/local.yaml mydest/hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -431,8 +431,8 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_remote --force -o remote.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_send --colors none --force mysrc/files.yaml remote.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
+        output = run('shelephant_send --colors none --force mysrc/files.yaml hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -450,7 +450,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
-        os.remove('remote.yaml')
+        os.remove('hostinfo.yaml')
 
     def test_partial(self):
 
@@ -479,8 +479,8 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_remote --force -o remote.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_send --colors none --force mysrc/files.yaml remote.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
+        output = run('shelephant_send --colors none --force mysrc/files.yaml hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -495,7 +495,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
-        os.remove('remote.yaml')
+        os.remove('hostinfo.yaml')
 
     def test_partial_localchecksum(self):
 
@@ -524,9 +524,9 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_remote --force -o remote.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_remote --force -o local.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_send --colors none --force --local local.yaml mysrc/files.yaml remote.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
+        output = run('shelephant_hostinfo --force -o local.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
+        output = run('shelephant_send --colors none --force --local local.yaml mysrc/files.yaml hostinfo.yaml')
 
         output = output.split('\n')
         output = output[5:-1]
@@ -541,7 +541,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
-        os.remove('remote.yaml')
+        os.remove('hostinfo.yaml')
         os.remove('local.yaml')
 
 

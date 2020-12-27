@@ -3,10 +3,10 @@
 
 Usage:
     shelephant_get [options]
-    shelephant_get [options] <remote.yaml>
+    shelephant_get [options] <hostinfo.yaml>
 
 Argument:
-    YAML-file with host information. Default: shelephant_remote.yaml
+    YAML-file with host information. Default: shelephant_hostinfo.yaml
 
 Options:
         --colors=M      Select color scheme from: none, dark. [default: dark]
@@ -36,7 +36,7 @@ from . import ShelephantCopySSH
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
-    source = args['<remote.yaml>'] if args['<remote.yaml>'] else 'shelephant_remote.yaml'
+    source = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
     data = YamlRead(source)
 
     if 'host' not in data:
