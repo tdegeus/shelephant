@@ -404,14 +404,16 @@ Copy/move files.
     summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
         sum(create), sum(overwrite), sum(skip))]
 
-    if len(files) <= 100:
+    l = max([len(file) for file in files])
+    ncreate = sum(create)
+    noverwrite = sum(overwrite)
+    nskip = sum(skip)
+    pskip = nskip <= 100
+
+    if ncreate + noverwrite <= 100:
         print('-----')
         print('\n'.join(summary))
         print('-----')
-
-    l = max([len(file) for file in files])
-    nskip = sum(skip)
-    pskip = nskip <= 100
 
     for i in range(n):
         if create[i]:
@@ -433,7 +435,7 @@ Copy/move files.
                 String(files[i], color=theme['overwrite']).format()
             ))
 
-    if len(files) > 100:
+    if ncreate + noverwrite > 100:
         print('-----')
         print('\n'.join(summary))
         print('-----')
@@ -448,11 +450,13 @@ Copy/move files.
     ncp = n - nskip
     l = int(math.log10(ncp) + 1)
     fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+    j = 0
 
     for i in range(n):
         if not skip[i]:
             if not quiet:
-                print(fmt.format(i + 1 - nskip, dest[i]))
+                j += 1
+                print(fmt.format(j, files[i]))
             copy_function(src[i], dest[i])
 
 
@@ -558,14 +562,18 @@ Send/get files.
     summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
         sum(create), sum(overwrite), sum(skip))]
 
-    if len(files) <= 100:
+
+
+    l = max([len(file) for file in files])
+    ncreate = sum(create)
+    noverwrite = sum(overwrite)
+    nskip = sum(skip)
+    pskip = nskip <= 100
+
+    if ncreate + noverwrite <= 100:
         print('-----')
         print('\n'.join(summary))
         print('-----')
-
-    l = max([len(file) for file in files])
-    nskip = sum(skip)
-    pskip = nskip <= 100
 
     for i in range(n):
         if create[i]:
@@ -587,7 +595,7 @@ Send/get files.
                 String(files[i], color=theme['overwrite']).format()
             ))
 
-    if len(files) > 100:
+    if ncreate + noverwrite > 100:
         print('-----')
         print('\n'.join(summary))
         print('-----')
@@ -602,11 +610,13 @@ Send/get files.
     ncp = n - sum(skip)
     l = int(math.log10(ncp) + 1)
     fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
+    j = 0
 
     for i in range(n):
         if not skip[i]:
             if not quiet:
-                print(fmt.format(i + 1 - nskip, files[i]))
+                j += 1
+                print(fmt.format(j, files[i]))
             copy_function(host, src[i], dest[i], verbose)
 
 

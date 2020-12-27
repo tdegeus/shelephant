@@ -317,8 +317,8 @@ class Test_get(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt -> foo.txt',
-            'mydest/bar.txt',
-            'mydest/foo.txt',
+            'bar.txt',
+            'foo.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
@@ -361,7 +361,7 @@ class Test_get(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt == foo.txt',
-            'mydest/bar.txt',
+            'bar.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
@@ -403,7 +403,7 @@ class Test_get(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt == foo.txt',
-            'mydest/bar.txt',
+            'bar.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
@@ -452,8 +452,8 @@ class Test_send(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt -> foo.txt',
-            'mydest/bar.txt',
-            'mydest/foo.txt',
+            'bar.txt',
+            'foo.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
@@ -501,7 +501,7 @@ class Test_send(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt == foo.txt',
-            'mydest/bar.txt',
+            'bar.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
@@ -546,7 +546,7 @@ class Test_send(unittest.TestCase):
         operations = [
             'bar.txt -> bar.txt',
             'foo.txt == foo.txt',
-            'mydest/bar.txt',
+            'bar.txt',
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
