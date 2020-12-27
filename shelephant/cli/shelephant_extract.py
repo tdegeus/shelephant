@@ -30,10 +30,10 @@ import mergedeep
 import functools
 
 from .. import __version__
-from . import YamlGetItem
-from . import YamlDump
-from . import ChangeRootOfRelativePaths
-from . import Squash
+from .. import YamlGetItem
+from .. import YamlDump
+from .. import ChangeRootOfRelativePaths
+from .. import Squash
 
 
 def main():

@@ -3,9 +3,9 @@ import subprocess
 import os
 import shutil
 
-from shelephant.cli import YamlGetItem
-from shelephant.cli import YamlRead
-from shelephant.cli import YamlDump
+from shelephant import YamlGetItem
+from shelephant import YamlRead
+from shelephant import YamlDump
 
 
 def run(cmd):
@@ -16,7 +16,7 @@ class Test_tools(unittest.TestCase):
 
     def test_FlattenList(self):
 
-        from shelephant.cli import FlattenList
+        from shelephant import FlattenList
 
         arg = [1, [2, 2, 2], 4]
         ret = [1, 2, 2, 2, 4]
@@ -25,7 +25,7 @@ class Test_tools(unittest.TestCase):
 
     def test_Squash(self):
 
-        from shelephant.cli import Squash
+        from shelephant import Squash
 
         arg = {'foo': [1, 2], 'bar': {'foo': [3, 4], 'bar': 5}}
         ret = [1, 2, 3, 4, 5]

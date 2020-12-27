@@ -25,8 +25,8 @@ import os
 import subprocess
 
 from .. import __version__
-from . import YamlDump
-from . import YamlRead
+from .. import YamlDump
+from .. import YamlRead
 
 
 def main():

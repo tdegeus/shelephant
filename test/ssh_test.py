@@ -2,11 +2,13 @@
     Run SSH test.
 
 Usage:
-    ssh_test [options]
+    ssh_test [options] --host=N --prefix=N
 
 Options:
     -r, --host=N        Host name.
     -p, --prefix=M      Path on host.
+        --version       Print version.
+    -g, --help          Print this help.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
@@ -16,9 +18,9 @@ import docopt
 import os
 
 from shelephant import __version__
-from shelephant.cli import YamlGetItem
-from shelephant.cli import YamlRead
-from shelephant.cli import YamlDump
+from shelephant import YamlGetItem
+from shelephant import YamlRead
+from shelephant import YamlDump
 
 
 def run(cmd):

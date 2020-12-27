@@ -28,11 +28,11 @@ import tempfile
 import shutil
 
 from .. import __version__
-from . import Error
-from . import YamlGetItem
-from . import YamlDump
-from . import YamlRead
-from . import CopyFromRemote
+from .. import Error
+from .. import YamlGetItem
+from .. import YamlDump
+from .. import YamlRead
+from .. import CopyFromRemote
 
 
 def main():

@@ -29,10 +29,10 @@ import mergedeep
 import os
 
 from .. import __version__
-from . import YamlRead
-from . import YamlDump
-from . import Error
-from . import ChangeRootOfRelativePaths
+from .. import YamlRead
+from .. import YamlDump
+from .. import Error
+from .. import ChangeRootOfRelativePaths
 
 def recursive_items(dictionary):
     for key, value in dictionary.items():

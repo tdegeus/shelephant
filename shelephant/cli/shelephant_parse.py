@@ -17,8 +17,8 @@ Options:
 import docopt
 
 from .. import __version__
-from . import YamlRead
-from . import YamlPrint
+from .. import YamlRead
+from .. import YamlPrint
 
 
 def main():

@@ -23,8 +23,8 @@ import click
 import os
 
 from .. import __version__
-from . import YamlGetItem
-from . import PrefixPaths
+from .. import YamlGetItem
+from .. import PrefixPaths
 
 
 def main():
