@@ -27,10 +27,10 @@ import shutil
 import math
 
 from .. import __version__
-from . import YamlRead
-from . import CopyFromRemote
-from . import ShelephantCopy
-from . import ShelephantCopySSH
+from .. import YamlRead
+from .. import CopyFromRemote
+from .. import ShelephantCopy
+from .. import ShelephantCopySSH
 
 
 def main():

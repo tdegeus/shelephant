@@ -24,10 +24,10 @@ import docopt
 import os
 
 from .. import __version__
-from . import YamlGetItem
-from . import YamlDump
-from . import PrefixPaths
-from . import GetChecksums
+from .. import YamlGetItem
+from .. import YamlDump
+from .. import PrefixPaths
+from .. import GetChecksums
 
 
 def main():

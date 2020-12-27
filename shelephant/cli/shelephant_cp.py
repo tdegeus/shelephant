@@ -27,8 +27,8 @@ import shutil
 import os
 
 from .. import __version__
-from . import ShelephantCopy
-from . import YamlGetItem
+from .. import ShelephantCopy
+from .. import YamlGetItem
 
 
 def main():

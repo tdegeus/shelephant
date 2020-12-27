@@ -30,11 +30,11 @@ import math
 import numpy as np
 
 from .. import __version__
-from . import YamlRead
-from . import YamlGetItem
-from . import CopyToRemote
-from . import ShelephantCopy
-from . import ShelephantCopySSH
+from .. import YamlRead
+from .. import YamlGetItem
+from .. import CopyToRemote
+from .. import ShelephantCopy
+from .. import ShelephantCopySSH
 
 
 def main():
