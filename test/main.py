@@ -298,7 +298,7 @@ class Test_get(unittest.TestCase):
         output = run('shelephant_get --colors none --force mydest/remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-2] = output[-2].split(') ')[1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
@@ -341,7 +341,7 @@ class Test_get(unittest.TestCase):
         output = run('shelephant_get --colors none --force mydest/remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
 
@@ -386,7 +386,7 @@ class Test_get(unittest.TestCase):
         output = run('shelephant_get --colors none --force --local mydest/local.yaml mydest/remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
 
@@ -435,7 +435,7 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_send --colors none --force mysrc/files.yaml remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-2] = output[-2].split(') ')[1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
@@ -483,7 +483,7 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_send --colors none --force mysrc/files.yaml remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
 
@@ -529,7 +529,7 @@ class Test_send(unittest.TestCase):
         output = run('shelephant_send --colors none --force --local local.yaml mysrc/files.yaml remote.yaml')
 
         output = output.split('\n')
-        output = output[4:-1]
+        output = output[5:-1]
         output[-1] = output[-1].split(') ')[1]
         self.assertEqual(output, operations)
 

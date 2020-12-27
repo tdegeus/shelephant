@@ -310,8 +310,8 @@ Compute the checksums for ``filepaths``.
 
 def ShelephantCopy(
     copy_function,
-    yaml_src,
-    yaml_key,
+    files,
+    src_dir,
     dest_dir,
     checksum = False,
     quiet = False,
@@ -327,27 +327,27 @@ Copy/move files.
     **copy_function** (``<function>``)
         Function to perform the copy. E.g. `os.rename` or `shutil.copy`.
 
-    **yaml_src** (``<str>``)
-        YAML-file with filenames.
-        The filenames are assumed either absolute, or relative to the input YAML-file.
+    **files** (``<list<<str>>``)
+        Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
 
-    **yaml_key** (``<str>``)
-        Path in the YAML-file in ``yaml_src``, separated by "/".
-        Use "/" for root.
+    **src_dir** (``<str>``)
+        The destination directory.
 
     **dest_dir** (``<str>``)
         The destination directory.
 
-    **checksum** (``True`` | ``False``)
+:options:
+
+    **checksum** ([``False``] | ``True``)
         Use checksum to skip files that are the same.
 
-    **quiet** (``True`` | ``False``)
+    **quiet** ([``False``] | ``True``)
         Proceed without printing progress.
 
-    **force** (``True`` | ``False``)
+    **force** ([``False``] | ``True``)
         Continue without prompt.
 
-    **theme_name** (``<str>``)
+    **theme_name** ([``'none'``] | ``<str>``)
         The name of the color-theme. See ``Theme``.
 
     **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
@@ -356,8 +356,6 @@ Copy/move files.
         Specify these files *only* to use precomputed checksums.
     '''
 
-    files = YamlGetItem(yaml_src, yaml_key)
-    src_dir = os.path.dirname(yaml_src)
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -368,7 +366,7 @@ Copy/move files.
 
     for file in src:
         if not os.path.isfile(file):
-            Error('"{0:s}" does not exists')
+            Error('"{0:s}" does not exists'.format(file))
 
     if MakeDir(dest_dir, force):
         return 1
@@ -387,10 +385,16 @@ Copy/move files.
             continue
         create[i] = True
 
-    print('-----')
-    print('- from dir. : ' + os.path.normpath(src_dir))
-    print('- to dir.   : ' + os.path.normpath(dest_dir))
-    print('-----')
+    summary = []
+    summary += ['- from dir. : ' + os.path.normpath(src_dir)]
+    summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
+    summary += ['- create {0:d}, overwrite {1:d}, skip {2:d}'.format(
+        sum(create), sum(overwrite), sum(skip))]
+
+    if len(files) <= 100:
+        print('-----')
+        print('\n'.join(summary))
+        print('-----')
 
     l = max([len(file) for file in files])
     nskip = sum(skip)
@@ -416,8 +420,10 @@ Copy/move files.
                 String(files[i], color=theme['overwrite']).format()
             ))
 
-    if not pskip:
-        print('{0:d} skipped files'.format(nskip))
+    if len(files) > 100:
+        print('-----')
+        print('\n'.join(summary))
+        print('-----')
 
     if all(skip):
         return 0
@@ -450,6 +456,48 @@ def ShelephantCopySSH(
     theme_name = 'none',
     yaml_hostinfo_src = None,
     yaml_hostinfo_dest = None):
+    r'''
+Send/get files.
+
+:arguments:
+
+    **copy_function** (``<function>``)
+        Function to perform the copy. E.g. `CopyFromRemote` or `CopyFromRemote`.
+
+    **host** (``<str>``)
+        Host-name.
+
+    **files** (``<list<<str>>``)
+        Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
+
+    **src_dir** (``<str>``)
+        The destination directory.
+
+    **dest_dir** (``<str>``)
+        The destination directory.
+
+:options:
+
+    **checksum** ([``False``] | ``True``)
+        Use checksum to skip files that are the same.
+
+    **quiet** ([``False``] | ``True``)
+        Proceed without printing progress.
+
+    **force** ([``False``] | ``True``)
+        Continue without prompt.
+
+    **verbose** ([``False``] | ``True``)
+        Verbose all operations.
+
+    **theme_name** ([``'none'``] | ``<str>``)
+        The name of the color-theme. See ``Theme``.
+
+    **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
+        Filename of host-files for the source and destination.
+        These files contain existing files and optionally checksums, see ``shelephant_remote``.
+        Specify these files *only* to use precomputed checksums.
+    '''
 
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
@@ -485,16 +533,22 @@ def ShelephantCopySSH(
             continue
         create[i] = True
 
-    print('-----')
+    summary = []
     if copy_function == CopyToRemote:
-        print('- to host           : ' + host)
-        print('- from dir. (local) : ' + os.path.normpath(src_dir))
-        print('- to dir. (remote)  : ' + os.path.normpath(dest_dir))
+        summary += ['- to host           : ' + host]
+        summary += ['- from dir. (local) : ' + os.path.normpath(src_dir)]
+        summary += ['- to dir. (remote)  : ' + os.path.normpath(dest_dir)]
     else:
-        print('- from host          : ' + host)
-        print('- from dir. (remote) : ' + os.path.normpath(src_dir))
-        print('- to dir. (local)    : ' + os.path.normpath(dest_dir))
-    print('-----')
+        summary += ['- from host          : ' + host]
+        summary += ['- from dir. (remote) : ' + os.path.normpath(src_dir)]
+        summary += ['- to dir. (local)    : ' + os.path.normpath(dest_dir)]
+    summary += ['- create {0:d}, overwrite {1:d}, skip {2:d}'.format(
+        sum(create), sum(overwrite), sum(skip))]
+
+    if len(files) <= 100:
+        print('-----')
+        print('\n'.join(summary))
+        print('-----')
 
     l = max([len(file) for file in files])
     nskip = sum(skip)
@@ -520,8 +574,10 @@ def ShelephantCopySSH(
                 String(files[i], color=theme['overwrite']).format()
             ))
 
-    if not pskip:
-        print('{0:d} skipped files'.format(nskip))
+    if len(files) > 100:
+        print('-----')
+        print('\n'.join(summary))
+        print('-----')
 
     if all(skip):
         return 0

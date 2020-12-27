@@ -27,16 +27,19 @@ import os
 
 from .. import __version__
 from . import ShelephantCopy
+from . import YamlGetItem
 
 
 def main():
 
     args = docopt.docopt(__doc__, version=__version__)
+    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+    key = list(filter(None, args['--key'].split('/')))
 
     return ShelephantCopy(
         copy_function = os.rename,
-        yaml_src = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml',
-        yaml_key = list(filter(None, args['--key'].split('/'))),
+        files = YamlGetItem(source, key),
+        src_dir = os.path.dirname(source),
         dest_dir = args['<destination>'],
         checksum = args['--checksum'],
         quiet = args['--quiet'],

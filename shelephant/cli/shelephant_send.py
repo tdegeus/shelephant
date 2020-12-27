@@ -10,7 +10,7 @@ Arguments:
     remote.yaml         YAML-file with host information. Default: shelephant_remote.yaml
 
 Options:
-    -k, --key=N         Path in the YAML-file, separated by "/". [default: /]
+    -k, --key=N         Path in <files.yaml>, separated by "/". [default: /]
         --colors=M      Select color scheme from: none, dark. [default: dark]
     -q, --quiet         Do not print progress.
     -f, --force         Force overwrite of all existing (but not matching) files.
@@ -31,47 +31,10 @@ import numpy as np
 
 from .. import __version__
 from . import YamlRead
-from . import PrefixPaths
 from . import YamlGetItem
-from . import GetSHA256
-from . import Theme
-from . import String
 from . import CopyToRemote
 from . import ShelephantCopy
 from . import ShelephantCopySSH
-
-
-def ReadChecksums(shelephant_remote, dest):
-
-    import numpy as np
-
-    data = YamlRead(shelephant_remote)
-    files = data['files']
-    prefix = data['prefix']
-    checksum = data['checksum']
-    paths = PrefixPaths(prefix, files)
-
-    n = len(dest)
-    ret = [False for i in range(n)]
-
-    for i in range(n):
-        if os.path.isfile(dest[i]):
-            j = np.argwhere([file == dest[i] for file in paths]).ravel()[0]
-            ret[i] = checksum[j]
-
-    return ret
-
-
-def ComputeChecksums(dest):
-
-    n = len(dest)
-    ret = [False for i in range(n)]
-
-    for i in range(n):
-        if os.path.isfile(dest[i]):
-            ret[i] = GetSHA256(dest[i])
-
-    return ret
 
 
 def main():
@@ -89,8 +52,8 @@ def main():
 
         ShelephantCopy(
             copy_function = shutil.copy,
-            yaml_src = source,
-            yaml_key = key,
+            files = files,
+            src_dir = src_dir,
             dest_dir = data['prefix'],
             checksum = 'checksum' in data,
             quiet = args['--quiet'],
