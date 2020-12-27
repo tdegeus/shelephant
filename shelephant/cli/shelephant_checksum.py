@@ -12,6 +12,7 @@ Arguments:
 Options:
     -o, --output=N  Output YAML-file. [default: shelephant_checksum.yaml]
     -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
+    -l, --local=N   Add local 'host' information to use precomputed checksums.
     -f, --force     Overwrite output file without prompt.
     -h, --help      Show help.
         --version   Show version.
@@ -26,7 +27,7 @@ from .. import __version__
 from . import YamlGetItem
 from . import YamlDump
 from . import PrefixPaths
-from . import GetSHA256
+from . import GetChecksums
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
     files = YamlGetItem(source, key)
     prefix = os.path.dirname(source)
     files = PrefixPaths(prefix, files)
-    data = [GetSHA256(file) for file in files]
+    data = GetChecksums(files, args['--local'], True)
     YamlDump(args['--output'], data, args['--force'])
 
 
