@@ -26,6 +26,7 @@ Command-line arguments with a memory (stored in YAML-files).
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
 - [Change-log](#change-log)
+    - [v0.9.0](#v090)
     - [v0.8.1](#v081)
     - [v0.8.0](#v080)
     - [v0.7.0](#v070)
@@ -49,16 +50,23 @@ Typical workflow:
 
 ```bash
 # Collect files to copy & compute their checksum (e.g. on remote system)
+# - creates "shelephant_dump.yaml"
 shelephant_dump *.hdf5
-shelephant_checksum shelephant_dump.yaml
+# - reads "shelephant_dump.yaml" 
+# - creates "shelephant_checksum.yaml"
+shelephant_checksum 
 
 # Combine all needed info (locally)
-shelephant_remote --host myhost --prefix /some/path --files --checksum
+# - reads "shelephant_dump.yaml" and "shelephant_checksum.yaml"
+# - creates "shelephant_hostinfo.yaml"
+shelephant_hostinfo --host myhost --prefix /some/path --files --checksum
 
 # Copy from remote (can be restarted and any time, existing files are skipped)
-shelephant_get shelephant_remote.yaml
+# - reads "shelephant_hostinfo.yaml"
+shelephant_get
 ```
 
+>   *   The filenames can be customised.
 >   *   To copy *to* a remote system use `shelephant_send`.
 >   *   Get details in the help of the respective commands, e.g. `shelephant_dump --help`.
 >   *   *shelephant* works for both local as remote copy actions.
@@ -69,13 +77,15 @@ shelephant_get shelephant_remote.yaml
 
 *   `shelephant_dump`: list filenames in a YAML file.
 *   `shelephant_checksum`: get the checksums of files listed in a YAML file.
-*   `shelephant_remote`: collect host information (from a remote system).
+*   `shelephant_hostinfo`: collect host information (from a remote system).
 
 ### File operations
 
 *   `shelephant_get`: copy from remote, based on earlier stored information.
 *   `shelephant_send`: copy to remote, based on earlier stored information.
 *   `shelephant_rm`: remove files listed in a YAML file.
+*   `shelephant_cp`: copy files listed in a YAML file.
+*   `shelephant_mv`: move files listed in a YAML file.
 
 ### YAML file operations
 
@@ -160,7 +170,7 @@ cd "/path/where/to/copy/to"
 # and store in a (temporary) local file
 # note that all paths are on the remote system, 
 # and that they are now copied using secure-copy (scp)
-shelephant_remote \ 
+shelephant_hostinfo \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/files/are/stored/on/remote" \  
@@ -243,7 +253,7 @@ Then, we will specify some basic information about the host
 ```bash
 # specify basic information about the host
 # and store in a (temporary) local file
-shelephant_remote \ 
+shelephant_hostinfo \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/to/copy/to/on/remote" \  
@@ -281,7 +291,7 @@ exit # or press Ctrl + D
 
 Now we will complement the basic host-info:
 ```bash
-shelephant_remote \ 
+shelephant_hostinfo \ 
     -o remote_info.yaml \ 
     --host "hostname" \ 
     --prefix "/path/where/to/copy/to/on/remote" \  
@@ -295,6 +305,22 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
 # Change-log
+
+## v0.9.0
+
+*    Changing namespace Python module: `shelephant.cli` -> `shelephant`
+*    `shelephant_checksum`: Allow reuse of pre-computed checksums
+*    API change: `shelephant_remote` -> `shelephant_hostinfo`
+*    Centralizing implementation `shelephant_get`
+*    Updating ssh tests
+*    Centralizing implementation `shelephant_send`
+*    Implementation simplifications
+*    `shelephant_send`: allow use of pre-computed checksum
+*    Updating counter in copy scripts
+*    Large output: summarizing skipped files
+*    Copy: Adding assertion that source must exist
+*    `shelephant_get`: Adding possibility to use local checksums for
+*    Updating change-log
 
 ## v0.8.1
 
@@ -310,7 +336,7 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 
 *   Using default sources in `shelephant_send` and `shelephant_rm`.
 *   Various updates to make the help more readable.
-*   Adding short options `shelephant_remote`.
+*   Adding short options `shelephant_hostinfo`.
 
 ## v0.6.0
 
@@ -322,7 +348,7 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 
 ## v0.4.0
 
-*   shelephant_remote: allow update of existing remote file
+*   shelephant_hostinfo: allow update of existing remote file
 *   shelephant_get: fixing counter
 *   shelephant_checksum: accepting default source-file
 *   Checksum: updating chunk size
