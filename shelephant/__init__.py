@@ -144,21 +144,6 @@ Optionally the key to the item can be specified as a list. E.g.
     return data
 
 
-def GetSHA256(filename, size = 2 ** 10):
-    r'''
-Get SHA256 for a file.
-    '''
-
-    import hashlib
-
-    h = hashlib.sha256()
-
-    with open(filename, 'rb') as f:
-        for byte_block in iter(lambda: f.read(size * h.block_size), b""):
-            h.update(byte_block)
-        return h.hexdigest()
-
-
 def PrefixPaths(prefix, files):
     r'''
 Add prefix to a list of filenames.
@@ -257,6 +242,21 @@ Create a directory if it does not yet exist.
             return 1
 
     os.makedirs(dirname)
+
+
+def GetSHA256(filename, size = 2 ** 10):
+    r'''
+Get SHA256 for a file.
+    '''
+
+    import hashlib
+
+    h = hashlib.sha256()
+
+    with open(filename, 'rb') as f:
+        for byte_block in iter(lambda: f.read(size * h.block_size), b""):
+            h.update(byte_block)
+        return h.hexdigest()
 
 
 def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False):
@@ -608,8 +608,6 @@ Send/get files.
             if not quiet:
                 print(fmt.format(i + 1 - nskip, files[i]))
             copy_function(host, src[i], dest[i], verbose)
-
-
 
 
 def Theme(theme=None):
