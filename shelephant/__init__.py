@@ -401,7 +401,7 @@ Copy/move files.
     summary = []
     summary += ['- from dir. : ' + os.path.normpath(src_dir)]
     summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
-    summary += ['- create {0:d}, overwrite {1:d}, skip {2:d}'.format(
+    summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
         sum(create), sum(overwrite), sum(skip))]
 
     if len(files) <= 100:
@@ -555,7 +555,7 @@ Send/get files.
         summary += ['- from host          : ' + host]
         summary += ['- from dir. (remote) : ' + os.path.normpath(src_dir)]
         summary += ['- to dir. (local)    : ' + os.path.normpath(dest_dir)]
-    summary += ['- create {0:d}, overwrite {1:d}, skip {2:d}'.format(
+    summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
         sum(create), sum(overwrite), sum(skip))]
 
     if len(files) <= 100:

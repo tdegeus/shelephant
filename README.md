@@ -22,6 +22,7 @@ Command-line arguments with a memory (stored in YAML-files).
     - [From source](#from-source)
 - [Detailed examples](#detailed-examples)
     - [Get files from remote, allowing restarts](#get-files-from-remote-allowing-restarts)
+        - [Avoid recomputing checksums](#avoid-recomputing-checksums)
     - [Send files to host](#send-files-to-host)
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
@@ -229,6 +230,68 @@ checksum:
 `remote_info.yaml` 
 (in this case in the same folder as `remote_info.yaml`).
 It will skip any files whose filename and checksum match to target ones.
+
+### Avoid recomputing checksums
+
+Suppose that we want to restart multiple times, or that we
+update the files present on the remote after copying them initially. 
+In that case, we can use previously computed
+checksums to avoid recomputing them
+(which can be costly for large files).
+
+First step, update information *on the host*:
+
+```bash
+# connect to the host
+ssh hostname
+
+# go the relevant location at the host
+cd "/path/where/files/are/stored/on/remote"
+
+# collect the previously computed information
+shelephant_hostinfo -o precomputed_checksums.yaml -f files_to_copy.yaml -c files_checksum.yaml
+
+# list files to copy 
+shelephant_dump -o files_to_copy.yaml *.txt
+
+# get the checksum of the files to copy, where possible reading precomputed values
+shelephant_checksum -o files_checksum.yaml files_to_copy.yaml -l precomputed_checksums.yaml
+
+# disconnect
+exit # or press Ctrl + D
+```
+
+Second step, copy files to the *local system*, collecting everything in a single place:
+
+```bash
+# go to the relevant location on the local system
+# (often this is new directory)
+cd "/path/where/to/copy/to"
+
+# collect the previously computed information
+shelephant_hostinfo -o precomputed_checksums.yaml -f files_present.yaml -c files_checksum.yaml
+
+# list files currently present locally
+shelephant_dump -o files_present.yaml *.txt
+
+# get the checksum of the files to copy, where possible reading precomputed values
+shelephant_checksum -o files_checksum.yaml files_present.yaml -l precomputed_checksums.yaml
+
+# combine local files and checksums
+shelephant_hostinfo -o precomputed_checksums.yaml -f files_present.yaml -c files_checksum.yaml
+
+# get the file-information compiled on the host [as before]
+shelephant_hostinfo \ 
+    -o remote_info.yaml \ 
+    --host "hostname" \ 
+    --prefix "/path/where/files/are/stored/on/remote" \  
+    --files "files_to_copy.yaml " \
+    --checksum "files_checksum.yaml" 
+
+# get the files using secure copy
+# use the precomputed checksums instead of computing them
+shelephant_get remote_info.yaml --local "precomputed_checksums.yaml"
+```
 
 ## Send files to host
 
