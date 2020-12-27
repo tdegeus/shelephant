@@ -43,8 +43,8 @@ class Test_checksum(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump foo.txt bar.txt')
-        output = run('shelephant_checksum shelephant_dump.yaml')
+        output = run('shelephant_dump --force foo.txt bar.txt')
+        output = run('shelephant_checksum --force shelephant_dump.yaml')
         data = YamlGetItem('shelephant_checksum.yaml')
 
         keys = [
@@ -58,6 +58,35 @@ class Test_checksum(unittest.TestCase):
         os.remove('bar.txt')
         os.remove('shelephant_dump.yaml')
         os.remove('shelephant_checksum.yaml')
+
+    def test_hybrid(self):
+
+        with open('foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('bar.txt', 'w') as file:
+            file.write('bar')
+
+        output = run('shelephant_dump --force foo.txt')
+        output = run('shelephant_checksum --force shelephant_dump.yaml')
+        output = run('shelephant_hostinfo -f -c')
+
+        output = run('shelephant_dump --force foo.txt bar.txt')
+        output = run('shelephant_checksum --force shelephant_dump.yaml --local shelephant_hostinfo.yaml')
+        data = YamlGetItem('shelephant_checksum.yaml')
+
+        keys = [
+            '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+            'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9',
+        ]
+
+        self.assertEqual(data, keys)
+
+        os.remove('foo.txt')
+        os.remove('bar.txt')
+        os.remove('shelephant_dump.yaml')
+        os.remove('shelephant_checksum.yaml')
+        os.remove('shelephant_hostinfo.yaml')
 
 
 class Test_dump(unittest.TestCase):

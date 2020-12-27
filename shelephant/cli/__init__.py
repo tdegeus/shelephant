@@ -256,7 +256,7 @@ Create a directory if it does not yet exist.
     os.makedirs(dirname)
 
 
-def GetChecksums(filepaths, yaml_hostinfo = None):
+def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False):
     r'''
 Compute the checksums for ``filepaths``.
 
@@ -271,6 +271,10 @@ Compute the checksums for ``filepaths``.
         File-path of a host-info file (see ``shelephant_hostinfo``).
         If specified the checksums are **not** computed, but exclusively read from the
         host-file. The user is responsible for keeping them up-to-date.
+
+    **hybrid** ([``False``] | ``True``)
+        If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
+        computes missing items on the fly.
 
 :returns:
 
@@ -304,6 +308,12 @@ Compute the checksums for ``filepaths``.
         if filepaths[i] in paths:
             j = np.argwhere([path == filepaths[i] for path in paths]).ravel()[0]
             ret[i] = checksum[j]
+
+    if hybrid:
+        for i in range(n):
+            if ret[i] is None:
+                if os.path.isfile(filepaths[i]):
+                    ret[i] = GetSHA256(filepaths[i])
 
     return ret
 
