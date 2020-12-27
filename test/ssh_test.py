@@ -35,10 +35,35 @@ operations = [
     'bar.txt',
 ]
 
-output = run('shelephant_remote -o myssh_send/shelephant_remote.yaml --force --host "{0:s}" --prefix "{1:s}" -f -c'.format(
+output = run(('shelephant_remote -o myssh_send/shelephant_remote.yaml --force '
+              '--host "{0:s}" --prefix "{1:s}" -f -c').format(
     args['--host'], os.path.join(args['--prefix'], 'myssh_get')))
 
-output = run('shelephant_send --colors none --force myssh_send/shelephant_dump.yaml shelephant_remote.yaml')
+output = run(('shelephant_send --colors none --force '
+              'myssh_send/shelephant_dump.yaml myssh_send/shelephant_remote.yaml'))
+
+output = output.split('\n')
+output = output[5:-1]
+output[-1] = output[-1].split(') ')[1]
+assert output == operations
+
+# shelephant_send - local checksum
+
+operations = [
+    'bar.txt -> bar.txt',
+    'foo.txt == foo.txt',
+    'bar.txt',
+]
+
+output = run(('shelephant_remote -o myssh_send/shelephant_remote.yaml --force '
+              '--host "{0:s}" --prefix "{1:s}" -f -c').format(
+              args['--host'], os.path.join(args['--prefix'], 'myssh_get')))
+
+output = run(('shelephant_remote -o myssh_send/shelephant_local.yaml --force '
+              '-f myssh_send/shelephant_dump.yaml -c myssh_send/shelephant_checksum.yaml'))
+
+output = run(('shelephant_send --colors none --force '
+              'myssh_send/shelephant_dump.yaml myssh_send/shelephant_remote.yaml'))
 
 output = output.split('\n')
 output = output[5:-1]
@@ -53,8 +78,9 @@ operations = [
     'bar.txt',
 ]
 
-output = run('shelephant_remote -o myssh_get/shelephant_remote.yaml --force --host "{0:s}" --prefix "{1:s}" -f -c'.format(
-    args['--host'], os.path.join(args['--prefix'], 'myssh_send')))
+output = run(('shelephant_remote -o myssh_get/shelephant_remote.yaml --force '
+              '--host "{0:s}" --prefix "{1:s}" -f -c').format(
+              args['--host'], os.path.join(args['--prefix'], 'myssh_send')))
 
 output = run('shelephant_get --colors none --force myssh_get/shelephant_remote.yaml')
 
@@ -62,3 +88,5 @@ output = output.split('\n')
 output = output[5:-1]
 output[-1] = output[-1].split(') ')[1]
 assert output == operations
+
+os.remove('myssh_get/bar.txt')
