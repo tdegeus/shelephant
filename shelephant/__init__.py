@@ -398,17 +398,20 @@ Copy/move files.
             continue
         create[i] = True
 
-    summary = []
-    summary += ['- from dir. : ' + os.path.normpath(src_dir)]
-    summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
-    summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
-        sum(create), sum(overwrite), sum(skip))]
-
     l = max([len(file) for file in files])
     ncreate = sum(create)
     noverwrite = sum(overwrite)
     nskip = sum(skip)
     pskip = nskip <= 100
+    skip_meesage = ' (not printed)' if not pskip else ''
+
+    summary = []
+    summary += ['- from dir. : ' + os.path.normpath(src_dir)]
+    summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
+    summary += ['- ' + ', '.join([
+        String('create (->): {0:d}'.format(ncreate), color=theme['new']).format(),
+        String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format(),
+        String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()])]
 
     if ncreate + noverwrite <= 100:
         print('-----')
@@ -550,6 +553,13 @@ Send/get files.
             continue
         create[i] = True
 
+    l = max([len(file) for file in files])
+    ncreate = sum(create)
+    noverwrite = sum(overwrite)
+    nskip = sum(skip)
+    pskip = nskip <= 100
+    skip_meesage = ' (not printed)' if not pskip else ''
+
     summary = []
     if copy_function == CopyToRemote:
         summary += ['- to host           : ' + host]
@@ -559,16 +569,10 @@ Send/get files.
         summary += ['- from host          : ' + host]
         summary += ['- from dir. (remote) : ' + os.path.normpath(src_dir)]
         summary += ['- to dir. (local)    : ' + os.path.normpath(dest_dir)]
-    summary += ['- create: {0:d}, overwrite: {1:d}, skip identical: {2:d}'.format(
-        sum(create), sum(overwrite), sum(skip))]
-
-
-
-    l = max([len(file) for file in files])
-    ncreate = sum(create)
-    noverwrite = sum(overwrite)
-    nskip = sum(skip)
-    pskip = nskip <= 100
+    summary += ['- ' + ', '.join([
+        String('create (->): {0:d}'.format(ncreate), color=theme['new']).format(),
+        String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format(),
+        String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()])]
 
     if ncreate + noverwrite <= 100:
         print('-----')
