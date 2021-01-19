@@ -7,3 +7,4 @@ dependencies:
   - click
   - numpy
   - mergedeep
+  - tqdm
