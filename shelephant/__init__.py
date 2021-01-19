@@ -304,13 +304,20 @@ Compute the checksums for ``filepaths``.
     data = YamlRead(yaml_hostinfo)
     files = data['files']
     prefix = data['prefix']
-    checksum = data['checksum']
-    paths = PrefixPaths(prefix, files)
+    check_sums = data['checksum']
+    check_paths = PrefixPaths(prefix, files)
 
-    for i in range(n):
-        if filepaths[i] in paths:
-            j = np.argwhere([path == filepaths[i] for path in paths]).ravel()[0]
-            ret[i] = checksum[j]
+    sorter = np.argsort(filepaths)
+    source_paths = np.array(filepaths)[sorter]
+
+    i = np.argsort(check_paths)
+    check_paths = np.array(check_paths)[i]
+    check_sums = np.array(check_sums)[i]
+
+    test = np.in1d(source_paths, check_paths)
+    idx = np.searchsorted(check_paths, source_paths)
+    ret = np.where(test, check_sums[idx], None)
+    ret = list(ret[sorter])
 
     if hybrid:
         for i in range(n):
