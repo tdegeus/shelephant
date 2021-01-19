@@ -10,6 +10,7 @@ import collections.abc
 import shutil
 import math
 import numpy as np
+import tqdm
 
 
 __version__ = '0.9.0'
@@ -259,7 +260,7 @@ Get SHA256 for a file.
         return h.hexdigest()
 
 
-def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False):
+def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
     r'''
 Compute the checksums for ``filepaths``.
 
@@ -279,6 +280,9 @@ Compute the checksums for ``filepaths``.
         If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
         computes missing items on the fly.
 
+    **progress** ([``False``] | ``True``)
+        If ``True`` a progress-bar is printed.
+
 :returns:
 
     (``<list<str>>``)
@@ -293,7 +297,7 @@ Compute the checksums for ``filepaths``.
 
     if not yaml_hostinfo:
 
-        for i in range(n):
+        for i in tqdm.trange(n, disable=not progress):
             if os.path.isfile(filepaths[i]):
                 ret[i] = GetSHA256(filepaths[i])
 
@@ -320,7 +324,7 @@ Compute the checksums for ``filepaths``.
     ret = list(ret[sorter])
 
     if hybrid:
-        for i in range(n):
+        for i in tqdm.trange(n, disable=not progress):
             if ret[i] is None:
                 if os.path.isfile(filepaths[i]):
                     ret[i] = GetSHA256(filepaths[i])
