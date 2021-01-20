@@ -27,6 +27,7 @@ Command-line arguments with a memory (stored in YAML-files).
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
 - [Change-log](#change-log)
+    - [v0.10.0](#v0100)
     - [v0.9.0](#v090)
     - [v0.8.1](#v081)
     - [v0.8.0](#v080)
@@ -368,6 +369,16 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
 # Change-log
+
+## v0.10.0
+
+*    Copy functions: Skip printing created files if there are also overwritten files
+*    Fixing tests
+*    Copy functions: Adding option to force print details
+*    YamlDump: create directory if needed
+*    Adding progress-bar to copy operations
+*    Adding progress-bar to checksums
+*    GetChecksums: enhance efficiency in reading from precomputed checksums
 
 ## v0.9.0
 
