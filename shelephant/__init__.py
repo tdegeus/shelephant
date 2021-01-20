@@ -429,16 +429,18 @@ Copy/move files.
     ncreate = sum(create)
     noverwrite = sum(overwrite)
     nskip = sum(skip)
+    pcreate = not (noverwrite > 0 and ncreate > 100)
     pskip = nskip <= 100
-    skip_meesage = ' (not printed)' if not pskip else ''
+    pcreate_message = ' (not printed)' if not pcreate else ''
+    pskip_message = ' (not printed)' if not pskip else ''
 
     overview = []
     if ncreate > 0:
-        overview += [String('create (->): {0:d}'.format(ncreate), color=theme['new']).format()]
+        overview += [String('create (->): {0:d}{1:s}'.format(ncreate, pcreate_message), color=theme['new']).format()]
     if noverwrite > 0:
         overview += [String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format()]
     if nskip > 0:
-        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()]
+        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, pskip_message), color=theme['skip']).format()]
 
     summary = []
     summary += ['- from dir. : ' + os.path.normpath(src_dir)]
@@ -452,7 +454,7 @@ Copy/move files.
 
     if print_details:
         for i in range(n):
-            if create[i]:
+            if create[i] and pcreate:
                 print('{0:s} {1:s} {2:s}'.format(
                     String(files[i], width=l, color=theme['bright']).format(),
                     String('->', color=theme['bright']).format(),
@@ -592,16 +594,18 @@ Send/get files.
     ncreate = sum(create)
     noverwrite = sum(overwrite)
     nskip = sum(skip)
+    pcreate = not (noverwrite > 0 and ncreate > 100)
     pskip = nskip <= 100
-    skip_meesage = ' (not printed)' if not pskip else ''
+    pcreate_message = ' (not printed)' if not pcreate else ''
+    pskip_message = ' (not printed)' if not pskip else ''
 
     overview = []
     if ncreate > 0:
-        overview += [String('create (->): {0:d}'.format(ncreate), color=theme['new']).format()]
+        overview += [String('create (->): {0:d}{1:s}'.format(ncreate, pcreate_message), color=theme['new']).format()]
     if noverwrite > 0:
         overview += [String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format()]
     if nskip > 0:
-        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()]
+        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, pskip_message), color=theme['skip']).format()]
 
     summary = []
     if copy_function == CopyToRemote:
@@ -621,7 +625,7 @@ Send/get files.
 
     if print_details:
         for i in range(n):
-            if create[i]:
+            if create[i] and pcreate:
                 print('{0:s} {1:s} {2:s}'.format(
                     String(files[i], width=l, color=theme['bright']).format(),
                     String('->', color=theme['bright']).format(),
