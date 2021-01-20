@@ -106,10 +106,18 @@ Dump data (as ``list`` or ``dict``) to YAML file.
 Unless ``force = True`` the function prompts before overwriting an existing file.
     '''
 
+    dirname = os.path.dirname(filename)
+
     if not force:
         if os.path.isfile(filename):
             if not click.confirm('Overwrite "{0:s}"?'.format(filename)):
                 sys.exit(1)
+        elif not os.path.isdir(dirname) and len(dirname) > 0:
+            if not click.confirm('Create "{0:s}"?'.format(os.path.dirname(filename))):
+                sys.exit(1)
+
+    if not os.path.isdir(dirname) and len(dirname) > 0:
+        os.makedirs(os.path.dirname(filename))
 
     with open(filename, 'w') as file:
         ret = yaml.dump(data, file)
