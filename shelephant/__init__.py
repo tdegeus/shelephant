@@ -340,6 +340,8 @@ def ShelephantCopy(
     checksum = False,
     quiet = False,
     force = False,
+    print_details = True,
+    print_summary = True,
     theme_name = 'none',
     yaml_hostinfo_src = None,
     yaml_hostinfo_dest = None):
@@ -370,6 +372,12 @@ Copy/move files.
 
     **force** ([``False``] | ``True``)
         Continue without prompt.
+
+    **print_details** ([``True``] | ``False``)
+        Print copy details.
+
+    **print_summary** ([``True``] | ``False``)
+        Print copy summary.
 
     **theme_name** ([``'none'``] | ``<str>``)
         The name of the color-theme. See ``Theme``.
@@ -416,40 +424,46 @@ Copy/move files.
     pskip = nskip <= 100
     skip_meesage = ' (not printed)' if not pskip else ''
 
+    overview = []
+    if ncreate > 0:
+        overview += [String('create (->): {0:d}'.format(ncreate), color=theme['new']).format()]
+    if noverwrite > 0:
+        overview += [String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format()]
+    if nskip > 0:
+        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()]
+
     summary = []
     summary += ['- from dir. : ' + os.path.normpath(src_dir)]
     summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
-    summary += ['- ' + ', '.join([
-        String('create (->): {0:d}'.format(ncreate), color=theme['new']).format(),
-        String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format(),
-        String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()])]
+    summary += ['- ' + ', '.join(overview)]
 
-    if ncreate + noverwrite <= 100:
+    if ncreate + noverwrite <= 100 and print_summary:
         print('-----')
         print('\n'.join(summary))
         print('-----')
 
-    for i in range(n):
-        if create[i]:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['bright']).format(),
-                String('->', color=theme['bright']).format(),
-                String(files[i], color=theme['new']).format()
-            ))
-        elif skip[i] and pskip:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['skip']).format(),
-                String('==', color=theme['skip']).format(),
-                String(files[i], color=theme['skip']).format()
-            ))
-        elif overwrite[i]:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['bright']).format(),
-                String('=>', color=theme['bright']).format(),
-                String(files[i], color=theme['overwrite']).format()
-            ))
+    if print_details:
+        for i in range(n):
+            if create[i]:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['bright']).format(),
+                    String('->', color=theme['bright']).format(),
+                    String(files[i], color=theme['new']).format()
+                ))
+            elif skip[i] and pskip:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['skip']).format(),
+                    String('==', color=theme['skip']).format(),
+                    String(files[i], color=theme['skip']).format()
+                ))
+            elif overwrite[i]:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['bright']).format(),
+                    String('=>', color=theme['bright']).format(),
+                    String(files[i], color=theme['overwrite']).format()
+                ))
 
-    if ncreate + noverwrite > 100:
+    if ncreate + noverwrite > 100 and print_summary:
         print('-----')
         print('\n'.join(summary))
         print('-----')
@@ -461,16 +475,10 @@ Copy/move files.
         if not click.confirm('Proceed?'):
             return 1
 
-    ncp = n - nskip
-    l = int(math.log10(ncp) + 1)
-    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
-    j = 0
-
-    for i in range(n):
+    pbar = tqdm.trange(n, disable=quiet, total=ncreate + noverwrite)
+    for i in pbar:
         if not skip[i]:
-            if not quiet:
-                j += 1
-                print(fmt.format(j, files[i]))
+            pbar.set_description(files[i])
             copy_function(src[i], dest[i])
 
 
@@ -483,6 +491,8 @@ def ShelephantCopySSH(
     checksum = False,
     quiet = False,
     force = False,
+    print_details = True,
+    print_summary = True,
     verbose = False,
     theme_name = 'none',
     yaml_hostinfo_src = None,
@@ -517,6 +527,12 @@ Send/get files.
 
     **force** ([``False``] | ``True``)
         Continue without prompt.
+
+    **print_details** ([``True``] | ``False``)
+        Print copy details.
+
+    **print_summary** ([``True``] | ``False``)
+        Print copy summary.
 
     **verbose** ([``False``] | ``True``)
         Verbose all operations.
@@ -571,6 +587,14 @@ Send/get files.
     pskip = nskip <= 100
     skip_meesage = ' (not printed)' if not pskip else ''
 
+    overview = []
+    if ncreate > 0:
+        overview += [String('create (->): {0:d}'.format(ncreate), color=theme['new']).format()]
+    if noverwrite > 0:
+        overview += [String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format()]
+    if nskip > 0:
+        overview += [String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()]
+
     summary = []
     if copy_function == CopyToRemote:
         summary += ['- to host           : ' + host]
@@ -580,37 +604,35 @@ Send/get files.
         summary += ['- from host          : ' + host]
         summary += ['- from dir. (remote) : ' + os.path.normpath(src_dir)]
         summary += ['- to dir. (local)    : ' + os.path.normpath(dest_dir)]
-    summary += ['- ' + ', '.join([
-        String('create (->): {0:d}'.format(ncreate), color=theme['new']).format(),
-        String('overwrite (=>): {0:d}'.format(noverwrite), color=theme['overwrite']).format(),
-        String('skip (==): {0:d}{1:s}'.format(nskip, skip_meesage), color=theme['skip']).format()])]
+    summary += ['- ' + ', '.join(overview)]
 
-    if ncreate + noverwrite <= 100:
+    if ncreate + noverwrite <= 100 and print_summary:
         print('-----')
         print('\n'.join(summary))
         print('-----')
 
-    for i in range(n):
-        if create[i]:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['bright']).format(),
-                String('->', color=theme['bright']).format(),
-                String(files[i], color=theme['new']).format()
-            ))
-        elif skip[i] and pskip:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['skip']).format(),
-                String('==', color=theme['skip']).format(),
-                String(files[i], color=theme['skip']).format()
-            ))
-        elif overwrite[i]:
-            print('{0:s} {1:s} {2:s}'.format(
-                String(files[i], width=l, color=theme['bright']).format(),
-                String('=>', color=theme['bright']).format(),
-                String(files[i], color=theme['overwrite']).format()
-            ))
+    if print_details:
+        for i in range(n):
+            if create[i]:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['bright']).format(),
+                    String('->', color=theme['bright']).format(),
+                    String(files[i], color=theme['new']).format()
+                ))
+            elif skip[i] and pskip:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['skip']).format(),
+                    String('==', color=theme['skip']).format(),
+                    String(files[i], color=theme['skip']).format()
+                ))
+            elif overwrite[i]:
+                print('{0:s} {1:s} {2:s}'.format(
+                    String(files[i], width=l, color=theme['bright']).format(),
+                    String('=>', color=theme['bright']).format(),
+                    String(files[i], color=theme['overwrite']).format()
+                ))
 
-    if ncreate + noverwrite > 100:
+    if ncreate + noverwrite > 100 and print_summary:
         print('-----')
         print('\n'.join(summary))
         print('-----')
@@ -622,16 +644,10 @@ Send/get files.
         if not click.confirm('Proceed?'):
             return 1
 
-    ncp = n - sum(skip)
-    l = int(math.log10(ncp) + 1)
-    fmt = '({0:' + str(l) + 'd}/' + ('{0:' + str(l) + 'd}').format(ncp) + ') {1:s}'
-    j = 0
-
-    for i in range(n):
+    pbar = tqdm.trange(n, disable=quiet, total=ncreate + noverwrite)
+    for i in pbar:
         if not skip[i]:
-            if not quiet:
-                j += 1
-                print(fmt.format(j, files[i]))
+            pbar.set_description(files[i])
             copy_function(host, src[i], dest[i], verbose)
 
 
