@@ -14,6 +14,7 @@ Options:
     -f, --force         Force overwrite of all existing (but not matching) files.
     -l, --local=N       Add local 'host' information to use precomputed checksums.
     -s, --summary       Only print summary.
+        --details       Force print of details.
         --verbose       Verbose all commands.
     -h, --help          Show help.
         --version       Show version.
@@ -50,7 +51,7 @@ def main():
             checksum = 'checksum' in data,
             quiet = args['--quiet'],
             force = args['--force'],
-            print_details = not (args['--force'] or args['--summary']),
+            print_details = not (args['--force'] or args['--summary']) or args['--details'],
             print_summary = not args['--force'] or args['--summary'],
             theme_name = args['--colors'].lower(),
             yaml_hostinfo_src = source,
@@ -67,7 +68,7 @@ def main():
             checksum = 'checksum' in data,
             quiet = args['--quiet'],
             force = args['--force'],
-            print_details = not (args['--force'] or args['--summary']),
+            print_details = not (args['--force'] or args['--summary']) or args['--details'],
             print_summary = not args['--force'] or args['--summary'],
             verbose = args['--verbose'],
             theme_name = args['--colors'].lower(),
