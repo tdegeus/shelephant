@@ -148,7 +148,7 @@ Optionally the key to the item can be specified as a list. E.g.
         try:
             return functools.reduce(operator.getitem, key, data)
         except:
-            Error('"{0:s}" not in "{1:s}"'.format(key, filename))
+            Error('"{0:s}" not in "{1:s}"'.format('/'.join(key), filename))
 
     return data
 
