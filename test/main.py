@@ -43,8 +43,8 @@ class Test_checksum(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump --force foo.txt bar.txt')
-        output = run('shelephant_checksum --force shelephant_dump.yaml')
+        output = run('shelephant_dump -f foo.txt bar.txt')
+        output = run('shelephant_checksum -f -q shelephant_dump.yaml')
         data = YamlGetItem('shelephant_checksum.yaml')
 
         keys = [
@@ -67,12 +67,12 @@ class Test_checksum(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump --force foo.txt')
-        output = run('shelephant_checksum --force shelephant_dump.yaml')
+        output = run('shelephant_dump -f foo.txt')
+        output = run('shelephant_checksum -f -q shelephant_dump.yaml')
         output = run('shelephant_hostinfo -f -c')
 
-        output = run('shelephant_dump --force foo.txt bar.txt')
-        output = run('shelephant_checksum --force shelephant_dump.yaml --local shelephant_hostinfo.yaml')
+        output = run('shelephant_dump -f foo.txt bar.txt')
+        output = run('shelephant_checksum -f -q shelephant_dump.yaml -l shelephant_hostinfo.yaml')
         data = YamlGetItem('shelephant_checksum.yaml')
 
         keys = [
@@ -171,7 +171,7 @@ class Test_extract(unittest.TestCase):
 
         YamlDump('dump.yaml', data, force=True)
 
-        output = run('shelephant_extract --force dump.yaml "foo"')
+        output = run('shelephant_extract -f dump.yaml "foo"')
 
         self.assertEqual(YamlRead('dump.yaml'), ['foo.txt', 'bar.txt'])
 
@@ -192,7 +192,7 @@ class Test_extract(unittest.TestCase):
 
         YamlDump('dump.yaml', data, force=True)
 
-        output = run('shelephant_extract --force dump.yaml "/sub/foo" "foo"')
+        output = run('shelephant_extract -f dump.yaml "/sub/foo" "foo"')
 
         self.assertEqual(YamlRead('dump.yaml'), {'foo': ['foo.txt', 'bar.txt'], 'sub': {'foo': ['foo.txt', 'bar.txt']}})
 
@@ -213,7 +213,7 @@ class Test_extract(unittest.TestCase):
 
         YamlDump('dump.yaml', data, force=True)
 
-        output = run('shelephant_extract --force dump.yaml --squash "/sub/foo" "foo"')
+        output = run('shelephant_extract -f dump.yaml --squash "/sub/foo" "foo"')
 
         self.assertEqual(YamlRead('dump.yaml'), ['foo2.txt', 'bar2.txt', 'foo.txt', 'bar.txt'])
 
@@ -232,7 +232,7 @@ class Test_merge(unittest.TestCase):
 
         output = run('shelephant_dump -o main.yaml foo.txt')
         output = run('shelephant_dump -o branch.yaml bar.txt')
-        output = run('shelephant_merge --force branch.yaml main.yaml')
+        output = run('shelephant_merge -f branch.yaml main.yaml')
 
         self.assertEqual(YamlRead('main.yaml'), ['foo.txt', 'bar.txt'])
 
@@ -258,7 +258,7 @@ class Test_merge(unittest.TestCase):
 
         output = run('shelephant_dump -o dira/dump.yaml dira/foo.txt dira/bar.txt')
         output = run('shelephant_dump -o dirb/dump.yaml dirb/foo.txt dirb/bar.txt')
-        output = run('shelephant_merge --force dira/dump.yaml dirb/dump.yaml')
+        output = run('shelephant_merge -f dira/dump.yaml dirb/dump.yaml')
 
         self.assertEqual(YamlRead('dirb/dump.yaml'), ['foo.txt', 'bar.txt', '../dira/foo.txt', '../dira/bar.txt'])
 
@@ -284,11 +284,11 @@ class Test_hostinfo(unittest.TestCase):
             file.write('bar')
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --quiet --force mydest/hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
+        output = run('shelephant_get -f -q mydest/hostinfo.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -320,14 +320,14 @@ class Test_get(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --details --quiet --colors none --force mydest/hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
+        output = run('shelephant_get -f -d -q --colors none mydest/hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -358,14 +358,14 @@ class Test_get(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_get --details --quiet --colors none --force mydest/hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
+        output = run('shelephant_get -f -d -q --colors none mydest/hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -396,17 +396,17 @@ class Test_get(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_hostinfo -o mydest/local.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_get --details --quiet --colors none --force --local mydest/local.yaml mydest/hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
+        output = run('shelephant_hostinfo -o mydest/local.yaml -f mydest/files.yaml -c mydest/checksum.yaml')
+        output = run('shelephant_get -f -d -q --colors none -l mydest/local.yaml mydest/hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
         output = run('shelephant_dump --sort --force -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum --force -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -441,18 +441,18 @@ class Test_send(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_send --details --quiet --colors none --force mysrc/files.yaml hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml')
+        output = run('shelephant_send -f -d -q --colors none mysrc/files.yaml hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
         os.remove('mydest/foobar.txt')
 
-        output = run('shelephant_dump --force --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum --force -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_dump -f --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -484,16 +484,16 @@ class Test_send(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_send --details --quiet --colors none --force mysrc/files.yaml hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml')
+        output = run('shelephant_send -f -d -q --colors none mysrc/files.yaml hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
-        output = run('shelephant_dump --force --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum --force -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_dump -f --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -525,17 +525,17 @@ class Test_send(unittest.TestCase):
         ]
 
         output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
-        output = run('shelephant_hostinfo --force -o hostinfo.yaml --files mydest/files.yaml --checksum mydest/checksum.yaml')
-        output = run('shelephant_hostinfo --force -o local.yaml --files mysrc/files.yaml --checksum mysrc/checksum.yaml')
-        output = run('shelephant_send --details --quiet --colors none --force --local local.yaml mysrc/files.yaml hostinfo.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml')
+        output = run('shelephant_hostinfo --force -o local.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
+        output = run('shelephant_send -f -d -q --colors none -l local.yaml mysrc/files.yaml hostinfo.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
-        output = run('shelephant_dump --force --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum --force -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_dump -f --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -564,10 +564,10 @@ class Test_mv(unittest.TestCase):
             file.write('bar')
 
         output = run('shelephant_dump -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_mv --quiet --force mysrc/files.yaml mydest')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_mv -f -q mysrc/files.yaml mydest')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
@@ -594,10 +594,10 @@ class Test_cp(unittest.TestCase):
             file.write('bar')
 
         output = run('shelephant_dump -o mysrc/files.yaml mysrc/*.txt')
-        output = run('shelephant_checksum -o mysrc/checksum.yaml mysrc/files.yaml')
-        output = run('shelephant_cp --quiet --force mysrc/files.yaml mydest')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+        output = run('shelephant_cp -f -q mysrc/files.yaml mydest')
         output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
-        output = run('shelephant_checksum -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
         self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
