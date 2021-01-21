@@ -2,13 +2,14 @@ import unittest
 import subprocess
 import os
 import shutil
+import numpy as np
 
 from shelephant import YamlGetItem
 from shelephant import YamlRead
 from shelephant import YamlDump
 
 
-def run(cmd):
+def run(cmd, verbose=False):
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
 
 
@@ -68,11 +69,11 @@ class Test_checksum(unittest.TestCase):
             file.write('bar')
 
         output = run('shelephant_dump -f foo.txt')
-        output = run('shelephant_checksum -f -q shelephant_dump.yaml')
-        output = run('shelephant_hostinfo -f -c')
+        output = run('shelephant_checksum -f -q')
+        output = run('shelephant_hostinfo --force -f -c')
 
         output = run('shelephant_dump -f foo.txt bar.txt')
-        output = run('shelephant_checksum -f -q shelephant_dump.yaml -l shelephant_hostinfo.yaml')
+        output = run('shelephant_checksum -f -q -l shelephant_hostinfo.yaml')
         data = YamlGetItem('shelephant_checksum.yaml')
 
         keys = [
@@ -84,6 +85,60 @@ class Test_checksum(unittest.TestCase):
 
         os.remove('foo.txt')
         os.remove('bar.txt')
+        os.remove('shelephant_dump.yaml')
+        os.remove('shelephant_checksum.yaml')
+        os.remove('shelephant_hostinfo.yaml')
+
+    def test_recursive(self):
+
+        letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+
+        for letter in letters:
+            with open('{0:s}.txt'.format(letter), 'w') as file:
+                file.write(letter)
+
+        files = ['{0:s}.txt'.format(letter) for letter in letters]
+
+        keys = [
+            'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb', # a
+            '3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d', # b
+            '2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6', # c
+            '18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4', # d
+            '3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea', # e
+            '252f10c83610ebca1a059c0bae8255eba2f95be4d1d7bcfa89d7248a82d9f111', # f
+            'cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29', # g
+        ]
+
+        output = run('shelephant_dump -f -s {0:s}'.format(' '.join(files)))
+        output = run('shelephant_checksum -f -q')
+
+        data = YamlGetItem('shelephant_checksum.yaml')
+
+        self.assertEqual(data, keys)
+
+        ifiles = np.arange(len(files))
+        np.random.shuffle(ifiles)
+
+        output = run('shelephant_dump -f {0:s}'.format(' '.join([files[i] for i in ifiles[:3]])))
+        output = run('shelephant_checksum -f -q')
+        output = run('shelephant_hostinfo --force -f -c')
+
+        np.random.shuffle(ifiles)
+
+        output = run('shelephant_dump -f {0:s}'.format(' '.join([files[i] for i in ifiles])))
+        output = run('shelephant_checksum -f -q -l shelephant_hostinfo.yaml')
+        output = run('shelephant_hostinfo --force -f -c')
+
+        output = run('shelephant_dump -f -s {0:s}'.format(' '.join(files)))
+        output = run('shelephant_checksum -f -q -l shelephant_hostinfo.yaml')
+
+        data = YamlGetItem('shelephant_checksum.yaml')
+
+        self.assertEqual(data, keys)
+
+        for file in files:
+            os.remove(file)
+
         os.remove('shelephant_dump.yaml')
         os.remove('shelephant_checksum.yaml')
         os.remove('shelephant_hostinfo.yaml')
@@ -111,9 +166,9 @@ class Test_dump(unittest.TestCase):
         with open('mydir/bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump -s -o dump_1.yaml foo.txt bar.txt')
-        output = run('shelephant_dump -s -o dump_2.yaml *.txt')
-        output = run('shelephant_dump -s -o mydir/dump_3.yaml mydir/*.txt')
+        output = run('shelephant_dump -f -s -o dump_1.yaml foo.txt bar.txt')
+        output = run('shelephant_dump -f -s -o dump_2.yaml *.txt')
+        output = run('shelephant_dump -f -s -o mydir/dump_3.yaml mydir/*.txt')
 
         with open('dump_1.yaml', 'r') as file:
             dump_1 = file.read()
@@ -147,7 +202,7 @@ class Test_dump(unittest.TestCase):
         with open('bar.pdf', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_dump -f foo.txt bar.txt')
         output = run('shelephant_dump -a foo.pdf bar.pdf')
 
         self.assertEqual(YamlRead('shelephant_dump.yaml'), ['foo.txt', 'bar.txt', 'foo.pdf', 'bar.pdf'])
@@ -283,11 +338,11 @@ class Test_hostinfo(unittest.TestCase):
         with open('mysrc/bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_dump -f -s -o mysrc/files.yaml mysrc/*.txt')
         output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
         output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml')
         output = run('shelephant_get -f -q mydest/hostinfo.yaml')
-        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_dump -f -s -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
@@ -388,10 +443,19 @@ class Test_get(unittest.TestCase):
         with open('mysrc/bar.txt', 'w') as file:
             file.write('bar')
 
+        with open('mysrc/car.txt', 'w') as file:
+            file.write('car')
+
+        with open('mysrc/dog.txt', 'w') as file:
+            file.write('dog')
+
         shutil.copy('mysrc/foo.txt', 'mydest/foo.txt')
+        shutil.copy('mysrc/dog.txt', 'mydest/dog.txt')
 
         operations = [
             'bar.txt -> bar.txt',
+            'car.txt -> car.txt',
+            'dog.txt == dog.txt',
             'foo.txt == foo.txt',
         ]
 
@@ -405,7 +469,7 @@ class Test_get(unittest.TestCase):
 
         self.assertEqual(list(filter(None, output.split('\n'))), operations)
 
-        output = run('shelephant_dump --sort --force -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_dump -f -s -o mydest/files.yaml mydest/*.txt')
         output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
 
         self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
@@ -517,10 +581,19 @@ class Test_send(unittest.TestCase):
         with open('mysrc/bar.txt', 'w') as file:
             file.write('bar')
 
+        with open('mysrc/car.txt', 'w') as file:
+            file.write('car')
+
+        with open('mysrc/dog.txt', 'w') as file:
+            file.write('dog')
+
         shutil.copy('mysrc/foo.txt', 'mydest/foo.txt')
+        shutil.copy('mysrc/dog.txt', 'mydest/dog.txt')
 
         operations = [
             'bar.txt -> bar.txt',
+            'car.txt -> car.txt',
+            'dog.txt == dog.txt',
             'foo.txt == foo.txt',
         ]
 
@@ -619,7 +692,7 @@ class Test_rm(unittest.TestCase):
             file.write('bar')
 
         output = run('shelephant_dump foo.txt bar.txt')
-        output = run('shelephant_rm --force shelephant_dump.yaml')
+        output = run('shelephant_rm -f shelephant_dump.yaml')
 
         self.assertFalse(os.path.isfile('foo.txt'))
         self.assertFalse(os.path.isfile('bar.txt'))
