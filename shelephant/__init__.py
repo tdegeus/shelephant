@@ -486,11 +486,15 @@ Copy/move files.
         if not click.confirm('Proceed?'):
             return 1
 
-    pbar = tqdm.trange(n, disable=quiet, total=ncreate + noverwrite)
+    i = np.argwhere(np.not_equal(skip, True)).ravel()
+    src = np.array(src)[i]
+    dest = np.array(dest)[i]
+    files = np.array(files)[i]
+
+    pbar = tqdm.trange(len(files), disable=quiet)
     for i in pbar:
-        if not skip[i]:
-            pbar.set_description(files[i])
-            copy_function(src[i], dest[i])
+        pbar.set_description(files[i])
+        copy_function(src[i], dest[i])
 
 
 def ShelephantCopySSH(
@@ -657,11 +661,15 @@ Send/get files.
         if not click.confirm('Proceed?'):
             return 1
 
-    pbar = tqdm.trange(n, disable=quiet, total=ncreate + noverwrite)
+    i = np.argwhere(np.not_equal(skip, True)).ravel()
+    src = np.array(src)[i]
+    dest = np.array(dest)[i]
+    files = np.array(files)[i]
+
+    pbar = tqdm.trange(len(files), disable=quiet)
     for i in pbar:
-        if not skip[i]:
-            pbar.set_description(files[i])
-            copy_function(host, src[i], dest[i], verbose)
+        pbar.set_description(files[i])
+        copy_function(host, src[i], dest[i], verbose)
 
 
 def Theme(theme=None):
