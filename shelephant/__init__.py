@@ -330,7 +330,9 @@ Compute the checksums for ``filepaths``.
     idx = np.searchsorted(check_paths, source_paths)
     idx = np.where(test, idx, 0)
     ret = np.where(test, check_sums[idx], None)
-    ret = list(ret[sorter])
+    out = np.empty_like(ret)
+    out[sorter] = ret
+    ret = list(out)
 
     if hybrid:
         for i in tqdm.trange(n, disable=not progress):
