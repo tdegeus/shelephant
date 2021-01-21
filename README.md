@@ -27,6 +27,7 @@ Command-line arguments with a memory (stored in YAML-files).
         - [Basic copy](#basic-copy)
         - [Restart](#restart)
 - [Change-log](#change-log)
+    - [v0.11.0](#v0110)
     - [v0.10.0](#v0100)
     - [v0.9.0](#v090)
     - [v0.8.1](#v081)
@@ -369,6 +370,17 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 ```
 
 # Change-log
+
+## v0.11.0
+
+*    Adding test to checkout for correct order of pre-computed checksums
+*    Bugfix in reordering of pre-computed checksum
+*    Copy functions: skipping empty input
+*    Bugfix in error print
+*    Style updates tests
+*    Copy functions: allow force-print details. Further auto-truncation otherwise
+*    Copy functions: bugfix in progress bar
+*    Bugfix in matching checksums
 
 ## v0.10.0
 
