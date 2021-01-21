@@ -15,8 +15,8 @@ Options:
     -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
         --colors=M  Select color scheme from: none, dark. [default: dark]
     -q, --quiet     Do not print progress.
-    -s, --summary   Only print summary.
-        --details   Force print of details.
+    -s, --summary   Print summary (and no details unless specified).
+    -d, --details   Print details (and no summary unless specified).
     -f, --force     Move without prompt.
     -h, --help      Show help.
         --version   Show version.
@@ -49,7 +49,8 @@ def main():
         quiet = args['--quiet'],
         force = args['--force'],
         print_details = not (args['--force'] or args['--summary']) or args['--details'],
-        print_summary = not args['--force'] or args['--summary'],
+        print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+        print_all = args['--details'],
         theme_name = args['--colors'].lower())
 
 

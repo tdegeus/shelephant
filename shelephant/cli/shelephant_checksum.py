@@ -14,7 +14,7 @@ Options:
     -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
     -l, --local=N   Add local 'host' information to use precomputed checksums.
     -f, --force     Overwrite output file without prompt.
-    -p, --progress  Show progress-bar.
+    -q, --quiet     Do not print progress.
     -h, --help      Show help.
         --version   Show version.
 
@@ -39,7 +39,7 @@ def main():
     files = YamlGetItem(source, key)
     prefix = os.path.dirname(source)
     files = PrefixPaths(prefix, files)
-    data = GetChecksums(files, args['--local'], hybrid=True, progress=args['--progress'])
+    data = GetChecksums(files, args['--local'], hybrid=True, progress=not args['--quiet'])
     YamlDump(args['--output'], data, args['--force'])
 
 
