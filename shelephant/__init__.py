@@ -328,6 +328,7 @@ Compute the checksums for ``filepaths``.
 
     test = np.in1d(source_paths, check_paths)
     idx = np.searchsorted(check_paths, source_paths)
+    idx = np.where(test, idx, 0)
     ret = np.where(test, check_sums[idx], None)
     ret = list(ret[sorter])
 
