@@ -401,6 +401,13 @@ Copy/move files.
         Specify these files *only* to use precomputed checksums.
     '''
 
+    assert type(files) == list
+
+    if len(files) == 0:
+        if not quiet:
+            print('Nothing to do')
+        return
+
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -568,6 +575,13 @@ Send/get files.
         These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
         Specify these files *only* to use precomputed checksums.
     '''
+
+    assert type(files) == list
+
+    if len(files) == 0:
+        if not quiet:
+            print('Nothing to do')
+        return
 
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
