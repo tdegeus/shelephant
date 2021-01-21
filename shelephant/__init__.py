@@ -351,6 +351,7 @@ def ShelephantCopy(
     force = False,
     print_details = True,
     print_summary = True,
+    print_all = False,
     theme_name = 'none',
     yaml_hostinfo_src = None,
     yaml_hostinfo_dest = None):
@@ -387,6 +388,9 @@ Copy/move files.
 
     **print_summary** ([``True``] | ``False``)
         Print copy summary.
+
+    **print_all** ([``False``] | ``True``)
+        If ``False`` auto-truncation of long output is applied.
 
     **theme_name** ([``'none'``] | ``<str>``)
         The name of the color-theme. See ``Theme``.
@@ -430,8 +434,8 @@ Copy/move files.
     ncreate = sum(create)
     noverwrite = sum(overwrite)
     nskip = sum(skip)
-    pcreate = not (noverwrite > 0 and ncreate > 100)
-    pskip = nskip <= 100
+    pcreate = not ((noverwrite > 0 and ncreate > 100) or ncreate > 300) or print_all
+    pskip = (nskip <= 100) or print_all
     pcreate_message = ' (not printed)' if not pcreate else ''
     pskip_message = ' (not printed)' if not pskip else ''
 
@@ -508,6 +512,7 @@ def ShelephantCopySSH(
     force = False,
     print_details = True,
     print_summary = True,
+    print_all = False,
     verbose = False,
     theme_name = 'none',
     yaml_hostinfo_src = None,
@@ -548,6 +553,9 @@ Send/get files.
 
     **print_summary** ([``True``] | ``False``)
         Print copy summary.
+
+    **print_all** ([``False``] | ``True``)
+        If ``False`` auto-truncation of long output is applied.
 
     **verbose** ([``False``] | ``True``)
         Verbose all operations.
@@ -599,8 +607,8 @@ Send/get files.
     ncreate = sum(create)
     noverwrite = sum(overwrite)
     nskip = sum(skip)
-    pcreate = not (noverwrite > 0 and ncreate > 100)
-    pskip = nskip <= 100
+    pcreate = not ((noverwrite > 0 and ncreate > 100) or ncreate > 300) or print_all
+    pskip = (nskip <= 100) or print_all
     pcreate_message = ' (not printed)' if not pcreate else ''
     pskip_message = ' (not printed)' if not pskip else ''
 

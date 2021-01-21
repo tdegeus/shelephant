@@ -6,20 +6,20 @@ Usage:
     shelephant_send [options] <files.yaml> <hostinfo.yaml>
 
 Arguments:
-    files.yaml          YAML-file with files to send. Default: shelephant_dump.yaml
-    hostinfo.yaml       YAML-file with host information. Default: shelephant_hostinfo.yaml
+    files.yaml      YAML-file with files to send. Default: shelephant_dump.yaml
+    hostinfo.yaml   YAML-file with host information. Default: shelephant_hostinfo.yaml
 
 Options:
-    -k, --key=N         Path in <files.yaml>, separated by "/". [default: /]
-        --colors=M      Select color scheme from: none, dark. [default: dark]
-    -q, --quiet         Do not print progress.
-    -f, --force         Force overwrite of all existing (but not matching) files.
-    -l, --local=N       Add local 'host' information to use precomputed checksums.
-    -s, --summary       Only print summary.
-        --details       Force print of details.
-        --verbose       Verbose all commands.
-    -h, --help          Show help.
-        --version       Show version.
+    -k, --key=N     Path in <files.yaml>, separated by "/". [default: /]
+        --colors=M  Select color scheme from: none, dark. [default: dark]
+    -q, --quiet     Do not print progress.
+    -f, --force     Force overwrite of all existing (but not matching) files.
+    -l, --local=N   Add local 'host' information to use precomputed checksums.
+    -s, --summary   Print summary (and no details unless specified).
+    -d, --details   Print details (and no summary unless specified).
+        --verbose   Verbose all commands.
+    -h, --help      Show help.
+        --version   Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
@@ -61,7 +61,8 @@ def main():
             quiet = args['--quiet'],
             force = args['--force'],
             print_details = not (args['--force'] or args['--summary']) or args['--details'],
-            print_summary = not args['--force'] or args['--summary'],
+            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+            print_all = args['--details'],
             theme_name = args['--colors'].lower(),
             yaml_hostinfo_src = args['--local'],
             yaml_hostinfo_dest = hostinfo)
@@ -78,7 +79,8 @@ def main():
             quiet = args['--quiet'],
             force = args['--force'],
             print_details = not (args['--force'] or args['--summary']) or args['--details'],
-            print_summary = not args['--force'] or args['--summary'],
+            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+            print_all = args['--details'],
             verbose = args['--verbose'],
             theme_name = args['--colors'].lower(),
             yaml_hostinfo_src = args['--local'],
