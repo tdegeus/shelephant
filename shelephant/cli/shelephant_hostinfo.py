@@ -128,9 +128,6 @@ def main():
     # Run basic checks
 
     if not args['--ignore']:
-        for item in ['prefix', 'files']:
-            if item not in data:
-                Error('Please specify {0:s}'.format(item))
         if 'checksum' in data:
             if len(data['files']) != len(data['checksum']):
                 Error('Number of checksums does not match number of files')
@@ -141,6 +138,9 @@ def main():
         shutil.rmtree(temp_dir)
 
     # Write output
+
+    if 'files' not in data:
+        data['files'] = []
 
     YamlDump(args['--output'], data, args['--force'])
 

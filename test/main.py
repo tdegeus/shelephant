@@ -525,6 +525,44 @@ class Test_send(unittest.TestCase):
         shutil.rmtree('mydest')
         os.remove('hostinfo.yaml')
 
+    def test_empty_remote(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt -> foo.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml -p mydest')
+        output = run('shelephant_send -f -d -q --colors none mysrc/files.yaml hostinfo.yaml')
+
+        self.assertEqual(list(filter(None, output.split('\n'))), operations)
+
+        output = run('shelephant_dump -f --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -f -q -o mysrc/checksum.yaml mysrc/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+        os.remove('hostinfo.yaml')
+
+
     def test_partial(self):
 
         for dirname in ['mysrc', 'mydest']:
