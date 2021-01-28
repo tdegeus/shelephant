@@ -128,6 +128,9 @@ def main():
     # Run basic checks
 
     if not args['--ignore']:
+        for item in ['prefix']:
+            if item not in data:
+                Error('Please specify {0:s}'.format(item))
         if 'checksum' in data:
             if len(data['files']) != len(data['checksum']):
                 Error('Number of checksums does not match number of files')
