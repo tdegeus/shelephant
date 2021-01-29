@@ -29,25 +29,32 @@ from .. import PrefixPaths
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    key = list(filter(None, args['--key'].split('/')))
-    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
-    files = YamlGetItem(source, key)
-    prefix = os.path.dirname(source)
-    files = PrefixPaths(prefix, files)
+    try:
 
-    if len(files) == 0:
-        return 0
+        args = docopt.docopt(__doc__, version=__version__)
+        key = list(filter(None, args['--key'].split('/')))
+        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+        files = YamlGetItem(source, key)
+        prefix = os.path.dirname(source)
+        files = PrefixPaths(prefix, files)
 
-    for file in files:
-        print('rm {0:s}'.format(file))
+        if len(files) == 0:
+            return 0
 
-    if not args['--force']:
-        if not click.confirm('Proceed?'):
-            return 1
+        for file in files:
+            print('rm {0:s}'.format(file))
 
-    for file in files:
-        os.remove(file)
+        if not args['--force']:
+            if not click.confirm('Proceed?'):
+                return 1
+
+        for file in files:
+            os.remove(file)
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':

@@ -41,50 +41,57 @@ from .. import ShelephantCopySSH
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
-    hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
-    data = YamlRead(hostinfo)
-    key = list(filter(None, args['--key'].split('/')))
-    files = YamlGetItem(source, key)
-    src_dir = os.path.dirname(source)
-    dest_dir = data['prefix']
+    try:
 
-    if 'host' not in data:
+        args = docopt.docopt(__doc__, version=__version__)
+        source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
+        hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
+        data = YamlRead(hostinfo)
+        key = list(filter(None, args['--key'].split('/')))
+        files = YamlGetItem(source, key)
+        src_dir = os.path.dirname(source)
+        dest_dir = data['prefix']
 
-        ShelephantCopy(
-            copy_function = shutil.copy,
-            files = files,
-            src_dir = src_dir,
-            dest_dir = data['prefix'],
-            checksum = 'checksum' in data,
-            quiet = args['--quiet'],
-            force = args['--force'],
-            print_details = not (args['--force'] or args['--summary']) or args['--details'],
-            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-            print_all = args['--details'],
-            theme_name = args['--colors'].lower(),
-            yaml_hostinfo_src = args['--local'],
-            yaml_hostinfo_dest = hostinfo)
+        if 'host' not in data:
 
-    else:
+            ShelephantCopy(
+                copy_function = shutil.copy,
+                files = files,
+                src_dir = src_dir,
+                dest_dir = data['prefix'],
+                checksum = 'checksum' in data,
+                quiet = args['--quiet'],
+                force = args['--force'],
+                print_details = not (args['--force'] or args['--summary']) or args['--details'],
+                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+                print_all = args['--details'],
+                theme_name = args['--colors'].lower(),
+                yaml_hostinfo_src = args['--local'],
+                yaml_hostinfo_dest = hostinfo)
 
-        ShelephantCopySSH(
-            copy_function = CopyToRemote,
-            host = data['host'],
-            files = files,
-            src_dir = src_dir,
-            dest_dir = dest_dir,
-            checksum = 'checksum' in data,
-            quiet = args['--quiet'],
-            force = args['--force'],
-            print_details = not (args['--force'] or args['--summary']) or args['--details'],
-            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-            print_all = args['--details'],
-            verbose = args['--verbose'],
-            theme_name = args['--colors'].lower(),
-            yaml_hostinfo_src = args['--local'],
-            yaml_hostinfo_dest = hostinfo)
+        else:
+
+            ShelephantCopySSH(
+                copy_function = CopyToRemote,
+                host = data['host'],
+                files = files,
+                src_dir = src_dir,
+                dest_dir = dest_dir,
+                checksum = 'checksum' in data,
+                quiet = args['--quiet'],
+                force = args['--force'],
+                print_details = not (args['--force'] or args['--summary']) or args['--details'],
+                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+                print_all = args['--details'],
+                verbose = args['--verbose'],
+                theme_name = args['--colors'].lower(),
+                yaml_hostinfo_src = args['--local'],
+                yaml_hostinfo_dest = hostinfo)
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':

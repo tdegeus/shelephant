@@ -23,10 +23,17 @@ from .. import YamlPrint
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    source = args['<file.yaml>']
-    data = YamlRead(source)
-    YamlPrint(data)
+    try:
+
+        args = docopt.docopt(__doc__, version=__version__)
+        source = args['<file.yaml>']
+        data = YamlRead(source)
+        YamlPrint(data)
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':

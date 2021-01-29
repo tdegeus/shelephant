@@ -33,14 +33,21 @@ from .. import GetChecksums
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
-    key = list(filter(None, args['--key'].split('/')))
-    files = YamlGetItem(source, key)
-    prefix = os.path.dirname(source)
-    files = PrefixPaths(prefix, files)
-    data = GetChecksums(files, args['--local'], hybrid=True, progress=not args['--quiet'])
-    YamlDump(args['--output'], data, args['--force'])
+    try:
+
+        args = docopt.docopt(__doc__, version=__version__)
+        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+        key = list(filter(None, args['--key'].split('/')))
+        files = YamlGetItem(source, key)
+        prefix = os.path.dirname(source)
+        files = PrefixPaths(prefix, files)
+        data = GetChecksums(files, args['--local'], hybrid=True, progress=not args['--quiet'])
+        YamlDump(args['--output'], data, args['--force'])
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':

@@ -31,7 +31,6 @@ import os
 from .. import __version__
 from .. import YamlRead
 from .. import YamlDump
-from .. import Error
 from .. import ChangeRootOfRelativePaths
 
 def recursive_items(dictionary):
@@ -44,51 +43,58 @@ def recursive_items(dictionary):
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    main = YamlRead(args['<main.yaml>'])
-    branch = YamlRead(args['<branch.yaml>'])
-    output = args['--output'] if args['--output'] else args['<main.yaml>']
-    output_dir = os.path.dirname(output)
+    try:
 
-    if not args['--no-path']:
+        args = docopt.docopt(__doc__, version=__version__)
+        main = YamlRead(args['<main.yaml>'])
+        branch = YamlRead(args['<branch.yaml>'])
+        output = args['--output'] if args['--output'] else args['<main.yaml>']
+        output_dir = os.path.dirname(output)
 
-        paths = [os.path.dirname(args['<main.yaml>']), os.path.dirname(args['<branch.yaml>'])]
+        if not args['--no-path']:
 
-        for var, path in zip([main, branch], paths):
-            if type(var) == list:
-                ChangeRootOfRelativePaths(var, path, output_dir, in_place=True)
-            elif type(var) == dict:
-                for key, value in recursive_items(var):
-                    ChangeRootOfRelativePaths(value, path, output_dir, in_place=True)
+            paths = [os.path.dirname(args['<main.yaml>']), os.path.dirname(args['<branch.yaml>'])]
+
+            for var, path in zip([main, branch], paths):
+                if type(var) == list:
+                    ChangeRootOfRelativePaths(var, path, output_dir, in_place=True)
+                elif type(var) == dict:
+                    for key, value in recursive_items(var):
+                        ChangeRootOfRelativePaths(value, path, output_dir, in_place=True)
+                else:
+                    raise IOError('Files have an incompatible structure')
+
+        if type(main) == list and type(branch) == list:
+
+            if args['--skip']:
+                pass
+            elif args['--replace']:
+                main = branch
             else:
-                Error('Files have an incompatible structure')
+                main += branch
 
-    if type(main) == list and type(branch) == list:
+        elif type(main) == dict and type(branch) == dict:
 
-        if args['--skip']:
-            pass
-        elif args['--replace']:
-            main = branch
+            from mergedeep import merge, Strategy
+
+            if args['--skip']:
+                mergedeep.merge(branch, main, strategy=mergedeep.Strategy.REPLACE)
+                main = branch
+            elif args['--replace']:
+                mergedeep.merge(main, branch, strategy=mergedeep.Strategy.REPLACE)
+            else:
+                mergedeep.merge(main, branch, strategy=mergedeep.Strategy.ADDITIVE)
+
         else:
-            main += branch
 
-    elif type(main) == dict and type(branch) == dict:
+            raise IOError('Files have an incompatible structure')
 
-        from mergedeep import merge, Strategy
+        YamlDump(output, main, args['--force'])
 
-        if args['--skip']:
-            mergedeep.merge(branch, main, strategy=mergedeep.Strategy.REPLACE)
-            main = branch
-        elif args['--replace']:
-            mergedeep.merge(main, branch, strategy=mergedeep.Strategy.REPLACE)
-        else:
-            mergedeep.merge(main, branch, strategy=mergedeep.Strategy.ADDITIVE)
+    except Exception as e:
 
-    else:
-
-        Error('Files have an incompatible structure')
-
-    YamlDump(output, main, args['--force'])
+        print(e)
+        return 1
 
 if __name__ == '__main__':
 

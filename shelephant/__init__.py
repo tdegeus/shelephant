@@ -1,14 +1,10 @@
-import docopt
 import click
 import os
-import sys
 import yaml
 import operator
 import functools
 import subprocess
 import collections.abc
-import shutil
-import math
 import numpy as np
 import tqdm
 
@@ -79,22 +75,13 @@ Run command, optionally verbose command and its output, and return output.
     return ret
 
 
-def Error(text):
-    r'''
-Command-line error: show message and quit the program with exit code "1"
-    '''
-
-    print(text)
-    sys.exit(1)
-
-
 def YamlRead(filename):
     r'''
 Read YAML file and return its content as ``list`` or ``dict``.
     '''
 
     if not os.path.isfile(filename):
-        Error('"{0:s} does not exist'.format(filename))
+        raise IOError('"{0:s} does not exist'.format(filename))
 
     with open(filename, 'r') as file:
         return yaml.load(file.read(), Loader=yaml.FullLoader)
@@ -111,10 +98,10 @@ Unless ``force = True`` the function prompts before overwriting an existing file
     if not force:
         if os.path.isfile(filename):
             if not click.confirm('Overwrite "{0:s}"?'.format(filename)):
-                sys.exit(1)
+                raise IOError('Cancelled')
         elif not os.path.isdir(dirname) and len(dirname) > 0:
             if not click.confirm('Create "{0:s}"?'.format(os.path.dirname(filename))):
-                sys.exit(1)
+                raise IOError('Cancelled')
 
     if not os.path.isdir(dirname) and len(dirname) > 0:
         os.makedirs(os.path.dirname(filename))
@@ -142,13 +129,13 @@ Optionally the key to the item can be specified as a list. E.g.
     data = YamlRead(filename)
 
     if len(key) == 0 and type(data) != list:
-        Error('Specify key for "{0:s}"'.format(filename))
+        raise IOError('Specify key for "{0:s}"'.format(filename))
 
     if len(key) > 0:
         try:
             return functools.reduce(operator.getitem, key, data)
         except:
-            Error('"{0:s}" not in "{1:s}"'.format('/'.join(key), filename))
+            raise IOError('"{0:s}" not in "{1:s}"'.format('/'.join(key), filename))
 
     return data
 
@@ -162,7 +149,7 @@ Skip if all paths are absolute paths.
     isabs = [os.path.isabs(file) for file in files]
 
     if any(isabs) and not all(isabs):
-        Error('Specify either relative or absolute files-paths')
+        raise IOError('Specify either relative or absolute files-paths')
 
     if all(isabs):
         return files
@@ -182,7 +169,7 @@ otherwise a new list is returned.
     isabs = [os.path.isabs(file) for file in files]
 
     if any(isabs) and not all(isabs):
-        Error('Specify either relative or absolute files-paths')
+        raise IOError('Specify either relative or absolute files-paths')
 
     if all(isabs):
         return files
@@ -420,7 +407,7 @@ Copy/move files.
 
     for file in src:
         if not os.path.isfile(file):
-            Error('"{0:s}" does not exists'.format(file))
+            raise IOError('"{0:s}" does not exists'.format(file))
 
     if MakeDir(dest_dir, force):
         return 1
