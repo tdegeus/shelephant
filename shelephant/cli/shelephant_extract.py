@@ -38,30 +38,37 @@ from .. import Squash
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    input_dir = os.path.dirname(args['<input.yaml>'])
-    output = args['--output'] if args['--output'] else args['<input.yaml>']
-    output_dir = os.path.dirname(output)
-    data = {}
+    try:
 
-    if len(args['<key>']) == 0:
-        args['<key>'] = ['/']
+        args = docopt.docopt(__doc__, version=__version__)
+        input_dir = os.path.dirname(args['<input.yaml>'])
+        output = args['--output'] if args['--output'] else args['<input.yaml>']
+        output_dir = os.path.dirname(output)
+        data = {}
 
-    for key in args['<key>']:
-        key = list(filter(None, key.split('/')))
-        files = YamlGetItem(args['<input.yaml>'], key)
-        if not args['--no-path']:
-            files = ChangeRootOfRelativePaths(files, input_dir, output_dir)
-        if len(args['<key>']) == 1:
-            YamlDump(output, files, args['--force'])
-            return 0
-        container = functools.reduce(lambda x, y: {y: x}, key[:-1], {key[-1]: files})
-        mergedeep.merge(data, container)
+        if len(args['<key>']) == 0:
+            args['<key>'] = ['/']
 
-    if args['--squash']:
-        data = Squash(data)
+        for key in args['<key>']:
+            key = list(filter(None, key.split('/')))
+            files = YamlGetItem(args['<input.yaml>'], key)
+            if not args['--no-path']:
+                files = ChangeRootOfRelativePaths(files, input_dir, output_dir)
+            if len(args['<key>']) == 1:
+                YamlDump(output, files, args['--force'])
+                return 0
+            container = functools.reduce(lambda x, y: {y: x}, key[:-1], {key[-1]: files})
+            mergedeep.merge(data, container)
 
-    YamlDump(output, data, args['--force'])
+        if args['--squash']:
+            data = Squash(data)
+
+        YamlDump(output, data, args['--force'])
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 if __name__ == '__main__':
 

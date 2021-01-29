@@ -31,33 +31,40 @@ from .. import YamlRead
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    prefix = os.path.dirname(args['--output'])
-    files = args['<file>']
+    try:
 
-    if args['--command']:
-        command = ' '.join(files)
-        files = sorted(list(filter(None, subprocess.check_output(
-            command, shell=True).decode('utf-8').split('\n'))))
+        args = docopt.docopt(__doc__, version=__version__)
+        prefix = os.path.dirname(args['--output'])
+        files = args['<file>']
 
-    if args['--abspath']:
-        files = [os.path.abspath(file) for file in files]
-    else:
-        files = [os.path.relpath(file, prefix) for file in files]
+        if args['--command']:
+            command = ' '.join(files)
+            files = sorted(list(filter(None, subprocess.check_output(
+                command, shell=True).decode('utf-8').split('\n'))))
 
-    if args['--sort']:
-        files = sorted(files)
+        if args['--abspath']:
+            files = [os.path.abspath(file) for file in files]
+        else:
+            files = [os.path.relpath(file, prefix) for file in files]
 
-    if args['--append']:
+        if args['--sort']:
+            files = sorted(files)
 
-        main = YamlRead(args['--output'])
-        if type(main) != list:
-            Error('Can only append a "flat" file')
+        if args['--append']:
 
-        files = main + files
-        args['--force'] = True
+            main = YamlRead(args['--output'])
+            if type(main) != list:
+                raise IOError('Can only append a "flat" file')
 
-    YamlDump(args['--output'], files, args['--force'])
+            files = main + files
+            args['--force'] = True
+
+        YamlDump(args['--output'], files, args['--force'])
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':

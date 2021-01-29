@@ -34,22 +34,30 @@ from .. import YamlGetItem
 
 def main():
 
-    args = docopt.docopt(__doc__, version=__version__)
-    source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
-    key = list(filter(None, args['--key'].split('/')))
+    try:
 
-    return ShelephantCopy(
-        copy_function = os.rename,
-        files = YamlGetItem(source, key),
-        src_dir = os.path.dirname(source),
-        dest_dir = args['<destination>'],
-        checksum = args['--checksum'],
-        quiet = args['--quiet'],
-        force = args['--force'],
-        print_details = not (args['--force'] or args['--summary']) or args['--details'],
-        print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-        print_all = args['--details'],
-        theme_name = args['--colors'].lower())
+        args = docopt.docopt(__doc__, version=__version__)
+        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+        key = list(filter(None, args['--key'].split('/')))
+
+        return ShelephantCopy(
+            copy_function = os.rename,
+            files = YamlGetItem(source, key),
+            src_dir = os.path.dirname(source),
+            dest_dir = args['<destination>'],
+            checksum = args['--checksum'],
+            quiet = args['--quiet'],
+            force = args['--force'],
+            print_details = not (args['--force'] or args['--summary']) or args['--details'],
+            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+            print_all = args['--details'],
+            theme_name = args['--colors'].lower())
+
+
+    except Exception as e:
+
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':
