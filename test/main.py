@@ -352,6 +352,35 @@ class Test_hostinfo(unittest.TestCase):
         shutil.rmtree('mydest')
 
 
+    def test_remove(self):
+
+        with open('foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('bar.txt', 'w') as file:
+            file.write('bar')
+
+        keys = [
+            '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+            'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9',
+        ]
+
+        output = run('shelephant_dump -f foo.txt bar.txt')
+        output = run('shelephant_checksum -f -q')
+        output = run('shelephant_hostinfo --force -f -c')
+        output = run('shelephant_hostinfo --force --remove bar.txt')
+        data = YamlRead('shelephant_hostinfo.yaml')
+
+        self.assertEqual(data['files'], ['foo.txt'])
+        self.assertEqual(data['checksum'], [keys[0]])
+
+        os.remove('foo.txt')
+        os.remove('bar.txt')
+        os.remove('shelephant_dump.yaml')
+        os.remove('shelephant_checksum.yaml')
+        os.remove('shelephant_hostinfo.yaml')
+
+
 class Test_get(unittest.TestCase):
 
     def test_basic(self):
@@ -748,7 +777,7 @@ class Test_parse(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_dump -f foo.txt bar.txt')
         output = run('shelephant_parse shelephant_dump.yaml')
 
         self.assertEqual(list(filter(None, output.split('\n'))), ['- foo.txt', '- bar.txt'])
