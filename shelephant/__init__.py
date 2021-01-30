@@ -9,7 +9,7 @@ import numpy as np
 import tqdm
 
 
-__version__ = '0.12.0'
+__version__ = '0.13.0'
 
 
 def FlattenList_detail(data):
