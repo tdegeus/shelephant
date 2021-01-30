@@ -292,7 +292,7 @@ Compute the checksums for ``filepaths``.
 
     if not yaml_hostinfo:
 
-        for i in tqdm.trange(n, disable=not progress):
+        for i in tqdm.trange(n, disable=not progress, desc='Processing'):
             if os.path.isfile(filepaths[i]):
                 ret[i] = GetSHA256(filepaths[i])
 
@@ -322,7 +322,7 @@ Compute the checksums for ``filepaths``.
     ret = list(out)
 
     if hybrid:
-        for i in tqdm.trange(n, disable=not progress):
+        for i in tqdm.trange(n, disable=not progress, desc='Processing'):
             if ret[i] is None:
                 if os.path.isfile(filepaths[i]):
                     ret[i] = GetSHA256(filepaths[i])
@@ -413,8 +413,8 @@ Copy/move files.
         return 1
 
     if checksum == True:
-        src_checksums = GetChecksums(src, yaml_hostinfo_src)
-        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest)
+        src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
+        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
 
     for i in range(n):
         if os.path.isfile(dest[i]):
@@ -444,8 +444,8 @@ Copy/move files.
         overview += [String('skip (==): {0:d}{1:s}'.format(nskip, pskip_message), color=theme['skip']).format()]
 
     summary = []
-    summary += ['- from dir. : ' + os.path.normpath(src_dir)]
-    summary += ['- to dir.   : ' + os.path.normpath(dest_dir)]
+    summary += ['- source : ' + os.path.normpath(src_dir)]
+    summary += ['- dest   : ' + os.path.normpath(dest_dir)]
     summary += ['- ' + ', '.join(overview)]
 
     if ncreate + noverwrite <= 100 and print_summary:
@@ -582,8 +582,8 @@ Send/get files.
     theme = Theme(theme_name)
 
     if checksum == True:
-        src_checksums = GetChecksums(src, yaml_hostinfo_src)
-        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest)
+        src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
+        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
 
     if copy_function == CopyToRemote:
         if yaml_hostinfo_dest:
@@ -625,13 +625,13 @@ Send/get files.
 
     summary = []
     if copy_function == CopyToRemote:
-        summary += ['- to host           : ' + host]
-        summary += ['- from dir. (local) : ' + os.path.normpath(src_dir)]
-        summary += ['- to dir. (remote)  : ' + os.path.normpath(dest_dir)]
+        summary += ['- to host        : ' + host]
+        summary += ['- source (local) : ' + os.path.normpath(src_dir)]
+        summary += ['- dest (remote)  : ' + os.path.normpath(dest_dir)]
     else:
-        summary += ['- from host          : ' + host]
-        summary += ['- from dir. (remote) : ' + os.path.normpath(src_dir)]
-        summary += ['- to dir. (local)    : ' + os.path.normpath(dest_dir)]
+        summary += ['- from host       : ' + host]
+        summary += ['- source (remote) : ' + os.path.normpath(src_dir)]
+        summary += ['- dest (local)    : ' + os.path.normpath(dest_dir)]
     summary += ['- ' + ', '.join(overview)]
 
     if ncreate + noverwrite <= 100 and print_summary:
