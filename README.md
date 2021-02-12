@@ -1,11 +1,15 @@
 # shelephant
 
 [![CI](https://github.com/tdegeus/shelephant/workflows/CI/badge.svg)](https://github.com/tdegeus/shelephant/actions)
+[![Documentation Status](https://readthedocs.org/projects/shelephant/badge/?version=latest)](http://shelephant.geus.me/en/latest/?badge=latest)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/shelephant.svg)](https://anaconda.org/conda-forge/shelephant)
 [![PyPi release](https://img.shields.io/pypi/v/shelephant.svg)](https://pypi.org/project/shelephant/)
 
-
 Command-line arguments with a memory (stored in YAML-files).
+
+**Documentation: https://shelephant.readthedocs.io**
+
+# Contents
 
 <!-- MarkdownTOC -->
 
