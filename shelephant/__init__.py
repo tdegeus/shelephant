@@ -11,7 +11,7 @@ import numpy as np
 import tqdm
 
 
-__version__ = '0.13.0'
+__version__ = '0.14.0'
 
 
 def _FlattenList_detail(data):

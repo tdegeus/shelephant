@@ -3,6 +3,17 @@
 Change-log
 **********
 
+v0.14.0
+=======
+
+*   Adding badges to readme
+*   Making several functions private. Adding summary to docs.
+*   Adding readthedocs environment
+*   Adding documentation
+*   Adding size progress to send/get
+*   send/get: using rsync as backend (for speed)
+*   Copy functions: preserve metadata
+
 v0.13.0
 =======
 
