@@ -46,7 +46,7 @@ def main():
         if 'host' not in data:
 
             ShelephantCopy(
-                copy_function = shutil.copy,
+                copy_function = shutil.copy2,
                 files = data['files'],
                 src_dir = data['prefix'],
                 dest_dir = os.path.dirname(source),

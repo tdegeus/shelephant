@@ -43,7 +43,7 @@ def main():
         key = list(filter(None, args['--key'].split('/')))
 
         return ShelephantCopy(
-            copy_function = shutil.copy,
+            copy_function = shutil.copy2,
             files = YamlGetItem(source, key),
             src_dir = os.path.dirname(source),
             dest_dir = args['<destination>'],
