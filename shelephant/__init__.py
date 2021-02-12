@@ -201,10 +201,10 @@ Check if a file exists on a remote system. Uses ``ssh``.
 
 def CopyFromRemote(host, source, dest, verbose=False):
     r'''
-Copy a file from a remote system. Uses ``scp``.
+Copy a file from a remote system. Uses ``scp -p``.
     '''
 
-    cmd = 'scp {host:s}:{source:s} {dest:s}'.format(
+    cmd = 'scp -p {host:s}:{source:s} {dest:s}'.format(
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
@@ -212,10 +212,10 @@ Copy a file from a remote system. Uses ``scp``.
 
 def CopyToRemote(host, source, dest, verbose=False):
     r'''
-Copy a file to a remote system. Uses ``scp``.
+Copy a file to a remote system. Uses ``scp -p``.
     '''
 
-    cmd = 'scp {source:s} {host:s}:{dest:s}'.format(
+    cmd = 'scp -p {source:s} {host:s}:{dest:s}'.format(
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
