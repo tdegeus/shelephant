@@ -1,24 +1,52 @@
-'''shelephant_hostinfo
+r'''shelephant_hostinfo
     Collect file information from location (on a remote host).
 
 Usage:
     shelephant_hostinfo [options]
 
 Options:
-    -o, --output=N          Output YAML-file. [default: shelephant_hostinfo.yaml].
-    -r, --host=N            Host-name.
-    -p, --prefix=N          Directory (on host) from which to copy.
-    -f, --files=[N]         YAML-file with list of files (on remote). [default: shelephant_dump.yaml]
-    -c, --checksum=[N]      YAML-file with checksums (on remote). [default: shelephant_checksum.yaml]
-        --files-key=N       Path in the YAML-file, separated by "/". [default: /]
-        --checksum-key=N    Path in the YAML-file, separated by "/". [default: /]
-        --ignore            Skip basic checks.
-    -i, --input=[N]         Use host and prefix from existing file. [default: shelephant_hostinfo.yaml]
-        --remove=N...       Remove paths (and checksums) from existing file.
-        --force             Overwrite output file without prompt.
-        --verbose           Verbose all commands.
-    -h, --help              Show help.
-        --version           Show version.
+    -o, --output=N
+        Output YAML-file. [default: shelephant_hostinfo.yaml].
+
+    -r, --host=N
+        Host-name.
+
+    -p, --prefix=N
+        Directory (on host) from which to copy.
+
+    -f, --files=[N]
+        YAML-file with list of files (on remote). [default: shelephant_dump.yaml]
+
+    -c, --checksum=[N]
+        YAML-file with checksums (on remote). [default: shelephant_checksum.yaml]
+
+    --files-key=N
+        Path in the YAML-file, separated by "/". [default: /]
+
+    --checksum-key=N
+        Path in the YAML-file, separated by "/". [default: /]
+
+    --ignore
+        Skip basic checks.
+
+    -i, --input=[N]
+        Use host and prefix from existing file. [default: shelephant_hostinfo.yaml]
+
+    --remove=N...
+        Remove paths (and checksums) from existing file.
+
+    --force
+        Overwrite output file without prompt.
+
+    --verbose
+        Verbose all commands.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
+
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

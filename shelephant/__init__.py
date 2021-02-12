@@ -64,6 +64,12 @@ Squash a dictionary to a single list.
 def ExecCommand(cmd, verbose=False):
     r'''
 Run command, optionally verbose command and its output, and return output.
+
+:type cmd: str
+:param cmd: The command to run.
+
+:type verbose: bool
+:param verbose: Print command and its output.
     '''
 
     if verbose:
@@ -91,8 +97,16 @@ Read YAML file and return its content as ``list`` or ``dict``.
 
 def YamlDump(filename, data, force=False):
     r'''
-Dump data (as ``list`` or ``dict``) to YAML file.
-Unless ``force = True`` the function prompts before overwriting an existing file.
+Dump data to YAML file.
+
+:type filename: str
+:param filename: The output filename.
+
+:type data: list, dict
+:param data: The data to dump.
+
+:type force: bool, optional
+:param force: Do not prompt to overwrite file.
     '''
 
     dirname = os.path.dirname(filename)
@@ -365,30 +379,27 @@ def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
     r'''
 Compute the checksums for ``filepaths``.
 
-:arguments:
+:type filepaths: list of str
+:param filepaths: List of file-paths.
 
-    **filepaths** (``<list<str>>``)
-        List of file-paths.
+:type yaml_hostinfo: str
+:param yaml_hostinfo:
+    File-path of a host-info file (see ``shelephant_hostinfo``).
+    If specified the checksums are **not** computed, but exclusively read from the
+    host-file. The user is responsible for keeping them up-to-date.
 
-:option:
+:type hybrid: bool
+:param hybrid:
+    If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
+    computes missing items on the fly.
 
-    **yaml_hostinfo** (``<str>```)
-        File-path of a host-info file (see ``shelephant_hostinfo``).
-        If specified the checksums are **not** computed, but exclusively read from the
-        host-file. The user is responsible for keeping them up-to-date.
+:type progress: ([``False``] | ``True``)
+:param progress: Show a progress-bar.
 
-    **hybrid** ([``False``] | ``True``)
-        If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
-        computes missing items on the fly.
-
-    **progress** ([``False``] | ``True``)
-        If ``True`` a progress-bar is printed.
-
-:returns:
-
-    (``<list<str>>``)
-        List of checksums, of same length as ``filepaths``.
-        The entry is ``None`` if no checksum was found/read.
+:rtype: list of str
+:return:
+    List of checksums, of same length as ``filepaths``.
+    The entry is ``None`` if no checksum was found/read.
     '''
 
     n = len(filepaths)
@@ -453,47 +464,39 @@ def ShelephantCopy(
     r'''
 Copy/move files.
 
-:arguments:
+:param function copy_function: Function to perform the copy. E.g. ``os.rename``.
 
-    **copy_function** (``<function>``)
-        Function to perform the copy. E.g. `os.rename` or `shutil.copy`.
+:type files: list of str
+:param files: Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
 
-    **files** (``<list<<str>>``)
-        Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
+:param str src_dir: The source directory.
 
-    **src_dir** (``<str>``)
-        The destination directory.
+:param str dest_dir: The destination directory.
 
-    **dest_dir** (``<str>``)
-        The destination directory.
+:param bool checksum: Use checksum to skip files that are the same.
 
-:options:
+:param bool quiet: Proceed without printing progress.
 
-    **checksum** ([``False``] | ``True``)
-        Use checksum to skip files that are the same.
+:param bool force: Continue without prompt.
 
-    **quiet** ([``False``] | ``True``)
-        Proceed without printing progress.
+:param bool print_details: Print copy details.
 
-    **force** ([``False``] | ``True``)
-        Continue without prompt.
+:param bool print_summary: Print copy summary.
 
-    **print_details** ([``True``] | ``False``)
-        Print copy details.
+:param bool print_all: If ``False`` auto-truncation of long output is applied.
 
-    **print_summary** ([``True``] | ``False``)
-        Print copy summary.
+:type theme_name: str or None
+:param theme_name: The name of the color-theme. See ``Theme``.
 
-    **print_all** ([``False``] | ``True``)
-        If ``False`` auto-truncation of long output is applied.
+:type yaml_hostinfo_src: str, optional
+:param yaml_hostinfo_src:
+    Filename of hostinfo for the source, see :py:mod:`shelephant.cli.hostinfo`.
+    Specify these files *only* to use precomputed checksums.
 
-    **theme_name** ([``'none'``] | ``<str>``)
-        The name of the color-theme. See ``Theme``.
-
-    **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
-        Filename of host-files for the source and destination.
-        These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
-        Specify these files *only* to use precomputed checksums.
+:type yaml_hostinfo_dest: str, optional
+:param yaml_hostinfo_dest:
+    Filename of hostinfo for the destination, see :py:mod:`shelephant.cli.hostinfo`.
+    Specify these files *only* to use precomputed checksums.
     '''
 
     assert type(files) == list
@@ -621,58 +624,45 @@ def ShelephantCopySSH(
     yaml_hostinfo_dest = None,
     tempfilename = None):
     r'''
-Send/get files.
+Get/send files.
 
-:arguments:
+:param function copy_function: Function to perform the copy. E.g. ``CopyFromRemote``.
 
-    **copy_function** (``<function>``)
-        Function to perform the copy. E.g. `CopyFromRemote` or `CopyFromRemote`.
+:param std host: Host-name
 
-    **host** (``<str>``)
-        Host-name.
+:type files: list of str
+:param files: Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
 
-    **files** (``<list<<str>>``)
-        Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
+:param str src_dir: The source directory.
 
-    **src_dir** (``<str>``)
-        The destination directory.
+:param str dest_dir: The destination directory.
 
-    **dest_dir** (``<str>``)
-        The destination directory.
+:param bool checksum: Use checksum to skip files that are the same.
 
-:options:
+:param bool quiet: Proceed without printing progress.
 
-    **checksum** ([``False``] | ``True``)
-        Use checksum to skip files that are the same.
+:param bool force: Continue without prompt.
 
-    **quiet** ([``False``] | ``True``)
-        Proceed without printing progress.
+:param bool print_details: Print copy details.
 
-    **force** ([``False``] | ``True``)
-        Continue without prompt.
+:param bool print_summary: Print copy summary.
 
-    **print_details** ([``True``] | ``False``)
-        Print copy details.
+:param bool print_all: If ``False`` auto-truncation of long output is applied.
 
-    **print_summary** ([``True``] | ``False``)
-        Print copy summary.
+:type theme_name: str or None
+:param theme_name: The name of the color-theme. See ``Theme``.
 
-    **print_all** ([``False``] | ``True``)
-        If ``False`` auto-truncation of long output is applied.
+:type yaml_hostinfo_src: str, optional
+:param yaml_hostinfo_src:
+    Filename of hostinfo for the source, see :py:mod:`shelephant.cli.hostinfo`.
+    Specify these files *only* to use precomputed checksums.
 
-    **verbose** ([``False``] | ``True``)
-        Verbose all operations.
+:type yaml_hostinfo_dest: str, optional
+:param yaml_hostinfo_dest:
+    Filename of hostinfo for the destination, see :py:mod:`shelephant.cli.hostinfo`.
+    Specify these files *only* to use precomputed checksums.
 
-    **theme_name** ([``'none'``] | ``<str>``)
-        The name of the color-theme. See ``Theme``.
-
-    **yaml_hostinfo_src, yaml_hostinfo_src** (``<str>``)
-        Filename of host-files for the source and destination.
-        These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
-        Specify these files *only* to use precomputed checksums.
-
-    **tempfilename (``<str>``)
-        Filename for temporary file to use (e.g. for ``rsync``).
+:param str tempfilename: Filename for temporary file to use (e.g. for ``rsync``).
     '''
 
     assert type(files) == list
@@ -810,10 +800,9 @@ Return dictionary of colors.
         'bright' : '...',
     }
 
-:options:
+:param str theme: Select color-theme.
 
-    **theme** ([``'dark'``] | ``<str>``)
-        Select color-theme.
+:rtype: dict
     '''
 
     if theme == 'dark':
@@ -842,39 +831,34 @@ Rich string.
 
     All options are attributes, that can be modified at all times.
 
-:options:
+.. note::
 
-    **data** (``<str>`` | ``None``)
-        The data.
+    Available methods:
 
-    **width** ([``None``] | ``<int>``)
-        Print width (formatted print only).
+    *   ``A.format()`` :  Formatted string.
+    *   ``str(A)`` : Unformatted string.
+    *   ``A.isnumeric()`` : Return if the "data" is numeric.
+    *   ``int(A)`` : Dummy integer.
+    *   ``float(A)`` : Dummy float.
 
-    **color** ([``None``] | ``<str>``)
-        Print color, e.g. "1;32" for bold green (formatted print only).
+:type data: str, None
+:param data: The data.
 
-    **align** ([``'<'``] | ``'>'``)
-        Print alignment (formatted print only).
+:type width: None, int
+:param width: Print width (formatted print only).
 
-    **dummy** ([``0``] | ``<int>`` | ``<float>``)
-        Dummy numerical value.
+:type color: None, str
+:param color: Print color, e.g. "1;32" for bold green (formatted print only).
+
+:type align: ``'<'``, ``'>'``
+:param align: Print alignment (formatted print only).
+
+:type dummy: 0, int, float
+:param dummy: Dummy numerical value.
 
 :methods:
 
-    **A.format()**
-        Formatted string.
 
-    **str(A)**
-        Unformatted string.
-
-    **A.isnumeric()**
-        Return if the "data" is numeric.
-
-    **int(A)**
-        Dummy integer.
-
-    **float(A)**
-        Dummy float.
     '''
 
     def __init__(self, data, width=None, align='<', color=None, dummy=0):

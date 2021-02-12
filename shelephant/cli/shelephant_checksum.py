@@ -10,13 +10,26 @@ Arguments:
     YAML-file with file-paths. Default: shelephant_dump.yaml
 
 Options:
-    -o, --output=N  Output YAML-file. [default: shelephant_checksum.yaml]
-    -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
-    -l, --local=N   Add local 'host' information to use precomputed checksums.
-    -f, --force     Overwrite output file without prompt.
-    -q, --quiet     Do not print progress.
-    -h, --help      Show help.
-        --version   Show version.
+    -o, --output=N
+        Output YAML-file. [default: shelephant_checksum.yaml]
+
+    -k, --key=N
+        Path in the YAML-file, separated by "/". [default: /]
+
+    -l, --local=N
+        Add local 'host' information to use precomputed checksums.
+
+    -f, --force
+        Overwrite output file without prompt.
+
+    -q, --quiet
+        Do not print progress.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

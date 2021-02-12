@@ -8,14 +8,29 @@ Argument(s):
     Files to dump. By default the filenames are written relative to the output file.
 
 Options:
-    -o, --output=N      Output YAML-file. [default: shelephant_dump.yaml]
-    -a, --append        Append existing file.
-    -c, --command       Interpret the input as a command (instead of as filenames).
-        --abspath       Store absolute paths (default: relative to the output file).
-    -s, --sort          Sort filenames.
-    -f, --force         Overwrite output file without prompt.
-    -h, --help          Show help.
-        --version       Show version.
+    -o, --output=N
+        Output YAML-file. [default: shelephant_dump.yaml]
+
+    -a, --append
+        Append existing file.
+
+    -c, --command
+        Interpret the input as a command (instead of as filenames).
+
+    --abspath
+        Store absolute paths (default: relative to the output file).
+
+    -s, --sort
+        Sort filenames.
+
+    -f, --force
+        Overwrite output file without prompt.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

@@ -13,13 +13,26 @@ Arguments:
     main.yaml       Main source.
 
 Options:
-    -o, --output=N  Output file. (default: <main.yaml>)
-        --replace   Replace fields in <main.yaml> that are also in <branch.yaml>. (default: append)
-        --skip      Skip fields in <branch.yaml> that are also in <main.yaml>.
-        --no-path   Do not interpret data as paths.
-    -f, --force     Overwrite output file without prompt.
-    -h, --help      Show help.
-        --version   Show version.
+    -o, --output=N
+        Output file. (default: <main.yaml>)
+
+    --replace
+        Replace fields in <main.yaml> that are also in <branch.yaml>. (default: append)
+
+    --skip
+        Skip fields in <branch.yaml> that are also in <main.yaml>.
+
+    --no-path
+        Do not interpret data as paths.
+
+    -f, --force
+        Overwrite output file without prompt.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

@@ -13,18 +13,41 @@ Arguments:
     hostinfo.yaml   YAML-file with host information. Default: shelephant_hostinfo.yaml
 
 Options:
-    -k, --key=N     Path in <files.yaml>, separated by "/". [default: /]
-        --colors=M  Select color scheme from: none, dark. [default: dark]
-    -q, --quiet     Do not print progress.
-    -f, --force     Force overwrite of all existing (but not matching) files.
-    -l, --local=N   Add local 'host' information to use precomputed checksums.
-    -s, --summary   Print summary (and no details unless specified).
-    -d, --details   Print details (and no summary unless specified).
-        --scp       Use ``scp`` instead of ``rysnc`` as backend.
-        --temp=N    Temporary filename to communicate with rsync. [default: shelephant_files.txt]
-        --verbose   Verbose all commands.
-    -h, --help      Show help.
-        --version   Show version.
+    -k, --key=N
+        Path in <files.yaml>, separated by "/". [default: /]
+
+    --colors=M
+        Select color scheme from: none, dark. [default: dark]
+
+    -q, --quiet
+        Do not print progress.
+
+    -f, --force
+        Force overwrite of all existing (but not matching) files.
+
+    -l, --local=N
+        Add local 'host' information to use precomputed checksums.
+
+    -s, --summary
+        Print summary (and no details unless specified).
+
+    -d, --details
+        Print details (and no summary unless specified).
+
+    --scp
+        Use ``scp`` instead of ``rysnc`` as backend.
+
+    --temp=N
+        Temporary filename to communicate with rsync. [default: shelephant_files.txt]
+
+    --verbose
+        Verbose all commands.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
