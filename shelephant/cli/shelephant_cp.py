@@ -11,15 +11,32 @@ Argument:
     <destination>   Prefix of the destination.
 
 Options:
-    -c, --checksum  Use checksum to skip files that are the same.
-    -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
-        --colors=M  Select color scheme from: none, dark. [default: dark]
-    -q, --quiet     Do not print progress.
-    -s, --summary   Print summary (and no details unless specified).
-    -d, --details   Print details (and no summary unless specified).
-    -f, --force     Move without prompt.
-    -h, --help      Show help.
-        --version   Show version.
+    -c, --checksum
+        Use checksum to skip files that are the same.
+
+    -k, --key=N
+        Path in the YAML-file, separated by "/". [default: /]
+
+    --colors=M
+        Select color scheme from: none, dark. [default: dark]
+
+    -q, --quiet
+        Do not print progress.
+
+    -s, --summary
+        Print summary (and no details unless specified).
+
+    -d, --details
+        Print details (and no summary unless specified).
+
+    -f, --force
+        Move without prompt.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

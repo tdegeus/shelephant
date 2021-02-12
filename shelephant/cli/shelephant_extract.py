@@ -14,12 +14,23 @@ Arguments:
     key             The keys to read from the file.
 
 Options:
-    -o, --output=N  Output file. (default: <input.yaml>)
-        --no-path   Do not interpret data as paths.
-    -s, --squash    Squash fields into a single field.
-    -f, --force     Overwrite output file without prompt.
-    -h, --help      Show help.
-        --version   Show version.
+    -o, --output=N
+        Output file. (default: <input.yaml>)
+
+    --no-path
+        Do not interpret data as paths.
+
+    -s, --squash
+        Squash fields into a single field.
+
+    -f, --force
+        Overwrite output file without prompt.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

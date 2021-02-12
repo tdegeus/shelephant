@@ -10,10 +10,17 @@ Argument:
     YAML-file with filenames. Default: shelephant_dump.yaml
 
 Options:
-    -k, --key=N     Path in the YAML-file, separated by "/". [default: /]
-    -f, --force     Remove without prompt.
-    -h, --help      Show help.
-        --version   Show version.
+    -k, --key=N
+        Path in the YAML-file, separated by "/". [default: /]
+
+    -f, --force
+        Remove without prompt.
+
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''

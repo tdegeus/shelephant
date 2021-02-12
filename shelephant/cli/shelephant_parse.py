@@ -8,8 +8,11 @@ Argument:
     File path.
 
 Options:
-    -h, --help          Show help.
-        --version       Show version.
+    -h, --help
+        Show help.
+
+    --version
+        Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
