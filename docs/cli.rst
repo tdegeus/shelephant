@@ -3,6 +3,23 @@
 Command-line tools
 ******************
 
+Overview
+========
+
+.. autosummary::
+
+    shelephant.cli.shelephant_dump
+    shelephant.cli.shelephant_checksum
+    shelephant.cli.shelephant_cp
+    shelephant.cli.shelephant_mv
+    shelephant.cli.shelephant_rm
+    shelephant.cli.shelephant_hostinfo
+    shelephant.cli.shelephant_get
+    shelephant.cli.shelephant_send
+    shelephant.cli.shelephant_merge
+    shelephant.cli.shelephant_parse
+    shelephant.cli.shelephant_extract
+
 List files
 ==========
 

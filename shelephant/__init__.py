@@ -14,7 +14,7 @@ import tqdm
 __version__ = '0.13.0'
 
 
-def FlattenList_detail(data):
+def _FlattenList_detail(data):
     r'''
 See https://stackoverflow.com/a/17485785/2646505
     '''
@@ -31,10 +31,10 @@ def FlattenList(data):
     r'''
 Flatten a nested list to a one dimensional list.
     '''
-    return list(FlattenList_detail(data))
+    return list(_FlattenList_detail(data))
 
 
-def Squash_detail(data, parent_key='', sep='_'):
+def _Squash_detail(data, parent_key='', sep='_'):
     r'''
 See https://stackoverflow.com/a/6027615/2646505
     '''
@@ -46,7 +46,7 @@ See https://stackoverflow.com/a/6027615/2646505
         new_key = parent_key + sep + k if parent_key else k
 
         if isinstance(v, collections.abc.MutableMapping):
-            items.extend(Squash_detail(v, new_key, sep=sep).items())
+            items.extend(_Squash_detail(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
 
@@ -58,10 +58,10 @@ def Squash(data):
 Squash a dictionary to a single list.
     '''
 
-    return FlattenList(list(Squash_detail(data).values()))
+    return FlattenList(list(_Squash_detail(data).values()))
 
 
-def ExecCommand(cmd, verbose=False):
+def _ExecCommand(cmd, verbose=False):
     r'''
 Run command, optionally verbose command and its output, and return output.
 
@@ -207,7 +207,7 @@ Check if a file exists on a remote system. Uses ``ssh``.
     cmd = 'ssh {host:s} test -f "{source:s}" && echo found || echo not found'.format(
         host=host, source=source)
 
-    ret = ExecCommand(cmd, args['--verbose'])
+    ret = _ExecCommand(cmd, args['--verbose'])
 
     if ret == 'found':
         return True
@@ -223,7 +223,7 @@ Copy a file from a remote system. Uses ``scp -p``.
     cmd = 'scp -p {host:s}:{source:s} {dest:s}'.format(
         host=host, source=source, dest=dest)
 
-    ExecCommand(cmd, verbose)
+    _ExecCommand(cmd, verbose)
 
 
 def CopyToRemote(host, source, dest, verbose=False):
@@ -234,7 +234,7 @@ Copy a file to a remote system. Uses ``scp -p``.
     cmd = 'scp -p {source:s} {host:s}:{dest:s}'.format(
         host=host, source=source, dest=dest)
 
-    ExecCommand(cmd, verbose)
+    _ExecCommand(cmd, verbose)
 
 
 def RsyncFromRemote(
@@ -266,7 +266,7 @@ Copy files to a remote system using ``rsync -a --files-from``.
         cmd = 'rsync -a --files-from="{files:s}" {hostname:s}:{source_dir:s} {dest_dir:s}'.format(
             hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
 
-        return ExecCommand(cmd, verbose)
+        return _ExecCommand(cmd, verbose)
 
     # Run while printing output
 
@@ -318,7 +318,7 @@ Copy files from a remote system using ``rsync -a --files-from``.
         cmd = 'rsync -a --files-from="{files:s}" {source_dir:s} {hostname:s}:{dest_dir:s}'.format(
             hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
 
-        return ExecCommand(cmd, verbose)
+        return _ExecCommand(cmd, verbose)
 
     # Run while printing output
 
