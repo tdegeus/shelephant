@@ -1,5 +1,8 @@
 '''shelephant_get
     Copy files using earlier collected information on which files to copy from where.
+    By default the back-end is ``rysnc -a --from-file="temp" host:source_dir dest_dir``.
+    Alternatively ``scp -p host:source_file dest_file`` can be used.
+    Typically, ``rsync`` will be faster, especially in copying a lot of small files.
 
 Usage:
     shelephant_get [options]
@@ -15,6 +18,8 @@ Options:
     -l, --local=N   Add local 'host' information to use precomputed checksums.
     -s, --summary   Print summary (and no details unless specified).
     -d, --details   Print details (and no summary unless specified).
+        --scp       Use ``scp`` instead of ``rysnc`` as backend.
+        --temp=N    Temporary filename to communicate with rsync. [default: shelephant_files.txt]
         --verbose   Verbose all commands.
     -h, --help      Show help.
         --version   Show version.
@@ -31,6 +36,7 @@ import math
 from .. import __version__
 from .. import YamlRead
 from .. import CopyFromRemote
+from .. import RsyncFromRemote
 from .. import ShelephantCopy
 from .. import ShelephantCopySSH
 
@@ -60,7 +66,7 @@ def main():
                 yaml_hostinfo_src = source,
                 yaml_hostinfo_dest = args['--local'])
 
-        else:
+        elif args['--scp']:
 
             ShelephantCopySSH(
                 copy_function = CopyFromRemote,
@@ -78,6 +84,26 @@ def main():
                 theme_name = args['--colors'].lower(),
                 yaml_hostinfo_src = source,
                 yaml_hostinfo_dest = args['--local'])
+
+        else:
+
+            ShelephantCopySSH(
+                copy_function = RsyncFromRemote,
+                host = data['host'],
+                files = data['files'],
+                src_dir = data['prefix'],
+                dest_dir = os.path.dirname(source),
+                checksum = 'checksum' in data,
+                quiet = args['--quiet'],
+                force = args['--force'],
+                print_details = not (args['--force'] or args['--summary']) or args['--details'],
+                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
+                print_all = args['--details'],
+                verbose = args['--verbose'],
+                theme_name = args['--colors'].lower(),
+                yaml_hostinfo_src = source,
+                yaml_hostinfo_dest = args['--local'],
+                tempfilename = args['--temp'])
 
     except Exception as e:
 

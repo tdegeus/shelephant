@@ -1,5 +1,7 @@
 import click
 import os
+import sys
+import re
 import yaml
 import operator
 import functools
@@ -219,6 +221,104 @@ Copy a file to a remote system. Uses ``scp -p``.
         host=host, source=source, dest=dest)
 
     ExecCommand(cmd, verbose)
+
+
+def RsyncFromRemote(
+    hostname,
+    source_dir,
+    dest_dir,
+    tempfilename,
+    files,
+    force=False,
+    verbose=False,
+    progress=True):
+    r'''
+Copy files to a remote system using ``rsync -a --files-from``.
+    '''
+
+    assert type(tempfilename) == str
+
+    if not force:
+        if os.path.isfile(tempfilename):
+            if not click.confirm('Overwrite "{0:s}"?'.format(tempfilename)):
+                raise IOError('Cancelled')
+
+    open(tempfilename, 'w').write('\n'.join(files))
+
+    # Run without printing output
+
+    if not progress:
+
+        cmd = 'rsync -a --files-from="{files:s}" {hostname:s}:{source_dir:s} {dest_dir:s}'.format(
+            hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+
+        return ExecCommand(cmd, verbose)
+
+    # Run while printing output
+
+    cmd = 'rsync -aP --files-from="{files:s}" {hostname:s}:{source_dir:s} {dest_dir:s}'.format(
+        hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+
+    if verbose:
+        print(cmd)
+
+    pbar = tqdm.trange(len(files))
+
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+    for line in iter(process.stdout.readline, ''):
+        line = line.decode("utf-8")
+        if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
+            pbar.update()
+
+
+def RsyncToRemote(
+    hostname,
+    source_dir,
+    dest_dir,
+    tempfilename,
+    files,
+    force=False,
+    verbose=False,
+    progress=True):
+    r'''
+Copy files from a remote system using ``rsync -a --files-from``.
+    '''
+
+    assert type(tempfilename) == str
+
+    if not force:
+        if os.path.isfile(tempfilename):
+            if not click.confirm('Overwrite "{0:s}"?'.format(tempfilename)):
+                raise IOError('Cancelled')
+
+    open(tempfilename, 'w').write('\n'.join(files))
+
+    # Run without printing output
+
+    if not progress:
+
+        cmd = 'rsync -a --files-from="{files:s}" {source_dir:s} {hostname:s}:{dest_dir:s}'.format(
+            hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+
+        return ExecCommand(cmd, verbose)
+
+    # Run while printing output
+
+    cmd = 'rsync -aP --files-from="{files:s}" {source_dir:s} {hostname:s}:{dest_dir:s}'.format(
+        hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+
+    if verbose:
+        print(cmd)
+
+    pbar = tqdm.trange(len(files))
+
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+
+    for line in iter(process.stdout.readline, ''):
+        line = line.decode("utf-8")
+        if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
+            pbar.update()
 
 
 def MakeDir(dirname, force=False):
@@ -512,7 +612,8 @@ def ShelephantCopySSH(
     verbose = False,
     theme_name = 'none',
     yaml_hostinfo_src = None,
-    yaml_hostinfo_dest = None):
+    yaml_hostinfo_dest = None,
+    tempfilename = None):
     r'''
 Send/get files.
 
@@ -563,6 +664,9 @@ Send/get files.
         Filename of host-files for the source and destination.
         These files contain existing files and optionally checksums, see ``shelephant_hostinfo``.
         Specify these files *only* to use precomputed checksums.
+
+    **tempfilename (``<str>``)
+        Filename for temporary file to use (e.g. for ``rsync``).
     '''
 
     assert type(files) == list
@@ -676,6 +780,10 @@ Send/get files.
     src = np.array(src)[i]
     dest = np.array(dest)[i]
     files = np.array(files)[i]
+
+    if copy_function == RsyncToRemote or copy_function == RsyncFromRemote:
+        dest_dir = dest_dir if len(dest_dir) > 0 else '.'
+        return copy_function(host, src_dir, dest_dir, tempfilename, files, force, verbose, not quiet)
 
     pbar = tqdm.trange(len(files), disable=quiet)
     for i in pbar:
