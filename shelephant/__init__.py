@@ -262,14 +262,17 @@ Copy files to a remote system using ``rsync -a --files-from``.
     if verbose:
         print(cmd)
 
-    pbar = tqdm.trange(len(files))
+    pbar = tqdm.tqdm(total=len(files))
+    sbar = tqdm.tqdm(unit='B', unit_scale=True)
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
     for line in iter(process.stdout.readline, ''):
         line = line.decode("utf-8")
         if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
+            e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
             pbar.update()
+            sbar.update(e)
 
 
 def RsyncToRemote(
@@ -311,14 +314,17 @@ Copy files from a remote system using ``rsync -a --files-from``.
     if verbose:
         print(cmd)
 
-    pbar = tqdm.trange(len(files))
+    pbar = tqdm.tqdm(total=len(files))
+    sbar = tqdm.tqdm(unit='B', unit_scale=True)
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
     for line in iter(process.stdout.readline, ''):
         line = line.decode("utf-8")
         if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
+            e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
             pbar.update()
+            sbar.update(e)
 
 
 def MakeDir(dirname, force=False):
