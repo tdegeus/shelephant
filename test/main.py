@@ -7,6 +7,7 @@ import numpy as np
 from shelephant import YamlGetItem
 from shelephant import YamlRead
 from shelephant import YamlDump
+from shelephant import GetDeepestPaths
 
 
 def run(cmd, verbose=False):
@@ -32,6 +33,30 @@ class Test_tools(unittest.TestCase):
         ret = [1, 2, 3, 4, 5]
 
         self.assertEqual(ret, Squash(arg))
+
+    def test_deepest_dirs(self):
+
+        dirnames = [
+            "foo/bar",
+            "foo/bar/mydir",
+            "bar/mydir",
+            "bar" ,
+            "bar/mydir2",
+            "foo/bar/mydir/deep",
+            "foo/bar/mydir/deep/deeper",
+            "foo/bar/mydir/deep/also",
+            "foo/shallow"]
+
+        ret = GetDeepestPaths(dirnames)
+
+        d = [
+            "bar/mydir",
+            "bar/mydir2",
+            "foo/bar/mydir/deep/deeper",
+            "foo/bar/mydir/deep/also",
+            "foo/shallow"]
+
+        self.assertEqual(sorted(ret), sorted(d))
 
 
 class Test_checksum(unittest.TestCase):
