@@ -344,6 +344,8 @@ Copy files from a remote system using ``rsync -a --files-from``.
 def MakeDir(dirname, force=False):
     r'''
 Create a directory if it does not yet exist.
+
+:param bool force: Create directories without prompt.
     '''
 
     if len(dirname) == 0:
@@ -355,7 +357,7 @@ Create a directory if it does not yet exist.
     if not force:
         print('mkdir -p {0:s}'.format(dirname))
         if not click.confirm('Proceed?'):
-            return 1
+            raise IOError('Cancelled')
 
     os.makedirs(dirname)
 
@@ -384,7 +386,7 @@ Compute the checksums for ``filepaths``.
 
 :type yaml_hostinfo: str
 :param yaml_hostinfo:
-    File-path of a host-info file (see ``shelephant_hostinfo``).
+    File-path of a host-info file (see :py:mod:`shelephant.cli.hostinfo`).
     If specified the checksums are **not** computed, but exclusively read from the
     host-file. The user is responsible for keeping them up-to-date.
 
@@ -593,7 +595,7 @@ Copy/move files.
 
     if not force:
         if not click.confirm('Proceed?'):
-            return 1
+            raise IOError('Cancelled')
 
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
@@ -650,7 +652,7 @@ Get/send files.
 :param bool print_all: If ``False`` auto-truncation of long output is applied.
 
 :type theme_name: str or None
-:param theme_name: The name of the color-theme. See ``Theme``.
+:param theme_name: The name of the color-theme. See :py:mod:`shelephant.Theme`.
 
 :type yaml_hostinfo_src: str, optional
 :param yaml_hostinfo_src:
@@ -770,7 +772,7 @@ Get/send files.
 
     if not force:
         if not click.confirm('Proceed?'):
-            return 1
+            raise IOError('Cancelled')
 
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
