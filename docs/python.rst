@@ -29,7 +29,9 @@ File-path operations
 
     shelephant.PrefixPaths
     shelephant.ChangeRootOfRelativePaths
+    shelephant.GetDeepestPaths
     shelephant.MakeDir
+    shelephant.MakeDirs
     shelephant.GetSHA256
     shelephant.GetChecksums
 

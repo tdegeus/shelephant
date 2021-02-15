@@ -9,6 +9,7 @@ import subprocess
 import collections.abc
 import numpy as np
 import tqdm
+from collections import defaultdict
 
 
 __version__ = '0.14.0'
@@ -362,6 +363,65 @@ Create a directory if it does not yet exist.
     os.makedirs(dirname)
 
 
+def _to_tree(d):
+    t = defaultdict(list)
+    for a, *b in d:
+        t[a].append(b)
+    return {a: None if not (k := list(filter(None, b))) else _to_tree(k) for a, b in t.items()}
+
+def _get_deepest_paths(d, c=[]):
+    r'''
+See https://stackoverflow.com/a/66211932/2646505
+    '''
+    for a, b in d.items():
+        if b is None:
+            yield '/'.join(c + [a])
+        else:
+            yield from _get_deepest_paths(b, c + [a])
+
+def GetDeepestPaths(paths):
+    r'''
+Return list with only the deepest paths.
+
+For example::
+
+    GetDeepestPaths(["foo/bar/dir", "foo/bar"])
+    >>> ["foo/bar/dir"]
+
+:type paths: list of str
+:param paths: List of paths.
+
+:rtype: list of str
+:return: List of paths.
+    '''
+
+    return list(_get_deepest_paths(_to_tree([i.split('/') for i in paths])))
+
+
+def MakeDirs(dirnames, force=False):
+    r'''
+Same as :py:mod:`shelephant.MakeDir` but for list of directories.
+
+:param bool force: Create directories without prompt.
+    '''
+
+    dirnames = [dirname for dirname in dirnames if not os.path.isdir(dirname)]
+
+    if len(dirnames) == 0:
+        return 0
+
+    dirnames = GetDeepestPaths(dirnames)
+
+    if not force:
+        for dirname in dirnames:
+            print('mkdir -p {0:s}'.format(dirname))
+        if not click.confirm('Proceed?'):
+            raise IOError('Cancelled')
+
+    for dirname in dirnames:
+        os.makedirs(dirname)
+
+
 def GetSHA256(filename, size = 2 ** 10):
     r'''
 Get SHA256 for a file.
@@ -520,22 +580,25 @@ Copy/move files.
         if not os.path.isfile(file):
             raise IOError('"{0:s}" does not exists'.format(file))
 
-    if MakeDir(dest_dir, force):
-        return 1
+    if not os.path.isdir(dest_dir):
 
-    if checksum == True:
-        src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
-        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
+        create = [True for i in range(n)]
 
-    for i in range(n):
-        if os.path.isfile(dest[i]):
-            if checksum:
-                if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
-                    skip[i] = True
-                    continue
-            overwrite[i] = True
-            continue
-        create[i] = True
+    else:
+
+        if checksum == True:
+            src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
+            dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
+
+        for i in range(n):
+            if os.path.isfile(dest[i]):
+                if checksum:
+                    if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
+                        skip[i] = True
+                        continue
+                overwrite[i] = True
+                continue
+            create[i] = True
 
     l = max([len(file) for file in files])
     ncreate = sum(create)
@@ -596,6 +659,8 @@ Copy/move files.
     if not force:
         if not click.confirm('Proceed?'):
             raise IOError('Cancelled')
+
+    MakeDirs(list(set([os.path.dirname(i) for i in dest])))
 
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
