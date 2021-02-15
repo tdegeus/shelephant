@@ -12,7 +12,7 @@ import tqdm
 from collections import defaultdict
 
 
-__version__ = '0.14.0'
+__version__ = '0.14.1'
 
 
 def _FlattenList_detail(data):

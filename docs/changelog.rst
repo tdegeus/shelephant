@@ -3,6 +3,13 @@
 Change-log
 **********
 
+v0.14.1
+=======
+
+*   Copy functions: improving error message
+*   Copy functions: creating destination directories
+*   Using assertions to simplify the code
+
 v0.14.0
 =======
 
