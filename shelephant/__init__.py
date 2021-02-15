@@ -578,7 +578,7 @@ Copy/move files.
 
     for file in src:
         if not os.path.isfile(file):
-            raise IOError('"{0:s}" does not exists'.format(file))
+            raise IOError('Input file "{0:s}" does not exists'.format(file))
 
     if not os.path.isdir(dest_dir):
 
