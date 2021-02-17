@@ -846,6 +846,7 @@ Get/send files.
 
     if copy_function == RsyncToRemote or copy_function == RsyncFromRemote:
         dest_dir = dest_dir if len(dest_dir) > 0 else '.'
+        src_dir = src_dir if len(src_dir) > 0 else '.'
         return copy_function(host, src_dir, dest_dir, tempfilename, files, force, verbose, not quiet)
 
     pbar = tqdm.trange(len(files), disable=quiet)
