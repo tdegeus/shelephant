@@ -3,6 +3,11 @@
 Change-log
 **********
 
+v0.14.2
+=======
+
+*   Bugfix: empty path given to rsync.
+
 v0.14.1
 =======
 
