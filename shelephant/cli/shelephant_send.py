@@ -49,6 +49,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -66,6 +69,7 @@ from .. import CopyToRemote
 from .. import RsyncToRemote
 from .. import ShelephantCopy
 from .. import ShelephantCopySSH
+from .. import git
 
 
 def main():
@@ -73,6 +77,11 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
         source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
         hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
         data = YamlRead(hostinfo)

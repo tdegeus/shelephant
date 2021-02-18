@@ -22,6 +22,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -32,6 +35,7 @@ import os
 from .. import __version__
 from .. import YamlGetItem
 from .. import PrefixPaths
+from .. import git
 
 
 def main():
@@ -39,6 +43,11 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
         key = list(filter(None, args['--key'].split('/')))
         source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
         files = YamlGetItem(source, key)

@@ -10,6 +10,7 @@ import collections.abc
 import numpy as np
 import tqdm
 from collections import defaultdict
+from .git import *
 
 
 __version__ = '0.14.2'

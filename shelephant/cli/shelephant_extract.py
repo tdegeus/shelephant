@@ -6,6 +6,7 @@
     to being relative to --output.
 
 Usage:
+    shelephant_extract [options]
     shelephant_extract [options] <input.yaml>
     shelephant_extract [options] <input.yaml> <key>...
 
@@ -32,6 +33,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -45,6 +49,7 @@ from .. import YamlGetItem
 from .. import YamlDump
 from .. import ChangeRootOfRelativePaths
 from .. import Squash
+from .. import git
 
 
 def main():
@@ -52,6 +57,15 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
+        if not args['<input.yaml>']:
+            print("A YAML-file is required as input")
+            return 1
+
         input_dir = os.path.dirname(args['<input.yaml>'])
         output = args['--output'] if args['--output'] else args['<input.yaml>']
         output_dir = os.path.dirname(output)

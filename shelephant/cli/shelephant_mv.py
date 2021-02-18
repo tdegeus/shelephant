@@ -3,6 +3,7 @@
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
 Usage:
+    shelephant_mv [options]
     shelephant_mv [options] <destination>
     shelephant_mv [options] <input.yaml> <destination>
 
@@ -38,6 +39,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -47,6 +51,7 @@ import os
 from .. import __version__
 from .. import ShelephantCopy
 from .. import YamlGetItem
+from .. import git
 
 
 def main():
@@ -54,6 +59,15 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
+        if not args["<destination>"]:
+            print("A destination is required")
+            return 1
+
         source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
         key = list(filter(None, args['--key'].split('/')))
 

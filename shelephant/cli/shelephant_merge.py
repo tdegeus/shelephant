@@ -6,6 +6,7 @@
     to being relative to --output.
 
 Usage:
+    shelephant_merge [options]
     shelephant_merge [options] <branch.yaml> <main.yaml>
 
 Arguments:
@@ -34,6 +35,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -45,6 +49,8 @@ from .. import __version__
 from .. import YamlRead
 from .. import YamlDump
 from .. import ChangeRootOfRelativePaths
+from .. import git
+
 
 def recursive_items(dictionary):
     for key, value in dictionary.items():
@@ -59,6 +65,15 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
+        if not args['<branch.yaml>'] or not args['<main.yaml>']:
+            print("Two YAML input files are required")
+            return 1
+
         main = YamlRead(args['<main.yaml>'])
         branch = YamlRead(args['<branch.yaml>'])
         output = args['--output'] if args['--output'] else args['<main.yaml>']

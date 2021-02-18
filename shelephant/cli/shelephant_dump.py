@@ -2,6 +2,7 @@
     Dump filenames to a YAML-file.
 
 Usage:
+    shelephant_dump [options]
     shelephant_dump [options] <file>...
 
 Argument(s):
@@ -32,6 +33,9 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
+
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
@@ -42,6 +46,7 @@ import subprocess
 from .. import __version__
 from .. import YamlDump
 from .. import YamlRead
+from .. import git
 
 
 def main():
@@ -49,6 +54,11 @@ def main():
     try:
 
         args = docopt.docopt(__doc__, version=__version__)
+
+        if args['--git']:
+            print(", ".join(git()))
+            return 0
+
         prefix = os.path.dirname(args['--output'])
         files = args['<file>']
 

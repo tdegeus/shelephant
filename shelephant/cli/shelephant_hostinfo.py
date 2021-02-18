@@ -47,6 +47,8 @@ Options:
     --version
         Show version.
 
+    --git
+        Print git branch and commit hash at the time this script was installed.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
@@ -62,6 +64,7 @@ from .. import YamlGetItem
 from .. import YamlDump
 from .. import YamlRead
 from .. import CopyFromRemote
+from .. import git
 
 
 def remove(data, rm):
@@ -111,6 +114,7 @@ def main():
         parser.add_argument(      '--ignore', required=False, action='store_true')
         parser.add_argument(      '--verbose', required=False, action='store_true')
         parser.add_argument('-v', '--version', action='version', version=__version__)
+        parser.add_argument(      '--git', action='version', version=", ".join(git()))
 
         p = parser.parse_args()
 

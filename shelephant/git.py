@@ -1,2 +1,2 @@
 def git():
-    return None
+    return ("None", "None")
