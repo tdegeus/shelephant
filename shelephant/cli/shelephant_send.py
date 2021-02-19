@@ -59,7 +59,7 @@ import shutil
 import math
 import numpy as np
 
-from .. import __version__
+from .. import version
 from .. import YamlRead
 from .. import YamlGetItem
 from .. import CopyToRemote
@@ -72,7 +72,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
         hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
         data = YamlRead(hostinfo)

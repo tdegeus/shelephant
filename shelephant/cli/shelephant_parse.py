@@ -19,7 +19,7 @@ Options:
 
 import docopt
 
-from .. import __version__
+from .. import version
 from .. import YamlRead
 from .. import YamlPrint
 
@@ -28,7 +28,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         source = args['<file.yaml>']
         data = YamlRead(source)
         YamlPrint(data)

@@ -4,12 +4,8 @@ from setuptools import find_packages
 
 import re
 
-filepath = 'shelephant/__init__.py'
-__version__ = re.findall(r'__version__ = \'(.*)\'', open(filepath).read())[0]
-
 setup(
     name = 'shelephant',
-    version = __version__,
     license = 'MIT',
     author = 'Tom de Geus',
     author_email = 'tom@geus.me',
@@ -18,6 +14,8 @@ setup(
     keywords = 'YAML, Bash',
     url = 'https://github.com/tdegeus/shelephant',
     packages = find_packages(),
+    use_scm_version = {'write_to': 'shelephant/version.py'},
+    setup_requires = ['setuptools_scm'],
     install_requires = ['docopt', 'click', 'pyyaml', 'mergedeep', 'numpy'],
     entry_points = {
         'console_scripts': [

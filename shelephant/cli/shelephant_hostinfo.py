@@ -57,7 +57,7 @@ import tempfile
 import shutil
 import numpy as np
 
-from .. import __version__
+from .. import version
 from .. import YamlGetItem
 from .. import YamlDump
 from .. import YamlRead
@@ -110,7 +110,7 @@ def main():
         parser.add_argument(      '--remove', required=False, nargs='*')
         parser.add_argument(      '--ignore', required=False, action='store_true')
         parser.add_argument(      '--verbose', required=False, action='store_true')
-        parser.add_argument('-v', '--version', action='version', version=__version__)
+        parser.add_argument('-v', '--version', action='version', version=version)
 
         p = parser.parse_args()
 

@@ -10,9 +10,7 @@ import collections.abc
 import numpy as np
 import tqdm
 from collections import defaultdict
-
-
-__version__ = '0.14.2'
+from .version import *
 
 
 def _FlattenList_detail(data):
