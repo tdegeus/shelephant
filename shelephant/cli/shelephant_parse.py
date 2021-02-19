@@ -39,7 +39,7 @@ def main():
             print(", ".join(git()))
             return 0
 
-        if not args["<file>"]:
+        if not args["<file.yaml>"]:
             print("A YAML-file is required as input")
             return 1
 

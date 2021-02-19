@@ -783,7 +783,7 @@ class Test_rm(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_dump --force foo.txt bar.txt')
         output = run('shelephant_rm -f shelephant_dump.yaml')
 
         self.assertFalse(os.path.isfile('foo.txt'))
