@@ -14,7 +14,7 @@ setup(
     keywords = 'YAML, Bash',
     url = 'https://github.com/tdegeus/shelephant',
     packages = find_packages(),
-    use_scm_version = {'write_to': 'shelephant/version.py'},
+    use_scm_version = {'write_to': 'shelephant/_version.py'},
     setup_requires = ['setuptools_scm'],
     install_requires = ['docopt', 'click', 'pyyaml', 'mergedeep', 'numpy'],
     entry_points = {
