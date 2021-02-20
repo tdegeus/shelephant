@@ -40,7 +40,7 @@ import os
 import mergedeep
 import functools
 
-from .. import __version__
+from .. import version
 from .. import YamlGetItem
 from .. import YamlDump
 from .. import ChangeRootOfRelativePaths
@@ -51,7 +51,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         input_dir = os.path.dirname(args['<input.yaml>'])
         output = args['--output'] if args['--output'] else args['<input.yaml>']
         output_dir = os.path.dirname(output)

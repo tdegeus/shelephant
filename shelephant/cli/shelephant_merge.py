@@ -41,7 +41,7 @@ import docopt
 import mergedeep
 import os
 
-from .. import __version__
+from .. import version
 from .. import YamlRead
 from .. import YamlDump
 from .. import ChangeRootOfRelativePaths
@@ -58,7 +58,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         main = YamlRead(args['<main.yaml>'])
         branch = YamlRead(args['<branch.yaml>'])
         output = args['--output'] if args['--output'] else args['<main.yaml>']

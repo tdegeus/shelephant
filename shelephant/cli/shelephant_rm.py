@@ -29,7 +29,7 @@ import docopt
 import click
 import os
 
-from .. import __version__
+from .. import version
 from .. import YamlGetItem
 from .. import PrefixPaths
 
@@ -38,7 +38,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         key = list(filter(None, args['--key'].split('/')))
         source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
         files = YamlGetItem(source, key)

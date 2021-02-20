@@ -39,7 +39,7 @@ import docopt
 import os
 import subprocess
 
-from .. import __version__
+from .. import version
 from .. import YamlDump
 from .. import YamlRead
 
@@ -48,7 +48,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         prefix = os.path.dirname(args['--output'])
         files = args['<file>']
 

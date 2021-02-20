@@ -54,7 +54,7 @@ import os
 import shutil
 import math
 
-from .. import __version__
+from .. import version
 from .. import YamlRead
 from .. import CopyFromRemote
 from .. import RsyncFromRemote
@@ -66,7 +66,7 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=__version__)
+        args = docopt.docopt(__doc__, version=version)
         source = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
         data = YamlRead(source)
 
