@@ -3,6 +3,11 @@
 Change-log
 **********
 
+v0.14.3
+=======
+
+*   Versioning: using setuptools_scm -> include git commit hash (#71)
+
 v0.14.2
 =======
 
