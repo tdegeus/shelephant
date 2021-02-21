@@ -282,7 +282,7 @@ Copy files to a remote system using ``rsync -a --files-from``.
 
     for line in iter(process.stdout.readline, ''):
         line = line.decode("utf-8")
-        if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
+        if re.match(r'(.*)(xf)([e]?)(r\#)([0-9])(.*)(to\-ch)([e]?[c]?)(k\=)([0-9])(.*)', line):
             e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
             pbar.update()
             sbar.update(e)
