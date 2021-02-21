@@ -546,7 +546,7 @@ Copy/move files.
 :param bool print_all: If ``False`` auto-truncation of long output is applied.
 
 :type theme_name: str or None
-:param theme_name: The name of the color-theme. See ``Theme``.
+:param theme_name: The name of the color-theme. See :py:mod:`shelephant.Theme`.
 
 :type yaml_hostinfo_src: str, optional
 :param yaml_hostinfo_src:
@@ -693,7 +693,7 @@ Get/send files.
 
 :param function copy_function: Function to perform the copy. E.g. ``CopyFromRemote``.
 
-:param std host: Host-name
+:param str host: Host-name
 
 :type files: list of str
 :param files: Filenames (will be prepended by ``src_dir`` and ``dest_dir``).
@@ -737,6 +737,18 @@ Get/send files.
             print('Nothing to do')
         return
 
+    if copy_function in [CopyToRemote, RsyncToRemote]:
+        to_remote = True
+    elif copy_function in [CopyFromRemote, RsyncFromRemote]:
+        to_remote = False
+    else:
+        raise IOError('Unknown copy function')
+
+    if copy_function in [RsyncToRemote, RsyncFromRemote]:
+        use_rsync = True
+    else:
+        use_rsync = False
+
     src = PrefixPaths(src_dir, files)
     dest = PrefixPaths(dest_dir, files)
     n = len(src)
@@ -744,32 +756,38 @@ Get/send files.
     create = [False for i in range(n)]
     skip = [False for i in range(n)]
     dest_exists = [False for i in range(n)]
-    theme = Theme(theme_name)
+    theme = Theme(theme_name.lower())
 
-    if checksum == True:
-        src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
-        dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
+    if not os.path.isdir(dest_dir):
 
-    if copy_function == CopyToRemote:
-        if yaml_hostinfo_dest:
-            f = YamlRead(yaml_hostinfo_dest)['files']
-            for i in range(n):
-                if files[i] in f:
-                    dest_exists[i] = True
+        create = [True for i in range(n)]
+
     else:
-        for i in range(n):
-            if os.path.isfile(dest[i]):
-                dest_exists[i] = True
 
-    for i in range(n):
-        if dest_exists[i]:
-            if checksum:
-                if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
-                    skip[i] = True
-                    continue
-            overwrite[i] = True
-            continue
-        create[i] = True
+        if checksum == True:
+            src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
+            dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
+
+        if to_remote:
+            if yaml_hostinfo_dest:
+                f = YamlRead(yaml_hostinfo_dest)['files']
+                for i in range(n):
+                    if files[i] in f:
+                        dest_exists[i] = True
+        elif not to_remote:
+            for i in range(n):
+                if os.path.isfile(dest[i]):
+                    dest_exists[i] = True
+
+        for i in range(n):
+            if dest_exists[i]:
+                if checksum:
+                    if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
+                        skip[i] = True
+                        continue
+                overwrite[i] = True
+                continue
+            create[i] = True
 
     l = max([len(file) for file in files])
     ncreate = sum(create)
@@ -789,7 +807,7 @@ Get/send files.
         overview += [String('skip (==): {0:d}{1:s}'.format(nskip, pskip_message), color=theme['skip']).format()]
 
     summary = []
-    if copy_function == CopyToRemote:
+    if to_remote:
         summary += ['- to host        : ' + host]
         summary += ['- source (local) : ' + os.path.normpath(src_dir)]
         summary += ['- dest (remote)  : ' + os.path.normpath(dest_dir)]
@@ -837,12 +855,15 @@ Get/send files.
         if not click.confirm('Proceed?'):
             raise IOError('Cancelled')
 
+    if not to_remote:
+        MakeDirs(list(set([os.path.dirname(i) for i in dest])))
+
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
     dest = np.array(dest)[i]
     files = np.array(files)[i]
 
-    if copy_function == RsyncToRemote or copy_function == RsyncFromRemote:
+    if use_rsync:
         dest_dir = dest_dir if len(dest_dir) > 0 else '.'
         src_dir = src_dir if len(src_dir) > 0 else '.'
         return copy_function(host, src_dir, dest_dir, tempfilename, files, force, verbose, not quiet)
