@@ -3,6 +3,12 @@
 Change-log
 **********
 
+v0.14.4
+=======
+
+*   rsync: wrapping progress-bar also for old versions of rsync
+*   Using MakeDirs in ShelephantCopySSH
+
 v0.14.3
 =======
 
