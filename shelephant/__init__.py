@@ -13,6 +13,59 @@ from collections import defaultdict
 from ._version import *
 
 
+def CheckAllIsFile(paths):
+    r'''
+Check that all paths point to existing files.
+Uses: ``os.path.isfile``.
+
+:param list paths: List of file paths.
+:throw: IOError
+    '''
+
+    for path in paths:
+        if not os.path.isfile(path):
+            raise IOError('"{0:s}" does not exist'.format(path))
+
+
+def DirNames(paths, return_unique=True):
+    r'''
+Get the ``os.path.dirname`` of all file paths.
+
+:param list paths: List of file paths.
+:param bool return_unique: Filter duplicates.
+:return: List of dirnames.
+    '''
+
+    ret = [os.path.dirname(path) for path in paths]
+
+    if not return_unique:
+        return ret
+
+    return list(set(ret))
+
+
+def OverWrite(paths, force=False):
+    r'''
+List files that will be overwritten.
+
+:param list paths: List of file paths.
+:param bool force: If ``True`` the user is prompted to overwrite.
+:return: List of overwritten files.
+    '''
+
+    ret = [path for path in paths if os.path.isfile(path)]
+
+    if not force:
+        return ret
+
+    print('Files exist:')
+    print('\n'.join(ret))
+    if not click.confirm('Overwrite?'):
+        raise IOError('Cancelled')
+
+    return ret
+
+
 def _FlattenList_detail(data):
     r'''
 See https://stackoverflow.com/a/17485785/2646505
@@ -159,6 +212,10 @@ def PrefixPaths(prefix, files):
     r'''
 Add prefix to a list of filenames.
 Skip if all paths are absolute paths.
+
+:param str prefix: The prefix.
+:param list files: List of paths.
+:return: List of paths.
     '''
 
     isabs = [os.path.isabs(file) for file in files]
@@ -408,7 +465,8 @@ Same as :py:mod:`shelephant.MakeDir` but for list of directories.
     if len(dirnames) == 0:
         return 0
 
-    dirnames = GetDeepestPaths(dirnames)
+    dirnames = list(set(dirnames))
+    dirnames = sorted(GetDeepestPaths(dirnames))
 
     if not force:
         for dirname in dirnames:
@@ -439,24 +497,19 @@ def GetChecksums(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
     r'''
 Compute the checksums for ``filepaths``.
 
-:type filepaths: list of str
-:param filepaths: List of file-paths.
+:param list filepaths: List of file-paths.
 
-:type yaml_hostinfo: str
-:param yaml_hostinfo:
+:param set yaml_hostinfo:
     File-path of a host-info file (see :py:mod:`shelephant.cli.hostinfo`).
     If specified the checksums are **not** computed, but exclusively read from the
     host-file. The user is responsible for keeping them up-to-date.
 
-:type hybrid: bool
-:param hybrid:
+:param bool hybrid:
     If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
     computes missing items on the fly.
 
-:type progress: ([``False``] | ``True``)
-:param progress: Show a progress-bar.
+:param bool progress: Show a progress-bar.
 
-:rtype: list of str
 :return:
     List of checksums, of same length as ``filepaths``.
     The entry is ``None`` if no checksum was found/read.
