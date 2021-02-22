@@ -11,7 +11,6 @@ Support functions
     shelephant.FlattenList
     shelephant.Squash
 
-
 YAML handling
 -------------
 
@@ -27,11 +26,14 @@ File-path operations
 
 .. autosummary::
 
+    shelephant.CheckAllIsFile
     shelephant.PrefixPaths
     shelephant.ChangeRootOfRelativePaths
     shelephant.GetDeepestPaths
+    shelephant.DirNames
     shelephant.MakeDir
     shelephant.MakeDirs
+    shelephant.OverWrite
     shelephant.GetSHA256
     shelephant.GetChecksums
 
