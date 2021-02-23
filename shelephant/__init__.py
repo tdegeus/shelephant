@@ -22,6 +22,9 @@ Uses: ``os.path.isfile``.
 :throw: IOError
     '''
 
+    if type(paths) == str:
+        paths = [paths]
+
     for path in paths:
         if not os.path.isfile(path):
             raise IOError('"{0:s}" does not exist'.format(path))
@@ -35,6 +38,9 @@ Get the ``os.path.dirname`` of all file paths.
 :param bool return_unique: Filter duplicates.
 :return: List of dirnames.
     '''
+
+    if type(paths) == str:
+        paths = [paths]
 
     ret = [os.path.dirname(path) for path in paths]
 
@@ -53,9 +59,12 @@ List files that will be overwritten.
 :return: List of overwritten files.
     '''
 
+    if type(paths) == str:
+        paths = [paths]
+
     ret = [path for path in paths if os.path.isfile(path)]
 
-    if force:
+    if force or len(ret) == 0:
         return ret
 
     print('Files exist:')
