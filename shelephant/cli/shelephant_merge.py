@@ -5,14 +5,20 @@
     and changes all relative paths from being relative to <branch.yaml> or <main.yaml>
     to being relative to --output.
 
-Usage:
+:usage:
+
     shelephant_merge [options] <branch.yaml> <main.yaml>
 
-Arguments:
-    branch.yaml     File to merge into main.yaml.
-    main.yaml       Main source.
+:arguments:
 
-Options:
+    <branch.yaml>
+        File to merge into main.yaml.
+
+    <main.yaml>
+        Main source.
+
+:options:
+
     -o, --output=N
         Output file. (default: <main.yaml>)
 
@@ -37,7 +43,7 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
+import argparse
 import mergedeep
 import os
 
@@ -58,15 +64,29 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
-        main = YamlRead(args['<main.yaml>'])
-        branch = YamlRead(args['<branch.yaml>'])
-        output = args['--output'] if args['--output'] else args['<main.yaml>']
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
+
+        parser = Parser()
+        parser.add_argument('-o', '--output', required=False)
+        parser.add_argument(      '--replace', required=False, action='store_true')
+        parser.add_argument(      '--skip', required=False, action='store_true')
+        parser.add_argument(      '--no-path', required=False, action='store_true')
+        parser.add_argument('-f', '--force', required=False, action='store_true')
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('branch')
+        parser.add_argument('main')
+        args = parser.parse_args()
+
+        main = YamlRead(args.main)
+        branch = YamlRead(args.branch)
+        output = args.output if args.output else args.main
         output_dir = os.path.dirname(output)
 
-        if not args['--no-path']:
+        if not args.no_path:
 
-            paths = [os.path.dirname(args['<main.yaml>']), os.path.dirname(args['<branch.yaml>'])]
+            paths = [os.path.dirname(args.main), os.path.dirname(args.branch)]
 
             for var, path in zip([main, branch], paths):
                 if type(var) == list:
@@ -79,9 +99,9 @@ def main():
 
         if type(main) == list and type(branch) == list:
 
-            if args['--skip']:
+            if args.skip:
                 pass
-            elif args['--replace']:
+            elif args.replace:
                 main = branch
             else:
                 main += branch
@@ -90,10 +110,10 @@ def main():
 
             from mergedeep import merge, Strategy
 
-            if args['--skip']:
+            if args.skip:
                 mergedeep.merge(branch, main, strategy=mergedeep.Strategy.REPLACE)
                 main = branch
-            elif args['--replace']:
+            elif args.replace:
                 mergedeep.merge(main, branch, strategy=mergedeep.Strategy.REPLACE)
             else:
                 mergedeep.merge(main, branch, strategy=mergedeep.Strategy.ADDITIVE)
@@ -102,12 +122,13 @@ def main():
 
             raise IOError('Files have an incompatible structure')
 
-        YamlDump(output, main, args['--force'])
+        YamlDump(output, main, args.force)
 
     except Exception as e:
 
         print(e)
         return 1
+
 
 if __name__ == '__main__':
 

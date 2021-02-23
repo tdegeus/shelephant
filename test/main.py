@@ -293,7 +293,7 @@ class Test_extract(unittest.TestCase):
 
         YamlDump('dump.yaml', data, force=True)
 
-        output = run('shelephant_extract -f dump.yaml --squash "/sub/foo" "foo"')
+        output = run('shelephant_extract -f --squash dump.yaml "/sub/foo" "foo"')
 
         self.assertEqual(YamlRead('dump.yaml'), ['foo2.txt', 'bar2.txt', 'foo.txt', 'bar.txt'])
 
@@ -783,7 +783,7 @@ class Test_rm(unittest.TestCase):
         with open('bar.txt', 'w') as file:
             file.write('bar')
 
-        output = run('shelephant_dump foo.txt bar.txt')
+        output = run('shelephant_dump -f foo.txt bar.txt')
         output = run('shelephant_rm -f shelephant_dump.yaml')
 
         self.assertFalse(os.path.isfile('foo.txt'))

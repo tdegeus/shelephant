@@ -1,10 +1,12 @@
 r'''shelephant_hostinfo
     Collect file information from location (on a remote host).
 
-Usage:
+:usage:
+
     shelephant_hostinfo [options]
 
-Options:
+:options:
+
     -o, --output=N
         Output YAML-file. [default: shelephant_hostinfo.yaml].
 
@@ -93,77 +95,62 @@ def main():
         # Parse command-line arguments
 
         class Parser(argparse.ArgumentParser):
-
             def print_help(self):
                 print(__doc__)
 
         parser = Parser()
         parser.add_argument('-o', '--output', required=False, default='shelephant_hostinfo.yaml')
-        parser.add_argument(      '--force', required=False, action='store_true')
-        parser.add_argument(      '--host', required=False, default=None)
+        parser.add_argument('-r', '--host', required=False, default=None)
         parser.add_argument('-p', '--prefix', required=False, default=None)
         parser.add_argument('-f', '--files', required=False, default=None, nargs='?', const='shelephant_dump.yaml')
         parser.add_argument('-c', '--checksum', required=False, default=None, nargs='?', const='shelephant_checksum.yaml')
-        parser.add_argument('-i', '--input', required=False, default=None, nargs='?', const='shelephant_hostinfo.yaml')
         parser.add_argument(      '--files-key', required=False, default='/')
         parser.add_argument(      '--checksum-key', required=False, default='/')
-        parser.add_argument(      '--remove', required=False, nargs='*')
         parser.add_argument(      '--ignore', required=False, action='store_true')
+        parser.add_argument('-i', '--input', required=False, default=None, nargs='?', const='shelephant_hostinfo.yaml')
+        parser.add_argument(      '--remove', required=False, nargs='*')
+        parser.add_argument(      '--force', required=False, action='store_true')
         parser.add_argument(      '--verbose', required=False, action='store_true')
         parser.add_argument('-v', '--version', action='version', version=version)
-
-        p = parser.parse_args()
-
-        args = {
-            '--output' : p.output,
-            '--force' : p.force,
-            '--host' : p.host,
-            '--prefix' : p.prefix,
-            '--files' : p.files,
-            '--checksum' : p.checksum,
-            '--input' : p.input,
-            '--files-key' : p.files_key,
-            '--checksum-key' : p.checksum_key,
-            '--remove' : p.remove,
-            '--ignore' : p.ignore,
-            '--verbose' : p.verbose,
-        }
+        args = parser.parse_args()
 
         # Separate mode: remove paths and quit
 
-        if args['--remove']:
-            filename = args['--output']
-            if args['--input']:
-                filename = args['--input']
+        if args.remove:
+            filename = args.output
+            if args.input:
+                filename = args.input
             data = YamlRead(filename)
-            data = remove(data, args['--remove'])
-            YamlDump(args['--output'], data, args['--force'])
+            data = remove(data, args.remove)
+            YamlDump(args.output, data, args.force)
             return 0
 
         # Extract basic information from command-line arguments
 
         data = {}
 
-        for item in ['host', 'prefix']:
-            if args['--' + item]:
-                data[item] = args['--' + item]
+        if args.host:
+            data['host'] = args.host
 
-        if args['--input']:
-            overwrite = YamlRead(args['--input'])
+        if args.prefix:
+            data['prefix'] = args.prefix
+
+        if args.input:
+            overwrite = YamlRead(args.input)
             for item in ['host', 'prefix']:
                 if item in overwrite:
                     data[item] = overwrite[item]
 
         # Basic IO-checks
 
-        if not args['--ignore']:
+        if not args.ignore:
             if 'host' in data and 'prefix' not in data:
                 raise IOError('Specify hostname and prefix')
 
         if 'host' not in data and 'prefix' not in data:
-            for item in ['files', 'checksum']:
-                if args['--' + item]:
-                    data['prefix'] = os.path.dirname(args['--' + item])
+            for item in [args.files, args.checksum]:
+                if item:
+                    data['prefix'] = os.path.dirname(item)
                     break
 
         # Create temporary file to download to
@@ -174,26 +161,28 @@ def main():
 
         # Read files and checksums
 
+        args_dict = vars(args)
+
         for item in ['files', 'checksum']:
 
-            if args['--' + item]:
+            if args_dict[item]:
 
-                key = list(filter(None, args['--' + item + '-key'].split('/')))
-                filename = args['--' + item]
+                key = list(filter(None, args_dict[item + '_key'].split('/')))
+                filename = args_dict[item]
 
                 if 'host' in data:
                     CopyFromRemote(
                         data['host'],
                         os.path.join(data['prefix'], filename),
                         temp_file,
-                        args['--verbose'])
+                        args.verbose)
                     filename = temp_file
 
                 data[item] = YamlGetItem(filename, key)
 
         # Run basic checks
 
-        if not args['--ignore']:
+        if not args.ignore:
             for item in ['prefix']:
                 if item not in data:
                     raise IOError('Please specify {0:s}'.format(item))
@@ -211,7 +200,7 @@ def main():
         if 'files' not in data:
             data['files'] = []
 
-        YamlDump(args['--output'], data, args['--force'])
+        YamlDump(args.output, data, args.force)
 
     except Exception as e:
 

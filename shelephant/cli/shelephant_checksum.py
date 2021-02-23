@@ -2,14 +2,16 @@
     Get checksum of files listed in a (field of a) YAML-file.
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
-Usage:
-    shelephant_checksum [options]
+:usage:
+
     shelephant_checksum [options] <input.yaml>
 
-Arguments:
+:argument:
+
     YAML-file with file-paths. Default: shelephant_dump.yaml
 
-Options:
+:options:
+
     -o, --output=N
         Output YAML-file. [default: shelephant_checksum.yaml]
 
@@ -34,7 +36,7 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
+import argparse
 import os
 
 from .. import version
@@ -48,14 +50,27 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
-        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
-        key = list(filter(None, args['--key'].split('/')))
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
+
+        parser = Parser()
+        parser.add_argument('-o', '--output', required=False, default='shelephant_checksum.yaml')
+        parser.add_argument('-k', '--key', required=False, default='/')
+        parser.add_argument('-l', '--local', required=False)
+        parser.add_argument('-f', '--force', required=False, action='store_true')
+        parser.add_argument('-q', '--quiet', required=False, action='store_true')
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('input', nargs='?', default='shelephant_dump.yaml')
+        args = parser.parse_args()
+
+        source = args.input
+        key = list(filter(None, args.key.split('/')))
         files = YamlGetItem(source, key)
         prefix = os.path.dirname(source)
         files = PrefixPaths(prefix, files)
-        data = GetChecksums(files, args['--local'], hybrid=True, progress=not args['--quiet'])
-        YamlDump(args['--output'], data, args['--force'])
+        data = GetChecksums(files, args.local, hybrid=True, progress=not args.quiet)
+        YamlDump(args.output, data, args.force)
 
     except Exception as e:
 

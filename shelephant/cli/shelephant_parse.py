@@ -1,13 +1,16 @@
 '''shelephant_parse
     Parse a YAML-file, and print to screen.
 
-Usage:
+:usage:
+
     shelephant_parse <file.yaml>
 
-Argument:
+:argument:
+
     File path.
 
-Options:
+:options:
+
     -h, --help
         Show help.
 
@@ -17,7 +20,7 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
+import argparse
 
 from .. import version
 from .. import YamlRead
@@ -28,9 +31,16 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
-        source = args['<file.yaml>']
-        data = YamlRead(source)
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
+
+        parser = Parser()
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('file')
+        args = parser.parse_args()
+
+        data = YamlRead(args.file)
         YamlPrint(data)
 
     except Exception as e:

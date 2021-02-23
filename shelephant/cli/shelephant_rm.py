@@ -2,14 +2,18 @@
     Remove files listed in a (field of a) YAML-file.
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
-Usage:
+:usage:
+
     shelephant_rm [options]
+
     shelephant_rm [options] <input.yaml>
 
-Argument:
+:argument:
+
     YAML-file with filenames. Default: shelephant_dump.yaml
 
-Options:
+:options:
+
     -k, --key=N
         Path in the YAML-file, separated by "/". [default: /]
 
@@ -25,7 +29,7 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
+import argparse
 import click
 import os
 
@@ -38,9 +42,19 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
-        key = list(filter(None, args['--key'].split('/')))
-        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
+
+        parser = Parser()
+        parser.add_argument('-k', '--key', required=False, default='/')
+        parser.add_argument('-f', '--force', required=False, action='store_true')
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('input', nargs='?', default='shelephant_dump.yaml')
+        args = parser.parse_args()
+
+        source = args.input
+        key = list(filter(None, args.key.split('/')))
         files = YamlGetItem(source, key)
         prefix = os.path.dirname(source)
         files = PrefixPaths(prefix, files)
@@ -51,7 +65,7 @@ def main():
         for file in files:
             print('rm {0:s}'.format(file))
 
-        if not args['--force']:
+        if not args.force:
             if not click.confirm('Proceed?'):
                 return 1
 
