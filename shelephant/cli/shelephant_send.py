@@ -4,35 +4,27 @@
     Alternatively ``scp -p source_file host:dest_file`` can be used.
     Typically, ``rsync`` will be faster, especially in copying a lot of small files.
 
-Usage:
+:usage:
+
     shelephant_send [options]
+
     shelephant_send [options] <files.yaml> <hostinfo.yaml>
 
-Arguments:
-    files.yaml      YAML-file with files to send. Default: shelephant_dump.yaml
-    hostinfo.yaml   YAML-file with host information. Default: shelephant_hostinfo.yaml
+:arguments:
 
-Options:
+    <files.yaml>
+        YAML-file with files to send. Default: shelephant_dump.yaml
+
+    <hostinfo.yaml>
+        YAML-file with host information. Default: shelephant_hostinfo.yaml
+
+:options:
+
     -k, --key=N
         Path in <files.yaml>, separated by "/". [default: /]
 
-    --colors=M
-        Select color scheme from: none, dark. [default: dark]
-
-    -q, --quiet
-        Do not print progress.
-
-    -f, --force
-        Force overwrite of all existing (but not matching) files.
-
     -l, --local=N
         Add local 'host' information to use precomputed checksums.
-
-    -s, --summary
-        Print summary (and no details unless specified).
-
-    -d, --details
-        Print details (and no summary unless specified).
 
     --scp
         Use ``scp`` instead of ``rysnc`` as backend.
@@ -40,8 +32,23 @@ Options:
     --temp=N
         Temporary filename to communicate with rsync. [default: shelephant_files.txt]
 
+    --colors=M
+        Select color scheme from: none, dark. [default: dark]
+
+    -s, --summary
+        Print summary (and no details unless specified).
+
+    -d, --details
+        Print details (and no summary unless specified).
+
+    -f, --force
+        Force overwrite of all existing (but not matching) files.
+
     --verbose
         Verbose all commands.
+
+    -q, --quiet
+        Do not print progress.
 
     -h, --help
         Show help.
@@ -52,12 +59,9 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
-import click
+import argparse
 import os
 import shutil
-import math
-import numpy as np
 
 from .. import version
 from .. import YamlRead
@@ -72,11 +76,29 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
-        source = args['<files.yaml>'] if args['<files.yaml>'] else 'shelephant_dump.yaml'
-        hostinfo = args['<hostinfo.yaml>'] if args['<hostinfo.yaml>'] else 'shelephant_hostinfo.yaml'
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
+
+        parser = Parser()
+        parser.add_argument('-k', '--key', required=False, default='/')
+        parser.add_argument('-l', '--local', required=False)
+        parser.add_argument(      '--scp', required=False, action='store_true')
+        parser.add_argument(      '--temp', required=False, default='shelephant_files.txt')
+        parser.add_argument(      '--colors', required=False, default='dark')
+        parser.add_argument('-s', '--summary', required=False, action='store_true')
+        parser.add_argument('-d', '--details', required=False, action='store_true')
+        parser.add_argument('-f', '--force', required=False, action='store_true')
+        parser.add_argument(      '--verbose', required=False, action='store_true')
+        parser.add_argument('-q', '--quiet', required=False, action='store_true')
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('args', nargs=2, default=['shelephant_dump.yaml', 'shelephant_hostinfo.yaml'])
+        args = parser.parse_args()
+
+        source = args.args[0]
+        hostinfo = args.args[1]
         data = YamlRead(hostinfo)
-        key = list(filter(None, args['--key'].split('/')))
+        key = list(filter(None, args.key.split('/')))
         files = YamlGetItem(source, key)
         src_dir = os.path.dirname(source)
         dest_dir = data['prefix']
@@ -89,16 +111,16 @@ def main():
                 src_dir = src_dir,
                 dest_dir = data['prefix'],
                 checksum = 'checksum' in data,
-                quiet = args['--quiet'],
-                force = args['--force'],
-                print_details = not (args['--force'] or args['--summary']) or args['--details'],
-                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-                print_all = args['--details'],
-                theme_name = args['--colors'].lower(),
-                yaml_hostinfo_src = args['--local'],
+                quiet = args.quiet,
+                force = args.force,
+                print_details = not (args.force or args.summary) or args.details,
+                print_summary = not (args.force or args.details) or args.summary,
+                print_all = args.details,
+                theme_name = args.colors.lower(),
+                yaml_hostinfo_src = args.local,
                 yaml_hostinfo_dest = hostinfo)
 
-        elif args['--scp']:
+        elif args.scp:
 
             ShelephantCopySSH(
                 copy_function = CopyToRemote,
@@ -107,14 +129,14 @@ def main():
                 src_dir = src_dir,
                 dest_dir = dest_dir,
                 checksum = 'checksum' in data,
-                quiet = args['--quiet'],
-                force = args['--force'],
-                print_details = not (args['--force'] or args['--summary']) or args['--details'],
-                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-                print_all = args['--details'],
-                verbose = args['--verbose'],
-                theme_name = args['--colors'].lower(),
-                yaml_hostinfo_src = args['--local'],
+                quiet = args.quiet,
+                force = args.force,
+                print_details = not (args.force or args.summary) or args.details,
+                print_summary = not (args.force or args.details) or args.summary,
+                print_all = args.details,
+                verbose = args.verbose,
+                theme_name = args.colors.lower(),
+                yaml_hostinfo_src = args.local,
                 yaml_hostinfo_dest = hostinfo)
 
         else:
@@ -126,16 +148,16 @@ def main():
                 src_dir = src_dir,
                 dest_dir = dest_dir,
                 checksum = 'checksum' in data,
-                quiet = args['--quiet'],
-                force = args['--force'],
-                print_details = not (args['--force'] or args['--summary']) or args['--details'],
-                print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-                print_all = args['--details'],
-                verbose = args['--verbose'],
-                theme_name = args['--colors'].lower(),
-                yaml_hostinfo_src = args['--local'],
+                quiet = args.quiet,
+                force = args.force,
+                print_details = not (args.force or args.summary) or args.details,
+                print_summary = not (args.force or args.details) or args.summary,
+                print_all = args.details,
+                verbose = args.verbose,
+                theme_name = args.colors.lower(),
+                yaml_hostinfo_src = args.local,
                 yaml_hostinfo_dest = hostinfo,
-                tempfilename = args['--temp'])
+                tempfilename = args.temp)
 
     except Exception as e:
 

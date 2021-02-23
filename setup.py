@@ -14,7 +14,7 @@ setup(
     packages = find_packages(),
     use_scm_version = {'write_to': 'shelephant/_version.py'},
     setup_requires = ['setuptools_scm'],
-    install_requires = ['docopt', 'click', 'pyyaml', 'mergedeep', 'numpy'],
+    install_requires = ['click', 'pyyaml', 'mergedeep', 'numpy'],
     entry_points = {
         'console_scripts': [
             'shelephant_checksum = shelephant.cli.shelephant_checksum:main',

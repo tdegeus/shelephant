@@ -2,15 +2,22 @@
     Copy files listed in a (field of a) YAML-file.
     The filenames are assumed either absolute, or relative to the input YAML-file.
 
-Usage:
+:usage:
+
     shelephant_cp [options] <destination>
+
     shelephant_cp [options] <input.yaml> <destination>
 
-Argument:
-    <input.yaml>    YAML-file with filenames. Default: shelephant_dump.yaml
-    <destination>   Prefix of the destination.
+:arguments:
 
-Options:
+    <input.yaml>
+        YAML-file with filenames. Default: shelephant_dump.yaml
+
+    <destination>
+        Prefix of the destination.
+
+:options:
+
     -c, --checksum
         Use checksum to skip files that are the same.
 
@@ -19,9 +26,6 @@ Options:
 
     --colors=M
         Select color scheme from: none, dark. [default: dark]
-
-    -q, --quiet
-        Do not print progress.
 
     -s, --summary
         Print summary (and no details unless specified).
@@ -32,6 +36,9 @@ Options:
     -f, --force
         Move without prompt.
 
+    -q, --quiet
+        Do not print progress.
+
     -h, --help
         Show help.
 
@@ -41,7 +48,7 @@ Options:
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 '''
 
-import docopt
+import argparse
 import shutil
 import os
 
@@ -54,23 +61,45 @@ def main():
 
     try:
 
-        args = docopt.docopt(__doc__, version=version)
+        class Parser(argparse.ArgumentParser):
+            def print_help(self):
+                print(__doc__)
 
-        source = args['<input.yaml>'] if args['<input.yaml>'] else 'shelephant_dump.yaml'
-        key = list(filter(None, args['--key'].split('/')))
+        parser = Parser()
+        parser.add_argument('-c', '--checksum', required=False, action='store_true')
+        parser.add_argument('-k', '--key', required=False, default='/')
+        parser.add_argument(      '--colors', required=False, default='dark')
+        parser.add_argument('-s', '--summary', required=False, action='store_true')
+        parser.add_argument('-d', '--details', required=False, action='store_true')
+        parser.add_argument('-f', '--force', required=False, action='store_true')
+        parser.add_argument('-q', '--quiet', required=False, action='store_true')
+        parser.add_argument('-v', '--version', action='version', version=version)
+        parser.add_argument('args', nargs='+')
+        args = parser.parse_args()
+
+        if len(args.args) == 1:
+            source = 'shelephant_dump.yaml'
+            dest_dir = args.args[0]
+        elif len(args.args) == 2:
+            source = args.args[0]
+            dest_dir = args.args[1]
+        else:
+            raise IOError('Too many arguments specified')
+
+        key = list(filter(None, args.key.split('/')))
 
         return ShelephantCopy(
             copy_function = shutil.copy2,
             files = YamlGetItem(source, key),
             src_dir = os.path.dirname(source),
-            dest_dir = args['<destination>'],
-            checksum = args['--checksum'],
-            quiet = args['--quiet'],
-            force = args['--force'],
-            print_details = not (args['--force'] or args['--summary']) or args['--details'],
-            print_summary = not (args['--force'] or args['--details']) or args['--summary'],
-            print_all = args['--details'],
-            theme_name = args['--colors'].lower())
+            dest_dir = dest_dir,
+            checksum = args.checksum,
+            quiet = args.quiet,
+            force = args.force,
+            print_details = not (args.force or args.summary) or args.details,
+            print_summary = not (args.force or args.details) or args.summary,
+            print_all = args.details,
+            theme_name = args.colors.lower())
 
     except Exception as e:
 
