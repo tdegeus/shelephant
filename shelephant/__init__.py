@@ -631,7 +631,7 @@ Copy/move files.
         if not os.path.isfile(file):
             raise IOError('Input file "{0:s}" does not exists'.format(file))
 
-    if not os.path.isdir(dest_dir):
+    if not os.path.isdir(dest_dir) and len(dest_dir) > 0:
 
         create = [True for i in range(n)]
 
@@ -811,7 +811,7 @@ Get/send files.
     dest_exists = [False for i in range(n)]
     theme = Theme(theme_name.lower())
 
-    if not os.path.isdir(dest_dir):
+    if not os.path.isdir(dest_dir) and len(dest_dir) > 0:
 
         create = [True for i in range(n)]
 
