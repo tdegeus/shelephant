@@ -337,7 +337,7 @@ Copy files to a remote system using ``rsync -a --files-from``.
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
-    for line in iter(process.stdout.readline, ''):
+    for line in iter(process.stdout.readline, b''):
         line = line.decode("utf-8")
         if re.match(r'(.*)(xf)([e]?)(r\#)([0-9])(.*)(to\-ch)([e]?[c]?)(k\=)([0-9])(.*)', line):
             e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
