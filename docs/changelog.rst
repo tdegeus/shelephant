@@ -3,6 +3,13 @@
 Change-log
 **********
 
+v0.15.0
+=======
+
+*   Switching to argparse
+*   Bugfix: incorrectly detecting current directory as non-existent
+*   Adding convenience methods
+
 v0.14.4
 =======
 
