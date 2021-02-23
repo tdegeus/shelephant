@@ -55,7 +55,7 @@ List files that will be overwritten.
 
     ret = [path for path in paths if os.path.isfile(path)]
 
-    if not force:
+    if force:
         return ret
 
     print('Files exist:')
