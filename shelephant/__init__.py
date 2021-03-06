@@ -302,8 +302,7 @@ Copy a file to a remote system. Uses ``scp -p``.
     _ExecCommand(cmd, verbose)
 
 
-def RsyncFromRemote(
-    hostname,
+def Rsync(
     source_dir,
     dest_dir,
     tempfilename,
@@ -312,7 +311,15 @@ def RsyncFromRemote(
     verbose=False,
     progress=True):
     r'''
-Copy files to a remote system using ``rsync -a --files-from``.
+Copy files to a destination using ``rsync -a --files-from``.
+
+:param str source_dir: Source directory.
+:param str dest_dir: Source directory.
+:param str tempfilename: Path of a temporary file to use to direct ``rsync --files-from``.
+:param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+:param bool force: Continue without prompt.
+:param bool verbose: Verbose commands.
+:param bool progress: Show progress bar.
     '''
 
     assert type(tempfilename) == str
@@ -328,15 +335,15 @@ Copy files to a remote system using ``rsync -a --files-from``.
 
     if not progress:
 
-        cmd = 'rsync -a --files-from="{files:s}" {hostname:s}:{source_dir:s} {dest_dir:s}'.format(
-            hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+        cmd = 'rsync -a --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
+            source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
 
         return _ExecCommand(cmd, verbose)
 
     # Run while printing output
 
-    cmd = 'rsync -aP --files-from="{files:s}" {hostname:s}:{source_dir:s} {dest_dir:s}'.format(
-        hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
+    cmd = 'rsync -aP --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
+        source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
 
     if verbose:
         print(cmd)
@@ -354,6 +361,38 @@ Copy files to a remote system using ``rsync -a --files-from``.
             sbar.update(e)
 
 
+def RsyncFromRemote(
+    hostname,
+    source_dir,
+    dest_dir,
+    tempfilename,
+    files,
+    force=False,
+    verbose=False,
+    progress=True):
+    r'''
+Copy files to a remote system using ``rsync -a --files-from``.
+
+:param str hostname: Hostname.
+:param str source_dir: Source directory.
+:param str dest_dir: Source directory.
+:param str tempfilename: Path of a temporary file to use to direct ``rsync --files-from``.
+:param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+:param bool force: Continue without prompt.
+:param bool verbose: Verbose commands.
+:param bool progress: Show progress bar.
+    '''
+
+    return Rsync(
+        source_dir = hostname + ":" + source_dir,
+        dest_dir = dest_dir,
+        tempfilename = tempfilename,
+        files = files,
+        force = force,
+        verbose = verbose,
+        progress = progress)
+
+
 def RsyncToRemote(
     hostname,
     source_dir,
@@ -365,45 +404,28 @@ def RsyncToRemote(
     progress=True):
     r'''
 Copy files from a remote system using ``rsync -a --files-from``.
+
+:param str hostname: Hostname.
+:param str source_dir: Source directory.
+:param str dest_dir: Source directory.
+:param str tempfilename: Path of a temporary file to use to direct ``rsync --files-from``.
+:param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+:param bool force: Continue without prompt.
+:param bool verbose: Verbose commands.
+:param bool progress: Show progress bar.
     '''
 
-    assert type(tempfilename) == str
+    return Rsync(
+        source_dir = source_dir,
+        dest_dir = hostname + ":" + dest_dir,
+        tempfilename = tempfilename,
+        files = files,
+        force = force,
+        verbose = verbose,
+        progress = progress)
 
-    if not force:
-        if os.path.isfile(tempfilename):
-            if not click.confirm('Overwrite "{0:s}"?'.format(tempfilename)):
-                raise IOError('Cancelled')
 
-    open(tempfilename, 'w').write('\n'.join(files))
 
-    # Run without printing output
-
-    if not progress:
-
-        cmd = 'rsync -a --files-from="{files:s}" {source_dir:s} {hostname:s}:{dest_dir:s}'.format(
-            hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
-
-        return _ExecCommand(cmd, verbose)
-
-    # Run while printing output
-
-    cmd = 'rsync -aP --files-from="{files:s}" {source_dir:s} {hostname:s}:{dest_dir:s}'.format(
-        hostname=hostname, source_dir=source_dir, dest_dir=dest_dir, files=tempfilename)
-
-    if verbose:
-        print(cmd)
-
-    pbar = tqdm.tqdm(total=len(files))
-    sbar = tqdm.tqdm(unit='B', unit_scale=True)
-
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-    for line in iter(process.stdout.readline, ''):
-        line = line.decode("utf-8")
-        if re.match(r'(.*)(xfr\#)([0-9])(.*)(to\-chk\=)([0-9])(.*)', line):
-            e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
-            pbar.update()
-            sbar.update(e)
 
 
 def MakeDir(dirname, force=False):
