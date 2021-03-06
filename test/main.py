@@ -532,6 +532,45 @@ class Test_get(unittest.TestCase):
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
 
+    def test_partial_rsync(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        shutil.copy2('mysrc/foo.txt', 'mydest/foo.txt')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt == foo.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml')
+        output = run('shelephant_get -f -d -q --colors none --check-rsync mydest/hostinfo.yaml')
+
+        self.assertEqual(list(filter(None, output.split('\n'))), operations)
+
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+        os.remove('shelephant_files.txt')
+
 
 class Test_send(unittest.TestCase):
 
@@ -615,7 +654,6 @@ class Test_send(unittest.TestCase):
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
         os.remove('hostinfo.yaml')
-
 
     def test_partial(self):
 
@@ -710,6 +748,46 @@ class Test_send(unittest.TestCase):
         os.remove('hostinfo.yaml')
         os.remove('local.yaml')
 
+    def test_partial_rsync(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.txt', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.txt', 'w') as file:
+            file.write('bar')
+
+        shutil.copy2('mysrc/foo.txt', 'mydest/foo.txt')
+
+        operations = [
+            'bar.txt -> bar.txt',
+            'foo.txt == foo.txt',
+        ]
+
+        output = run('shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt')
+        output = run('shelephant_hostinfo --force -o hostinfo.yaml -p mydest')
+        output = run('shelephant_send -f -d -q --colors none --check-rsync mysrc/files.yaml hostinfo.yaml')
+
+        self.assertEqual(list(filter(None, output.split('\n'))), operations)
+
+        output = run('shelephant_dump -f --sort -o mydest/files.yaml mydest/*.txt')
+        output = run('shelephant_checksum -f -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+        os.remove('hostinfo.yaml')
+        os.remove('shelephant_files.txt')
+
 
 class Test_mv(unittest.TestCase):
 
@@ -771,6 +849,46 @@ class Test_cp(unittest.TestCase):
 
         shutil.rmtree('mysrc')
         shutil.rmtree('mydest')
+
+    def test_rsync(self):
+
+        for dirname in ['mysrc', 'mydest']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir('mysrc')
+        os.mkdir('mydest')
+
+        with open('mysrc/foo.log', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/bar.log', 'w') as file:
+            file.write('bar')
+
+        shutil.copy2('mysrc/foo.log', 'mydest/foo.log')
+
+        operations = [
+            'bar.log -> bar.log',
+            'foo.log == foo.log',
+        ]
+
+        output = run('shelephant_dump -o mysrc/files.yaml mysrc/*.log')
+        output = run('shelephant_cp -f -d -q --colors none --check-rsync mysrc/files.yaml mydest')
+
+        self.assertEqual(list(filter(None, output.split('\n'))), operations)
+
+        output = run('shelephant_dump --sort -o mydest/files.yaml mydest/*.log')
+        output = run('shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml')
+        output = run('shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml')
+
+        self.assertEqual(YamlRead('mysrc/files.yaml'), YamlRead('mydest/files.yaml'))
+        self.assertEqual(YamlRead('mysrc/checksum.yaml'), YamlRead('mydest/checksum.yaml'))
+        self.assertTrue(os.path.isfile('mysrc/foo.log'))
+        self.assertTrue(os.path.isfile('mysrc/bar.log'))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mydest')
+        os.remove('shelephant_files.txt')
 
 
 class Test_rm(unittest.TestCase):
