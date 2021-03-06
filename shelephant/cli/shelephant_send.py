@@ -29,6 +29,12 @@
     --scp
         Use ``scp`` instead of ``rysnc`` as backend.
 
+    --check-rsync
+        Check if files are different using *rsync*.
+        *rsync* uses basic criteria such as file size and creation and modification date.
+        This is much faster than using checksums but is only approximate.
+        *rsync* can also check based on checksum.
+
     --temp=N
         Temporary filename to communicate with rsync. [default: shelephant_files.txt]
 
@@ -84,6 +90,7 @@ def main():
         parser.add_argument('-k', '--key', required=False, default='/')
         parser.add_argument('-l', '--local', required=False)
         parser.add_argument(      '--scp', required=False, action='store_true')
+        parser.add_argument('-r', '--check-rsync', required=False, action='store_true')
         parser.add_argument(      '--temp', required=False, default='shelephant_files.txt')
         parser.add_argument(      '--colors', required=False, default='dark')
         parser.add_argument('-s', '--summary', required=False, action='store_true')
@@ -111,6 +118,7 @@ def main():
                 src_dir = src_dir,
                 dest_dir = data['prefix'],
                 checksum = 'checksum' in data,
+                check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
                 force = args.force,
                 print_details = not (args.force or args.summary) or args.details,
@@ -129,6 +137,7 @@ def main():
                 src_dir = src_dir,
                 dest_dir = dest_dir,
                 checksum = 'checksum' in data,
+                check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
                 force = args.force,
                 print_details = not (args.force or args.summary) or args.details,
@@ -148,6 +157,7 @@ def main():
                 src_dir = src_dir,
                 dest_dir = dest_dir,
                 checksum = 'checksum' in data,
+                check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
                 force = args.force,
                 print_details = not (args.force or args.summary) or args.details,

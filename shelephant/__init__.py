@@ -425,7 +425,95 @@ Copy files from a remote system using ``rsync -a --files-from``.
         progress = progress)
 
 
+def RsyncDiff(
+    source_dir,
+    dest_dir,
+    tempfilename,
+    files,
+    checksum=False,
+    force=False,
+    verbose=False):
+    r'''
+Check if files are different using *rsync*.
+*rsync* uses basic criteria such as file size and creation and modification date.
+This is much faster than using checksums but is only approximate.
+See `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
 
+:param str source_dir: Source directory.
+:param str dest_dir: Source directory.
+:param str tempfilename: Path of a temporary file to use to direct ``rsync --files-from``.
+:param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+:param bool checksum: Use checksum to test file difference.
+:param bool force: Continue without prompt.
+:param bool verbose: Verbose commands.
+    '''
+
+    files = [os.path.normpath(file) for file in files]
+
+    assert type(tempfilename) == str
+
+    if not force:
+        if os.path.isfile(tempfilename):
+            if not click.confirm('Overwrite "{0:s}"?'.format(tempfilename)):
+                raise IOError('Cancelled')
+
+    open(tempfilename, 'w').write('\n'.join(files))
+
+    # Run without printing output
+
+    opt = '-nai'
+
+    if checksum:
+        opt += 'c'
+
+    cmd = 'rsync {opt:s} --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
+        source_dir=source_dir, dest_dir=dest_dir, files=tempfilename, opt=opt)
+
+    lines = list(filter(None, _ExecCommand(cmd, verbose).split('\n')))
+    lines = [line for line in lines if line[1] == 'f']
+
+    if len(lines) == 0:
+        return {
+            'skip' : np.ones((len(files)), dtype=np.bool),
+            'create' : np.zeros((len(files)), dtype=np.bool),
+            'overwrite' : np.zeros((len(files)), dtype=np.bool),
+        }
+
+    check_paths = [line.split(' ')[1] for line in lines]
+    mode = np.zeros((len(check_paths)), dtype=np.int16)
+
+    for i, line in enumerate(lines):
+        if line[0] == '>':
+            if line[2] == '+':
+                mode[i] = 1 # create
+            else:
+                mode[i] = 2 # overwrite
+        elif line[0] == '.':
+            pass
+        else:
+            raise IOError('Unknown cryptic output "{0:s}"'.format(line))
+
+    sorter = np.argsort(files)
+    source_paths = np.array(files, dtype=str)[sorter]
+
+    i = np.argsort(check_paths)
+    check_paths = np.array(check_paths, dtype=str)[i]
+    mode = mode[i]
+
+    test = np.in1d(source_paths, check_paths)
+
+    idx = np.searchsorted(check_paths, source_paths)
+    idx = np.where(test, idx, 0)
+    ret = np.where(test, mode[idx], 0)
+    ret = ret.astype(np.int16)
+    out = np.empty_like(ret)
+    out[sorter] = ret
+
+    return {
+        'skip' : out == 0,
+        'create' : out == 1,
+        'overwrite' : out == 2,
+    }
 
 
 def MakeDir(dirname, force=False):
@@ -597,6 +685,7 @@ def ShelephantCopy(
     src_dir,
     dest_dir,
     checksum = False,
+    check_rsync = None,
     quiet = False,
     force = False,
     print_details = True,
@@ -618,6 +707,8 @@ Copy/move files.
 :param str dest_dir: The destination directory.
 
 :param bool checksum: Use checksum to skip files that are the same.
+
+:param str check_rsync: Use rsync to check files to skip, specify temporary file name.
 
 :param bool quiet: Proceed without printing progress.
 
@@ -666,9 +757,23 @@ Copy/move files.
 
         create = [True for i in range(n)]
 
+    elif check_rsync is not None:
+
+        tmp = RsyncDiff(
+            source_dir = src_dir,
+            dest_dir = dest_dir,
+            tempfilename = check_rsync,
+            files = files,
+            checksum = checksum,
+            force = force)
+
+        skip = tmp['skip']
+        create = tmp['create']
+        overwrite = tmp['overwrite']
+
     else:
 
-        if checksum == True:
+        if checksum:
             src_checksums = GetChecksums(src, yaml_hostinfo_src, progress=not quiet)
             dest_checksums = GetChecksums(dest, yaml_hostinfo_dest, progress=not quiet)
 
@@ -762,6 +867,7 @@ def ShelephantCopySSH(
     src_dir,
     dest_dir,
     checksum = False,
+    check_rsync = None,
     quiet = False,
     force = False,
     print_details = True,
@@ -787,6 +893,8 @@ Get/send files.
 :param str dest_dir: The destination directory.
 
 :param bool checksum: Use checksum to skip files that are the same.
+
+:param str check_rsync: Use rsync to check files to skip, specify temporary file name.
 
 :param bool quiet: Proceed without printing progress.
 
@@ -845,6 +953,20 @@ Get/send files.
     if not os.path.isdir(dest_dir) and len(dest_dir) > 0:
 
         create = [True for i in range(n)]
+
+    elif check_rsync is not None:
+
+        tmp = RsyncDiff(
+            source_dir = src_dir if to_remote else hostname + ":" + src_dir,
+            dest_dir = hostname + ":" + dest_dir if to_remote else dest_dir,
+            tempfilename = check_rsync,
+            files = files,
+            checksum = checksum,
+            force = force)
+
+        skip = tmp['skip']
+        create = tmp['create']
+        overwrite = tmp['overwrite']
 
     else:
 
