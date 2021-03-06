@@ -36,6 +36,7 @@ File-path operations
     shelephant.OverWrite
     shelephant.GetSHA256
     shelephant.GetChecksums
+    shelephant.RsyncDiff
 
 Copy functions
 --------------
