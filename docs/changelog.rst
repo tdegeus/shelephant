@@ -3,6 +3,14 @@
 Change-log
 **********
 
+v0.16.0
+=======
+
+*   Allow use of rsync to check file difference
+*   Internal simplification: ``Rsync`` combines implementation of
+    ``RsyncToRemote`` and ``RsyncFromRemote``.
+*   Minor bugfixes
+
 v0.15.0
 =======
 
