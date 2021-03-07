@@ -579,6 +579,7 @@ Same as :py:mod:`shelephant.MakeDir` but for list of directories.
 :param bool force: Create directories without prompt.
     '''
 
+    dirnames = [dirname for dirname in dirnames if len(dirname) > 0]
     dirnames = [dirname for dirname in dirnames if not os.path.isdir(dirname)]
 
     if len(dirnames) == 0:
