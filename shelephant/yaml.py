@@ -1,14 +1,19 @@
+r'''
+Yaml IO.
+
+(c) Tom de Geus, 2021, MIT
+'''
 
 import yaml
-import functools
-import operator
 import click
 import os
+
+from . import convert
 
 
 def read(filename):
     r'''
-Read YAML file and return its content as ``list`` or ``dict``.
+Read YAML file and return its content.
     '''
 
     if not os.path.isfile(filename):
@@ -21,24 +26,31 @@ Read YAML file and return its content as ``list`` or ``dict``.
 def read_item(filename, key=[]):
     r'''
 Get an item from a YAML file.
-Optionally the key to the item can be specified as a list. E.g.
-*   ``[]`` for a YAML file containing only a list.
-*   ``['foo']`` for a plain YAML file.
-*   ``['key', 'to', foo']`` for a YAML file with nested items.
+
+:type key: str or list
+:param key:
+    The item to read. E.g.
+    *   ``[]`` for a YAML file containing only a list.
+    *   ``['foo']`` for a plain YAML file.
+    *   ``['key', 'to', foo']`` for a YAML file with nested items.
+
+    An item specified as ``str`` separated by "/" is also accepted.
+
+:return:
+    The read item.
     '''
 
     data = read(filename)
 
-    if len(key) == 0 and type(data) != list:
-        raise IOError('Specify key for "{0:s}"'.format(filename))
+    if type(data) == dict:
+        return convert.get(data, key)
 
-    if len(key) > 0:
-        try:
-            return functools.reduce(operator.getitem, key, data)
-        except:
-            raise IOError('"{0:s}" not in "{1:s}"'.format('/'.join(key), filename))
+    key = convert.split_key(key)
 
-    return data
+    if type(data) == list and len(key) == 0:
+        return data
+
+    raise IOError('"{0:s}" not in "{1:s}"'.format('/'.join(key), filename))
 
 
 def dump(filename, data, force=False):

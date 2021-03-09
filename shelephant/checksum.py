@@ -1,3 +1,8 @@
+r'''
+Compute checksums.
+
+(c) Tom de Geus, 2021, MIT
+'''
 
 import numpy as np
 import os
@@ -9,7 +14,7 @@ from .yaml import read
 
 def sha256(filename, size = 2 ** 10):
     r'''
-Get sha256 for a file.
+Get sha256 of a file.
     '''
 
     import hashlib
@@ -24,7 +29,7 @@ Get sha256 for a file.
 
 def get(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
     r'''
-Compute the checksums for ``filepaths``.
+Compute the checksums of a list of files.
 
 :param list filepaths: List of file-paths.
 
@@ -43,6 +48,9 @@ Compute the checksums for ``filepaths``.
     List of checksums, of same length as ``filepaths``.
     The entry is ``None`` if no checksum was found/read.
     '''
+
+    if type(filepaths) == str:
+        filepaths = [filepaths]
 
     n = len(filepaths)
     ret = [None for i in range(n)]
