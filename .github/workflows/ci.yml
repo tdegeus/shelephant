@@ -39,7 +39,9 @@ jobs:
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
         chmod 640 "$HOME/.ssh/authorized_keys"
+        echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
         sudo systemctl restart ssh
+        ssh localhost "uname"
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
