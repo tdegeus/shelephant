@@ -37,8 +37,10 @@ jobs:
         mkdir -p "$HOME/.ssh"
         chmod 0700 "$HOME/.ssh"
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
-        cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+        cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
+        chmod 640 "$HOME/.ssh/authorized_keys"
         echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
+        sudo systemctl restart ssh
 
     - name: Set conda environment "test"
       uses: conda-incubator/setup-miniconda@v2
