@@ -50,6 +50,7 @@ jobs:
         sudo apt-get install openssh-server
         sudo systemctl enable ssh
         sudo systemctl start ssh
+        echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
 
     - name: Prepare SSH test
       if: runner.os == 'Linux'
