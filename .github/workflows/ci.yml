@@ -28,6 +28,16 @@ jobs:
     - name: Basic GitHub action setup
       uses: actions/checkout@v2
 
+    - name: Install SSH server
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install openssh-server
+        sudo systemctl enable ssh
+        sudo systemctl start ssh
+        mkdir -p $HOME/.ssh
+        chmod 0700 $HOME/.ssh
+        echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
+
     - name: Set conda environment "test"
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -43,14 +53,6 @@ jobs:
 
     - name: Run tests
       run: python test/main.py
-
-    - name: Install SSH server
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get install openssh-server
-        sudo systemctl enable ssh
-        sudo systemctl start ssh
-        echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
 
     - name: Prepare SSH test
       if: runner.os == 'Linux'
