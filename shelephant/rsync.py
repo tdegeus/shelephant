@@ -1,8 +1,10 @@
 
 import click
-import re
-import os
 import numpy as np
+import os
+import re
+import subprocess
+import tqdm
 
 from .external import exec_cmd
 

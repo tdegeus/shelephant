@@ -17,6 +17,7 @@ from .relpath import add_prefix
 from .rich import String
 from .rich import theme
 from .rsync import diff
+from .yaml import read
 
 
 def copy(
@@ -269,11 +270,7 @@ Get/send files.
     dest_exists = [False for i in range(n)]
     color = theme(theme_name.lower())
 
-    if not os.path.isdir(dest_dir) and len(dest_dir) > 0:
-
-        create = [True for i in range(n)]
-
-    elif check_rsync is not None:
+    if check_rsync is not None:
 
         tmp = diff(
             source_dir = src_dir if to_remote else hostname + ":" + src_dir,
@@ -295,7 +292,7 @@ Get/send files.
 
         if to_remote:
             if yaml_hostinfo_dest:
-                f = YamlRead(yaml_hostinfo_dest)['files']
+                f = read(yaml_hostinfo_dest)['files']
                 for i in range(n):
                     if files[i] in f:
                         dest_exists[i] = True
