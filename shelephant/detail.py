@@ -270,7 +270,11 @@ Get/send files.
     dest_exists = [False for i in range(n)]
     color = theme(theme_name.lower())
 
-    if check_rsync is not None:
+    if not os.path.isdir(dest_dir) and len(dest_dir) > 0 and not to_remote:
+
+        create = [True for i in range(n)]
+
+    elif check_rsync is not None:
 
         tmp = diff(
             source_dir = src_dir if to_remote else hostname + ":" + src_dir,
