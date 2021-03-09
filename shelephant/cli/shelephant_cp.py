@@ -62,8 +62,8 @@ import shutil
 import os
 
 from .. import version
-from .. import ShelephantCopy
-from .. import YamlGetItem
+from .. import detail
+from .. import yaml
 
 
 def main():
@@ -99,9 +99,9 @@ def main():
 
         key = list(filter(None, args.key.split('/')))
 
-        return ShelephantCopy(
+        return detail.copy(
             copy_function = shutil.copy2,
-            files = YamlGetItem(source, key),
+            files = yaml.get_item(source, key),
             src_dir = os.path.dirname(source),
             dest_dir = dest_dir,
             checksum = args.checksum,

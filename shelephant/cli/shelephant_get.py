@@ -62,12 +62,11 @@ import argparse
 import os
 import shutil
 
+from .. import detail
+from .. import rsync
+from .. import scp
 from .. import version
-from .. import YamlRead
-from .. import CopyFromRemote
-from .. import RsyncFromRemote
-from .. import ShelephantCopy
-from .. import ShelephantCopySSH
+from .. import yaml
 
 
 def main():
@@ -94,11 +93,11 @@ def main():
         args = parser.parse_args()
 
         source = args.hostinfo
-        data = YamlRead(source)
+        data = yaml.read(source)
 
         if 'host' not in data:
 
-            ShelephantCopy(
+            detail.copy(
                 copy_function = shutil.copy2,
                 files = data['files'],
                 src_dir = data['prefix'],
@@ -116,13 +115,15 @@ def main():
 
         elif args.scp:
 
-            ShelephantCopySSH(
-                copy_function = CopyFromRemote,
+            detail.copy_ssh(
+                copy_function = scp.from_remote,
+                use_rsync = False,
                 host = data['host'],
                 files = data['files'],
                 src_dir = data['prefix'],
                 dest_dir = os.path.dirname(source),
                 checksum = 'checksum' in data,
+                to_remote = False,
                 check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
                 force = args.force,
@@ -136,13 +137,15 @@ def main():
 
         else:
 
-            ShelephantCopySSH(
-                copy_function = RsyncFromRemote,
+            detail.copy_ssh(
+                copy_function = rsync.from_remote,
+                use_rsync = True,
                 host = data['host'],
                 files = data['files'],
                 src_dir = data['prefix'],
                 dest_dir = os.path.dirname(source),
                 checksum = 'checksum' in data,
+                to_remote = False,
                 check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
                 force = args.force,
