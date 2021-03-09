@@ -43,3 +43,24 @@ jobs:
 
     - name: Run tests
       run: python test/main.py
+
+    - name: Install SSH server
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install openssh-server
+        sudo systemctl enable ssh
+        sudo systemctl start ssh
+
+    - name: Prepare SSH test
+      if: runner.os == 'Linux'
+      working-directory: test
+      run: |
+        python ssh_generate.py
+        mkdir remote
+        cp -r myssh_get remote/
+        cp -r myssh_send remote/
+
+    - name: Run SSH tests
+      if: runner.os == 'Linux'
+      working-directory: test
+      run: python ssh_test.py --host localhost --prefix "${PWD}/remote"
