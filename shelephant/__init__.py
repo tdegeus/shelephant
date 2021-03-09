@@ -5,7 +5,6 @@ Copy with a memory.
 '''
 
 from ._version import *
-
 from . import checksum
 from . import convert
 from . import detail
