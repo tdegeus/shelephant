@@ -1,6 +1,5 @@
-'''shelephant_checksum
-    Get checksum of files listed in a (field of a) YAML-file.
-    The filenames are assumed either absolute, or relative to the input YAML-file.
+'''Get checksum of files listed in a (field of a) YAML-file.
+The filenames are assumed either absolute, or relative to the input YAML-file.
 
 :usage:
 
@@ -12,13 +11,13 @@
 
 :options:
 
-    -o, --output=N
+    -o, --output=arg
         Output YAML-file. [default: shelephant_checksum.yaml]
 
-    -k, --key=N
+    -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
-    -l, --local=N
+    -l, --local=arg
         Add local 'host' information to use precomputed checksums.
 
     -f, --force

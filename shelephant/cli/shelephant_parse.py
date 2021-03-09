@@ -1,5 +1,4 @@
-'''shelephant_parse
-    Parse a YAML-file, and print to screen.
+'''Parse a YAML-file, and print to screen.
 
 :usage:
 

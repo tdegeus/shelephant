@@ -1,9 +1,8 @@
-'''shelephant_merge
-    Merge a YAML file into another YAML file.
+'''Merge a YAML-file into another YAML-file.
 
-    Unless you use --no-path, the function assumes that all data are paths,
-    and changes all relative paths from being relative to <branch.yaml> or <main.yaml>
-    to being relative to --output.
+Unless you use --no-path, the function assumes that all data are paths,
+and changes all relative paths from being relative to <branch.yaml> or <main.yaml>
+to being relative to --output.
 
 :usage:
 
@@ -19,7 +18,7 @@
 
 :options:
 
-    -o, --output=N
+    -o, --output=arg
         Output file. (default: <main.yaml>)
 
     --replace

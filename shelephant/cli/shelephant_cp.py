@@ -1,6 +1,5 @@
-'''shelephant_cp
-    Copy files listed in a (field of a) YAML-file.
-    The filenames are assumed either absolute, or relative to the input YAML-file.
+'''Copy files listed in a (field of a) YAML-file.
+The filenames are assumed either absolute, or relative to the input YAML-file.
 
 :usage:
 
@@ -25,15 +24,15 @@
         Check if files are different using *rsync*.
         *rsync* uses basic criteria such as file size and creation and modification date.
         This is much faster than using checksums but is only approximate.
-        *rsync* can also check based on checksum.
+        Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
 
-    --temp=N
-        Temporary filename to communicate with rsync. [default: shelephant_files.txt]
+    --temp=arg
+        Temporary filename to communicate with *rsync*. [default: shelephant_files.txt]
 
-    -k, --key=N
+    -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
-    --colors=M
+    --colors=arg
         Select color scheme from: none, dark. [default: dark]
 
     -s, --summary

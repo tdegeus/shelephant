@@ -28,7 +28,7 @@ Installing GooseSLUM proceeds easily with ``pip``:
 .. code-block:: bash
 
     cd /path/to/shelephant
-    python m pip install .
+    python -m pip install .
 
 This should install all the necessary runtime dependencies as well.
 

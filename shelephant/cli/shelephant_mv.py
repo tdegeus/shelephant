@@ -1,6 +1,5 @@
-'''shelephant_mv
-    Move files listed in a (field of a) YAML-file.
-    The filenames are assumed either absolute, or relative to the input YAML-file.
+'''Move files listed in a (field of a) YAML-file.
+The filenames are assumed either absolute, or relative to the input YAML-file.
 
 :usage:
 
@@ -21,10 +20,10 @@
     -c, --checksum
         Use checksum to skip files that are the same.
 
-    -k, --key=N
+    -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
-    --colors=M
+    --colors=arg
         Select color scheme from: none, dark. [default: dark]
 
     -s, --summary

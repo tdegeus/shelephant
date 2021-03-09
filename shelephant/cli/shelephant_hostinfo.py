@@ -1,5 +1,4 @@
-r'''shelephant_hostinfo
-    Collect file information from location (on a remote host).
+r'''Collect file information from location (on a remote host).
 
 :usage:
 
@@ -7,34 +6,34 @@ r'''shelephant_hostinfo
 
 :options:
 
-    -o, --output=N
+    -o, --output=arg
         Output YAML-file. [default: shelephant_hostinfo.yaml].
 
-    -r, --host=N
+    -r, --host=arg
         Host-name.
 
-    -p, --prefix=N
+    -p, --prefix=arg
         Directory (on host) from which to copy.
 
-    -f, --files=[N]
+    -f, --files=[arg]
         YAML-file with list of files (on remote). [default: shelephant_dump.yaml]
 
-    -c, --checksum=[N]
+    -c, --checksum=[arg]
         YAML-file with checksums (on remote). [default: shelephant_checksum.yaml]
 
-    --files-key=N
+    --files-key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
-    --checksum-key=N
+    --checksum-key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
     --ignore
         Skip basic checks.
 
-    -i, --input=[N]
+    -i, --input=[arg]
         Use host and prefix from existing file. [default: shelephant_hostinfo.yaml]
 
-    --remove=N...
+    --remove=arg...
         Remove paths (and checksums) from existing file.
 
     --force

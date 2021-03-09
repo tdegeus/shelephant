@@ -1,8 +1,9 @@
-'''shelephant_get
-    Copy files using earlier collected information on which files to copy from where.
-    By default the back-end is ``rysnc -a --from-file="temp" host:source_dir dest_dir``.
-    Alternatively ``scp -p host:source_file dest_file`` can be used.
-    Typically, ``rsync`` will be faster, especially in copying a lot of small files.
+'''Copy files from remote, using earlier collected host-information.
+Use ``shelephant_hostinfo`` to collect host-information.
+
+By default the back-end is ``rysnc -a --from-file="temp" host:source_dir dest_dir``.
+Alternatively ``scp -p host:source_file dest_file`` can be used.
+Typically, *rsync* will be faster, especially in copying a lot of small files.
 
 :usage:
 
@@ -16,7 +17,7 @@
 
 :options:
 
-    -l, --local=N
+    -l, --local=arg
         Add local 'host' information to use precomputed checksums.
 
     --scp
@@ -26,12 +27,12 @@
         Check if files are different using *rsync*.
         *rsync* uses basic criteria such as file size and creation and modification date.
         This is much faster than using checksums but is only approximate.
-        *rsync* can also check based on checksum.
+        Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
 
-    --temp=N
-        Temporary filename to communicate with rsync. [default: shelephant_files.txt]
+    --temp=arg
+        Temporary filename to communicate with *rsync*. [default: shelephant_files.txt]
 
-    --colors=M
+    --colors=arg
         Select color scheme from: none, dark. [default: dark]
 
     -s, --summary

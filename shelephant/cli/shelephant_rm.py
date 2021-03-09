@@ -1,6 +1,5 @@
-'''shelephant_rm
-    Remove files listed in a (field of a) YAML-file.
-    The filenames are assumed either absolute, or relative to the input YAML-file.
+'''Remove files listed in a (field of a) YAML-file.
+The filenames are assumed either absolute, or relative to the input YAML-file.
 
 :usage:
 
@@ -14,7 +13,7 @@
 
 :options:
 
-    -k, --key=N
+    -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
     -f, --force

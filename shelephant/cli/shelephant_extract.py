@@ -1,9 +1,8 @@
-'''shelephant_extract
-    Extract a field from a YAML-file.
+'''Extract a field from a YAML-file.
 
-    Unless you use --no-path, the function assumes that all data are paths,
-    and changes all relative paths from being relative to <input.yaml>
-    to being relative to --output.
+Unless you use --no-path, the function assumes that all data are paths,
+and changes all relative paths from being relative to <input.yaml>
+to being relative to --output.
 
 :usage:
 
@@ -19,7 +18,7 @@
 
 :options:
 
-    -o, --output=N
+    -o, --output=arg
         Output file. (default: <input.yaml>)
 
     --no-path

@@ -1,5 +1,4 @@
-'''shelephant_dump
-    Dump filenames to a YAML-file.
+'''Dump filenames to a YAML-file.
 
 :usage:
 
@@ -11,7 +10,7 @@
 
 :options:
 
-    -o, --output=N
+    -o, --output=arg
         Output YAML-file. [default: shelephant_dump.yaml]
 
     -a, --append
