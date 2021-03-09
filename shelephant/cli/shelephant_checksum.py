@@ -39,11 +39,10 @@
 import argparse
 import os
 
+from .. import checksum
+from .. import relpath
 from .. import version
-from .. import YamlGetItem
-from .. import YamlDump
-from .. import PrefixPaths
-from .. import GetChecksums
+from .. import yaml
 
 
 def main():
@@ -66,11 +65,11 @@ def main():
 
         source = args.input
         key = list(filter(None, args.key.split('/')))
-        files = YamlGetItem(source, key)
+        files = yaml.read_item(source, key)
         prefix = os.path.dirname(source)
-        files = PrefixPaths(prefix, files)
-        data = GetChecksums(files, args.local, hybrid=True, progress=not args.quiet)
-        YamlDump(args.output, data, args.force)
+        files = relpath.add_prefix(prefix, files)
+        data = checksum.get(files, args.local, hybrid=True, progress=not args.quiet)
+        yaml.dump(args.output, data, args.force)
 
     except Exception as e:
 

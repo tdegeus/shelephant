@@ -47,10 +47,9 @@ import argparse
 import mergedeep
 import os
 
+from .. import relpath
 from .. import version
-from .. import YamlRead
-from .. import YamlDump
-from .. import ChangeRootOfRelativePaths
+from .. import yaml
 
 def recursive_items(dictionary):
     for key, value in dictionary.items():
@@ -79,8 +78,8 @@ def main():
         parser.add_argument('main')
         args = parser.parse_args()
 
-        main = YamlRead(args.main)
-        branch = YamlRead(args.branch)
+        main = yaml.read(args.main)
+        branch = yaml.read(args.branch)
         output = args.output if args.output else args.main
         output_dir = os.path.dirname(output)
 
@@ -90,10 +89,10 @@ def main():
 
             for var, path in zip([main, branch], paths):
                 if type(var) == list:
-                    ChangeRootOfRelativePaths(var, path, output_dir, in_place=True)
+                    relpath.chroot(var, path, output_dir, in_place=True)
                 elif type(var) == dict:
                     for key, value in recursive_items(var):
-                        ChangeRootOfRelativePaths(value, path, output_dir, in_place=True)
+                        relpath.chroot(value, path, output_dir, in_place=True)
                 else:
                     raise IOError('Files have an incompatible structure')
 
@@ -122,7 +121,7 @@ def main():
 
             raise IOError('Files have an incompatible structure')
 
-        YamlDump(output, main, args.force)
+        yaml.dump(output, main, args.force)
 
     except Exception as e:
 

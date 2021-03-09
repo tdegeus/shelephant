@@ -43,8 +43,7 @@ import os
 import subprocess
 
 from .. import version
-from .. import YamlDump
-from .. import YamlRead
+from .. import yaml
 
 
 def main():
@@ -84,14 +83,14 @@ def main():
 
         if args.append:
 
-            main = YamlRead(args.output)
+            main = yaml.read(args.output)
             if type(main) != list:
                 raise IOError('Can only append a "flat" file')
 
             files = main + files
             args.force = True
 
-        YamlDump(args.output, files, args.force)
+        yaml.dump(args.output, files, args.force)
 
     except Exception as e:
 

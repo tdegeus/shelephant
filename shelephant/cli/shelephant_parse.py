@@ -23,8 +23,7 @@
 import argparse
 
 from .. import version
-from .. import YamlRead
-from .. import YamlPrint
+from .. import yaml
 
 
 def main():
@@ -40,8 +39,8 @@ def main():
         parser.add_argument('file')
         args = parser.parse_args()
 
-        data = YamlRead(args.file)
-        YamlPrint(data)
+        data = yaml.read(args.file)
+        yaml.view(data)
 
     except Exception as e:
 

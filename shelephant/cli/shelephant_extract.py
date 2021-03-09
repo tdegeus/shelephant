@@ -45,11 +45,10 @@ import os
 import mergedeep
 import functools
 
+from .. import convert
+from .. import relpath
 from .. import version
-from .. import YamlGetItem
-from .. import YamlDump
-from .. import ChangeRootOfRelativePaths
-from .. import Squash
+from .. import yaml
 
 
 def main():
@@ -80,19 +79,19 @@ def main():
 
         for key in args.key:
             key = list(filter(None, key.split('/')))
-            files = YamlGetItem(args.input, key)
+            files = yaml.read_item(args.input, key)
             if not args.no_path:
-                files = ChangeRootOfRelativePaths(files, input_dir, output_dir)
+                files = relpath.chroot(files, input_dir, output_dir)
             if len(args.key) == 1:
-                YamlDump(output, files, args.force)
+                yaml.dump(output, files, args.force)
                 return 0
             container = functools.reduce(lambda x, y: {y: x}, key[:-1], {key[-1]: files})
             mergedeep.merge(data, container)
 
         if args.squash:
-            data = Squash(data)
+            data = convert.squash(data)
 
-        YamlDump(output, data, args.force)
+        yaml.dump(output, data, args.force)
 
     except Exception as e:
 

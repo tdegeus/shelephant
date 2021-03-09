@@ -3,61 +3,81 @@
 Python module
 *************
 
-Support functions
------------------
+Type conversion
+---------------
 
 .. autosummary::
 
-    shelephant.FlattenList
-    shelephant.Squash
+    shelephant.convert.flatten
+    shelephant.convert.squash
 
-YAML handling
+yaml handling
 -------------
 
 .. autosummary::
 
-    shelephant.YamlRead
-    shelephant.YamlDump
-    shelephant.YamlPrint
-    shelephant.YamlGetItem
+    shelephant.yaml.read
+    shelephant.yaml.read_item
+    shelephant.yaml.dump
+    shelephant.yaml.view
+
+File operations
+---------------
+
+.. autosummary::
+
+    shelephant.path.check_allisfile
+    shelephant.path.filter_deepest
+    shelephant.path.dirnames
+    shelephant.path.makedirs
+    shelephant.path.overwrite
 
 File-path operations
 --------------------
 
 .. autosummary::
 
-    shelephant.CheckAllIsFile
-    shelephant.PrefixPaths
-    shelephant.ChangeRootOfRelativePaths
-    shelephant.GetDeepestPaths
-    shelephant.DirNames
-    shelephant.MakeDir
-    shelephant.MakeDirs
-    shelephant.OverWrite
-    shelephant.GetSHA256
-    shelephant.GetChecksums
-    shelephant.RsyncDiff
+    shelephant.relpath.add_prefix
+    shelephant.relpath.chroot
 
-Copy functions
---------------
+Checksum
+--------
+
+    shelephant.checksum.sha256
+    shelephant.checksum.get
+
+
+ssh queries
+-----------
 
 .. autosummary::
 
-    shelephant.IsOnRemote
-    shelephant.CopyFromRemote
-    shelephant.CopyToRemote
-    shelephant.RsyncFromRemote
-    shelephant.RsyncToRemote
-    shelephant.ShelephantCopy
-    shelephant.ShelephantCopySSH
+    shelephant.ssh.file_exists
+
+scp copy
+--------
+
+.. autosummary::
+
+    shelephant.scp.from_remote
+    shelephant.scp.to_remote
+
+rsync copy and queries
+----------------------
+
+.. autosummary::
+
+    shelephant.rsync.diff
+    shelephant.rsync.from_remote
+    shelephant.rsync.to_remote
 
 Formatted print
 ---------------
 
 .. autosummary::
 
-    shelephant.Theme
-    shelephant.String
+    shelephant.rich.theme
+    shelephant.rich.String
 
 
 Details

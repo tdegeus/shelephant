@@ -59,11 +59,9 @@ import tempfile
 import shutil
 import numpy as np
 
+from .. import scp
 from .. import version
-from .. import YamlGetItem
-from .. import YamlDump
-from .. import YamlRead
-from .. import CopyFromRemote
+from .. import yaml
 
 
 def remove(data, rm):
@@ -120,9 +118,9 @@ def main():
             filename = args.output
             if args.input:
                 filename = args.input
-            data = YamlRead(filename)
+            data = yaml.read(filename)
             data = remove(data, args.remove)
-            YamlDump(args.output, data, args.force)
+            yaml.dump(args.output, data, args.force)
             return 0
 
         # Extract basic information from command-line arguments
@@ -136,7 +134,7 @@ def main():
             data['prefix'] = args.prefix
 
         if args.input:
-            overwrite = YamlRead(args.input)
+            overwrite = yaml.read(args.input)
             for item in ['host', 'prefix']:
                 if item in overwrite:
                     data[item] = overwrite[item]
@@ -171,14 +169,14 @@ def main():
                 filename = args_dict[item]
 
                 if 'host' in data:
-                    CopyFromRemote(
+                    scp.from_remote(
                         data['host'],
                         os.path.join(data['prefix'], filename),
                         temp_file,
                         args.verbose)
                     filename = temp_file
 
-                data[item] = YamlGetItem(filename, key)
+                data[item] = yaml.read_item(filename, key)
 
         # Run basic checks
 
@@ -200,7 +198,7 @@ def main():
         if 'files' not in data:
             data['files'] = []
 
-        YamlDump(args.output, data, args.force)
+        yaml.dump(args.output, data, args.force)
 
     except Exception as e:
 

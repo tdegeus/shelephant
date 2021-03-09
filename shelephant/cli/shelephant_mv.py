@@ -51,9 +51,9 @@
 import argparse
 import os
 
+from .. import detail
 from .. import version
-from .. import ShelephantCopy
-from .. import YamlGetItem
+from .. import yaml
 
 
 def main():
@@ -87,9 +87,9 @@ def main():
 
         key = list(filter(None, args.key.split('/')))
 
-        return ShelephantCopy(
+        return detail.copy(
             copy_function = os.rename,
-            files = YamlGetItem(source, key),
+            files = yaml.read_item(source, key),
             src_dir = os.path.dirname(source),
             dest_dir = dest_dir,
             checksum = args.checksum,

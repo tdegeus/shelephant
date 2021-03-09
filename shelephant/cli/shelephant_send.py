@@ -69,13 +69,11 @@ import argparse
 import os
 import shutil
 
+from .. import detail
+from .. import rsync
+from .. import scp
 from .. import version
-from .. import YamlRead
-from .. import YamlGetItem
-from .. import CopyToRemote
-from .. import RsyncToRemote
-from .. import ShelephantCopy
-from .. import ShelephantCopySSH
+from .. import yaml
 
 
 def main():
@@ -104,15 +102,15 @@ def main():
 
         source = args.args[0]
         hostinfo = args.args[1]
-        data = YamlRead(hostinfo)
+        data = yaml.read(hostinfo)
         key = list(filter(None, args.key.split('/')))
-        files = YamlGetItem(source, key)
+        files = yaml.read_item(source, key)
         src_dir = os.path.dirname(source)
         dest_dir = data['prefix']
 
         if 'host' not in data:
 
-            ShelephantCopy(
+            detail.copy(
                 copy_function = shutil.copy2,
                 files = files,
                 src_dir = src_dir,
@@ -130,12 +128,14 @@ def main():
 
         elif args.scp:
 
-            ShelephantCopySSH(
-                copy_function = CopyToRemote,
+            detail.copy_ssh(
+                copy_function = scp.to_remote,
+                use_rsync = False,
                 host = data['host'],
                 files = files,
                 src_dir = src_dir,
                 dest_dir = dest_dir,
+                to_remote = True,
                 checksum = 'checksum' in data,
                 check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,
@@ -150,12 +150,14 @@ def main():
 
         else:
 
-            ShelephantCopySSH(
-                copy_function = RsyncToRemote,
+            detail.copy_ssh(
+                copy_function = rsync.to_remote,
+                use_rsync = True,
                 host = data['host'],
                 files = files,
                 src_dir = src_dir,
                 dest_dir = dest_dir,
+                to_remote = True,
                 checksum = 'checksum' in data,
                 check_rsync = None if not args.check_rsync else args.temp,
                 quiet = args.quiet,

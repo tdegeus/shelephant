@@ -33,9 +33,9 @@ import argparse
 import click
 import os
 
+from .. import relpath
 from .. import version
-from .. import YamlGetItem
-from .. import PrefixPaths
+from .. import yaml
 
 
 def main():
@@ -55,9 +55,9 @@ def main():
 
         source = args.input
         key = list(filter(None, args.key.split('/')))
-        files = YamlGetItem(source, key)
+        files = yaml.read_item(source, key)
         prefix = os.path.dirname(source)
-        files = PrefixPaths(prefix, files)
+        files = relpath.add_prefix(prefix, files)
 
         if len(files) == 0:
             return 0
