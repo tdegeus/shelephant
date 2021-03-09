@@ -1,3 +1,8 @@
+r'''
+Copy & query using *rsync*.
+
+(c) Tom de Geus, 2021, MIT
+'''
 
 import click
 import numpy as np
@@ -77,7 +82,7 @@ def from_remote(
     verbose=False,
     progress=True):
     r'''
-Copy files to a remote system using ``rsync -a --files-from``.
+Copy files from a remote system. Uses: ``rsync -a --files-from``.
 
 :param str hostname: Hostname.
 :param str source_dir: Source directory.
@@ -109,7 +114,7 @@ def to_remote(
     verbose=False,
     progress=True):
     r'''
-Copy files from a remote system using ``rsync -a --files-from``.
+Copy files to a remote system. Uses: ``rsync -a --files-from``.
 
 :param str hostname: Hostname.
 :param str source_dir: Source directory.

@@ -10,6 +10,8 @@ Type conversion
 
     shelephant.convert.flatten
     shelephant.convert.squash
+    shelephant.convert.get
+    shelephant.convert.split_key
 
 yaml handling
 -------------
@@ -43,9 +45,10 @@ File-path operations
 Checksum
 --------
 
+.. autosummary::
+
     shelephant.checksum.sha256
     shelephant.checksum.get
-
 
 ssh queries
 -----------

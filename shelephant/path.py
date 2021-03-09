@@ -1,3 +1,8 @@
+r'''
+FIle operations.
+
+(c) Tom de Geus, 2021, MIT
+'''
 
 from collections import defaultdict
 import click
@@ -86,7 +91,7 @@ Get the ``os.path.dirname`` of all file paths.
 
 def overwrite(paths, force=False):
     r'''
-List files that will be overwritten.
+(Prompt and) List files that will be overwritten if created.
 
 :param list paths: List of file paths.
 :param bool force: If ``True`` the user is prompted to overwrite.
@@ -111,10 +116,14 @@ List files that will be overwritten.
 
 def makedirs(dirnames, force=False):
     r'''
-Same as :py:mod:`shelephant.MakeDir` but for list of directories.
+(Prompt and) Create directories that do not yet exist.
+This function creates parent directories if needed.
 
 :param bool force: Create directories without prompt.
     '''
+
+    if type(dirnames) == str:
+        dirnames = [dirnames]
 
     dirnames = [dirname for dirname in dirnames if len(dirname) > 0]
     dirnames = [dirname for dirname in dirnames if not os.path.isdir(dirname)]
