@@ -40,7 +40,7 @@ def main():
         args = parser.parse_args()
 
         data = yaml.read(args.file)
-        yaml.print(data)
+        yaml.view(data)
 
     except Exception as e:
 

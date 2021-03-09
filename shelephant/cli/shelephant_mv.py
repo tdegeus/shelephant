@@ -89,7 +89,7 @@ def main():
 
         return detail.copy(
             copy_function = os.rename,
-            files = yaml.get_item(source, key),
+            files = yaml.read_item(source, key),
             src_dir = os.path.dirname(source),
             dest_dir = dest_dir,
             checksum = args.checksum,

@@ -65,7 +65,7 @@ def main():
 
         source = args.input
         key = list(filter(None, args.key.split('/')))
-        files = yaml.get_item(source, key)
+        files = yaml.read_item(source, key)
         prefix = os.path.dirname(source)
         files = relpath.add_prefix(prefix, files)
         data = checksum.get(files, args.local, hybrid=True, progress=not args.quiet)

@@ -101,7 +101,7 @@ def main():
 
         return detail.copy(
             copy_function = shutil.copy2,
-            files = yaml.get_item(source, key),
+            files = yaml.read_item(source, key),
             src_dir = os.path.dirname(source),
             dest_dir = dest_dir,
             checksum = args.checksum,

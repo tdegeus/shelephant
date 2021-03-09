@@ -104,7 +104,7 @@ def main():
         hostinfo = args.args[1]
         data = yaml.read(hostinfo)
         key = list(filter(None, args.key.split('/')))
-        files = yaml.get_item(source, key)
+        files = yaml.read_item(source, key)
         src_dir = os.path.dirname(source)
         dest_dir = data['prefix']
 

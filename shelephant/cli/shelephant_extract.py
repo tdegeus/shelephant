@@ -79,7 +79,7 @@ def main():
 
         for key in args.key:
             key = list(filter(None, key.split('/')))
-            files = yaml.get_item(args.input, key)
+            files = yaml.read_item(args.input, key)
             if not args.no_path:
                 files = relpath.chroot(files, input_dir, output_dir)
             if len(args.key) == 1:

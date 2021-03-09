@@ -176,7 +176,7 @@ def main():
                         args.verbose)
                     filename = temp_file
 
-                data[item] = yaml.get_item(filename, key)
+                data[item] = yaml.read_item(filename, key)
 
         # Run basic checks
 
