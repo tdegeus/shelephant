@@ -32,7 +32,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get install openssh-server
-        sudo sshd -d
+        sshd -d
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
