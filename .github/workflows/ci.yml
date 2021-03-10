@@ -37,8 +37,8 @@ jobs:
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
         eval "$(ssh-agent -s)"
         ssh-add ~/.ssh/id_rsa
-        sudo echo "LogLevel DEBUG3" >> /etc/ssh/sshd_config
         sudo /usr/sbin/sshd -dD
+        sudo echo "LogLevel DEBUG3" >> /etc/ssh/sshd_config
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         chmod 700 "$HOME/.ssh"
         chmod 644 "$HOME/.ssh/authorized_keys"
