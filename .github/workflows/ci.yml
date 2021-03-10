@@ -42,7 +42,8 @@ jobs:
         # chmod 640 "$HOME/.ssh/authorized_keys"
         # echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
         # sudo systemctl restart ssh
-        ssh localhost "uname -r"
+        ssh -v localhost "uname -r"
+        cat /var/log/auth.log
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
