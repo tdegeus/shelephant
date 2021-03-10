@@ -47,6 +47,7 @@ jobs:
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /var/log/auth.log
         cat /etc/ssh/sshd_config
+        ls -l "$HOME/.ssh/"
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
