@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest]
+        runs-on: [ubuntu-latest, macos-latest]
 
     defaults:
       run:
@@ -38,13 +38,7 @@ jobs:
         chmod o-w "$HOME"
         chmod 700 "$HOME/.ssh"
         chmod 600 "$HOME/.ssh/authorized_keys"
-        ls -l /home
-        ls -al "$HOME"
-        ls -al "$HOME/.ssh"
-        echo "LogLevel DEBUG3" | sudo tee -a /etc/ssh/sshd_config
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
-        cat /etc/ssh/sshd_config
-        grep 'sshd' /var/log/auth.log
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
