@@ -79,6 +79,8 @@ Copy/move files.
 
     src = add_prefix(src_dir, files)
     dest = add_prefix(dest_dir, files)
+    src_dir = os.path.normpath(src_dir)
+    dest_dir = os.path.normpath(dest_dir)
     n = len(src)
     overwrite = [False for i in range(n)]
     create = [False for i in range(n)]
@@ -89,7 +91,7 @@ Copy/move files.
         if not os.path.isfile(file):
             raise IOError('Input file "{0:s}" does not exists'.format(file))
 
-    if not os.path.isdir(dest_dir) and len(dest_dir) > 0:
+    if not os.path.isdir(dest_dir):
 
         create = [True for i in range(n)]
 
@@ -141,8 +143,8 @@ Copy/move files.
         overview += [String('skip (==): {0:d}{1:s}'.format(nskip, pskip_message), color=color['skip']).format()]
 
     summary = []
-    summary += ['- source : ' + os.path.normpath(src_dir)]
-    summary += ['- dest   : ' + os.path.normpath(dest_dir)]
+    summary += ['- source : ' + src_dir]
+    summary += ['- dest   : ' + dest_dir]
     summary += ['- ' + ', '.join(overview)]
 
     if ncreate + noverwrite <= 100 and print_summary:
@@ -263,6 +265,8 @@ Get/send files.
 
     src = add_prefix(src_dir, files)
     dest = add_prefix(dest_dir, files)
+    src_dir = os.path.normpath(src_dir)
+    dest_dir = os.path.normpath(dest_dir)
     n = len(src)
     overwrite = [False for i in range(n)]
     create = [False for i in range(n)]
@@ -270,19 +274,20 @@ Get/send files.
     dest_exists = [False for i in range(n)]
     color = theme(theme_name.lower())
 
-    if not os.path.isdir(dest_dir) and len(dest_dir) > 0 and not to_remote:
+    if not os.path.isdir(dest_dir) and not to_remote:
 
         create = [True for i in range(n)]
 
     elif check_rsync is not None:
 
         tmp = diff(
-            source_dir = src_dir if to_remote else hostname + ":" + src_dir,
-            dest_dir = hostname + ":" + dest_dir if to_remote else dest_dir,
+            source_dir = src_dir if to_remote else host + ":" + src_dir,
+            dest_dir = host + ":" + dest_dir if to_remote else dest_dir,
             tempfilename = check_rsync,
             files = files,
             checksum = checksum,
-            force = force)
+            force = force,
+            verbose = verbose)
 
         skip = tmp['skip']
         create = tmp['create']
@@ -335,12 +340,12 @@ Get/send files.
     summary = []
     if to_remote:
         summary += ['- to host        : ' + host]
-        summary += ['- source (local) : ' + os.path.normpath(src_dir)]
-        summary += ['- dest (remote)  : ' + os.path.normpath(dest_dir)]
+        summary += ['- source (local) : ' + src_dir]
+        summary += ['- dest (remote)  : ' + dest_dir]
     else:
         summary += ['- from host       : ' + host]
-        summary += ['- source (remote) : ' + os.path.normpath(src_dir)]
-        summary += ['- dest (local)    : ' + os.path.normpath(dest_dir)]
+        summary += ['- source (remote) : ' + src_dir]
+        summary += ['- dest (local)    : ' + dest_dir]
     summary += ['- ' + ', '.join(overview)]
 
     if ncreate + noverwrite <= 100 and print_summary:
@@ -390,8 +395,6 @@ Get/send files.
     files = np.array(files)[i]
 
     if use_rsync:
-        dest_dir = dest_dir if len(dest_dir) > 0 else '.'
-        src_dir = src_dir if len(src_dir) > 0 else '.'
         return copy_function(host, src_dir, dest_dir, tempfilename, files, force, verbose, not quiet)
 
     pbar = tqdm.trange(len(files), disable=quiet)
