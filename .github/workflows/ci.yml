@@ -39,6 +39,10 @@ jobs:
         # chmod 0700 "$HOME/.ssh"
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
+        ls -alh "$HOME"
+        ls -alh "$HOME/.ssh"
+        cat "$HOME/.ssh/id_rsa.pub"
+        cat "$HOME/.ssh/authorized_keys"
         # chmod 640 "$HOME/.ssh/authorized_keys"
         # echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
         # sudo systemctl restart ssh
