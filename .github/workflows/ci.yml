@@ -35,7 +35,7 @@ jobs:
         sudo systemctl status ssh
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
-        ssh -v localhost "uname -r"
+        ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /var/log/auth.log
 
     - name: Set conda environment
