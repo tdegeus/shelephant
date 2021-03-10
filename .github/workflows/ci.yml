@@ -37,6 +37,7 @@ jobs:
         chmod g-w "$HOME"
         chmod 700 "$HOME/.ssh"
         chmod 600 "$HOME/.ssh/authorized_keys"
+        echo "LogLevel DEBUG3" | sudo tee -a /etc/ssh/sshd_config
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /etc/ssh/sshd_config
         grep 'sshd' /var/log/auth.log
