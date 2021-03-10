@@ -35,6 +35,15 @@ jobs:
         sudo systemctl status ssh
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
+        eval "$(ssh-agent -s)"
+        ssh-add ~/.ssh/id_rsa
+        ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
+        chmod 700 "$HOME/.ssh"
+        chmod 644 "$HOME/.ssh/authorized_keys"
+        chmod 644 "$HOME/.ssh/known_hosts"
+        chmod 644 "$HOME/.ssh/config"
+        chmod 600 "$HOME/.ssh/id_rsa"
+        chmod 644 "$HOME/.ssh/id_rsa.pub"
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /var/log/auth.log
 
