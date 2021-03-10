@@ -35,6 +35,7 @@ jobs:
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
         chmod g-w "$HOME"
+        chmod o-w "$HOME"
         chmod 700 "$HOME/.ssh"
         chmod 600 "$HOME/.ssh/authorized_keys"
         ls -l /home
