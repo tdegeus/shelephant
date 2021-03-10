@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-latest]
+        runs-on: [macos-latest]
 
     defaults:
       run:
@@ -40,6 +40,9 @@ jobs:
         chmod g-w "$HOME"
         chmod 700 "$HOME/.ssh"
         chmod 600 "$HOME/.ssh/authorized_keys"
+        ls -l "$HOME"
+        ls -l $HOME/.ssh"
+        ls -l $HOME/.ssh/"
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /etc/ssh/sshd_config
         grep 'sshd' /var/log/auth.log
