@@ -46,6 +46,7 @@ jobs:
         chmod 644 "$HOME/.ssh/id_rsa.pub"
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /var/log/auth.log
+        cat /etc/ssh/sshd_config
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
