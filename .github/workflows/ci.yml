@@ -32,16 +32,17 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get install openssh-server
-        sudo systemctl enable ssh
-        sudo systemctl start ssh
-        mkdir -p "$HOME/.ssh"
-        chmod 0700 "$HOME/.ssh"
+        # sudo systemctl enable ssh
+        # sudo systemctl start ssh
+        sudo systemctl status ssh
+        # mkdir -p "$HOME/.ssh"
+        # chmod 0700 "$HOME/.ssh"
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
-        chmod 640 "$HOME/.ssh/authorized_keys"
-        echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
-        sudo systemctl restart ssh
-        ssh localhost "uname"
+        # chmod 640 "$HOME/.ssh/authorized_keys"
+        # echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
+        # sudo systemctl restart ssh
+        ssh localhost "uname -r"
 
     - name: Set conda environment
       uses: mamba-org/provision-with-micromamba@main
