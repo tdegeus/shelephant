@@ -34,7 +34,9 @@ jobs:
         sudo apt-get install openssh-server
         ssh-keygen -t rsa -q -f "$HOME/.ssh/id_rsa" -N ""
         cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys"
-        echo "StrictModes off" | sudo tee -a /etc/ssh/sshd_config
+        chmod g-w "$HOME"
+        chmod 700 "$HOME/.ssh"
+        chmod 600 "$HOME/.ssh/authorized_keys"
         ssh -o "StrictHostKeyChecking accept-new" -v localhost "uname -r"
         cat /etc/ssh/sshd_config
         grep 'sshd' /var/log/auth.log
