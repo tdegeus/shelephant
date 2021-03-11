@@ -185,7 +185,7 @@ Copy/move files.
         if not click.confirm('Proceed?'):
             raise IOError('Cancelled')
 
-    makedirs(list(set([os.path.dirname(i) for i in dest])))
+    makedirs(list(set([os.path.dirname(i) for i in dest])), force=force)
 
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
@@ -387,7 +387,7 @@ Get/send files.
             raise IOError('Cancelled')
 
     if not to_remote:
-        makedirs(list(set([os.path.dirname(i) for i in dest])))
+        makedirs(list(set([os.path.dirname(i) for i in dest])), force=force)
 
     i = np.argwhere(np.not_equal(skip, True)).ravel()
     src = np.array(src)[i]
