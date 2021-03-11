@@ -882,6 +882,46 @@ class Test_cp(unittest.TestCase):
         shutil.rmtree('mydest')
         os.remove('shelephant_files.txt')
 
+    def test_nested(self):
+
+        for dirname in ['mysrc', 'mybak']:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.makedirs('mysrc/foo/foo/foo')
+
+        with open('mysrc/foo.log', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/foo/foo.log', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/foo/foo/foo.log', 'w') as file:
+            file.write('foo')
+
+        with open('mysrc/foo/foo/foo/foo.log', 'w') as file:
+            file.write('foo')
+
+        operations = [
+            'mysrc/foo.log             -> mysrc/foo.log',
+            'mysrc/foo/foo.log         -> mysrc/foo/foo.log',
+            'mysrc/foo/foo/foo.log     -> mysrc/foo/foo/foo.log',
+            'mysrc/foo/foo/foo/foo.log -> mysrc/foo/foo/foo/foo.log',
+        ]
+
+        output = run("shelephant_dump -f -s `find . -iname '*.log'`")
+        output = run("shelephant_cp -f -d -q --colors none mybak")
+
+        self.assertEqual(list(filter(None, output.split('\n'))), operations)
+
+        self.assertTrue(os.path.isfile("mybak/mysrc/foo.log"))
+        self.assertTrue(os.path.isfile("mybak/mysrc/foo/foo.log"))
+        self.assertTrue(os.path.isfile("mybak/mysrc/foo/foo/foo.log"))
+        self.assertTrue(os.path.isfile("mybak/mysrc/foo/foo/foo/foo.log"))
+
+        shutil.rmtree('mysrc')
+        shutil.rmtree('mybak')
+
 
 class Test_rm(unittest.TestCase):
 
