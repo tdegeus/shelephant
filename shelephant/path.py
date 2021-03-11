@@ -132,7 +132,7 @@ This function creates parent directories if needed.
         return 0
 
     dirnames = list(set(dirnames))
-    dirnames = sorted(GetDeepestPaths(dirnames))
+    dirnames = sorted(filter_deepest(dirnames))
 
     if not force:
         for dirname in dirnames:
