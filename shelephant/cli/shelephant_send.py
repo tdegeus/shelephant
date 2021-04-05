@@ -98,8 +98,11 @@ def main():
         parser.add_argument(      '--verbose', required=False, action='store_true')
         parser.add_argument('-q', '--quiet', required=False, action='store_true')
         parser.add_argument('-v', '--version', action='version', version=version)
-        parser.add_argument('args', nargs=2, default=['shelephant_dump.yaml', 'shelephant_hostinfo.yaml'])
+        parser.add_argument('args', nargs='*', default=['shelephant_dump.yaml', 'shelephant_hostinfo.yaml'])
         args = parser.parse_args()
+
+        if len(args.args) != 2:
+            raise IOError('Unknown number of arguments')
 
         source = args.args[0]
         hostinfo = args.args[1]
