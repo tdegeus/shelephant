@@ -57,7 +57,7 @@ Copy/move files.
 :param bool print_all: If ``False`` auto-truncation of long output is applied.
 
 :type theme_name: str or None
-:param theme_name: The name of the color-theme. See :py:mod:`shelephant.theme`.
+:param theme_name: The name of the color-theme. See :py:mod:`shelephant.rich.theme`.
 
 :type yaml_hostinfo_src: str, optional
 :param yaml_hostinfo_src:
