@@ -81,6 +81,18 @@ def main():
 
     try:
 
+        # See https://stackoverflow.com/a/66965152/2646505
+        class CustomParsePositional(argparse.Action):
+
+            def __init__(self, option_strings, dest, nargs=None, **kwargs):
+                super().__init__(option_strings, dest, nargs='*', **kwargs)
+                self._custom_nargs = len(kwargs.get('default', []))
+
+            def __call__(self, parser, namespace, values, option_string=None):
+                if len(values) != self._custom_nargs:
+                    parser.error('Incorrect number of arguments')
+                namespace.__setattr__(self.dest, values)
+
         class Parser(argparse.ArgumentParser):
             def print_help(self):
                 print(__doc__)
@@ -98,11 +110,9 @@ def main():
         parser.add_argument(      '--verbose', required=False, action='store_true')
         parser.add_argument('-q', '--quiet', required=False, action='store_true')
         parser.add_argument('-v', '--version', action='version', version=version)
-        parser.add_argument('args', nargs='*', default=['shelephant_dump.yaml', 'shelephant_hostinfo.yaml'])
+        parser.add_argument('args', type=str, action=CustomParsePositional,
+            default=['shelephant_dump.yaml', 'shelephant_hostinfo.yaml'])
         args = parser.parse_args()
-
-        if len(args.args) != 2:
-            raise IOError('Unknown number of arguments: allowed are 0 or 2 positional arguments')
 
         source = args.args[0]
         hostinfo = args.args[1]
