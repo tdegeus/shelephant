@@ -3,6 +3,32 @@
 Change-log
 **********
 
+v0.17.4
+=======
+
+*   Fixing bug in command-line parsing of ``shelephant_send``: defaults were not selected.
+
+v0.17.3
+=======
+
+*   Fixing typos
+
+v0.17.2
+=======
+
+*   Normalising paths in copy functions.
+
+v0.17.1
+=======
+
+*   Documentation updates
+*   (Re-)Account for non-existing destination for copying from remote
+
+v0.17.0
+=======
+
+*   The Python API is now subdivided in namespaces and only lower-case letters are used.
+
 v0.16.0
 =======
 
