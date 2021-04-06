@@ -102,7 +102,7 @@ def main():
         args = parser.parse_args()
 
         if len(args.args) != 2:
-            raise IOError('Unknown number of arguments')
+            raise IOError('Unknown number of arguments: allowed are 0 or 2 positional arguments')
 
         source = args.args[0]
         hostinfo = args.args[1]
