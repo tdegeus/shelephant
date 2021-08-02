@@ -194,7 +194,9 @@ See `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
     mode = np.zeros((len(check_paths)), dtype=np.int16)
 
     for i, line in enumerate(lines):
-        if line[0] == '>':
+        # todo: split send `<` and recieve `>`?
+        # ref: https://stackoverflow.com/a/12037164/2646505
+        if line[0] == '>' or line[0] == '<':
             if line[2] == '+':
                 mode[i] = 1 # create
             else:
