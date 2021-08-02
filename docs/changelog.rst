@@ -3,6 +3,12 @@
 Change-log
 **********
 
+v0.17.5
+=======
+
+*   rsync: interpreting cryptic both in send and receive mode
+*   [CI] Minor style update
+
 v0.17.4
 =======
 
