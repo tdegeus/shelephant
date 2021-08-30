@@ -645,7 +645,9 @@ class Test_send(unittest.TestCase):
         run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
         run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
         run("shelephant_hostinfo --force -f mydest/files.yaml -c mydest/checksum.yaml")
-        output = run("shelephant_send -f -d -q --colors none mysrc/files.yaml")
+        output = run(
+            "shelephant_send -f -d -q --colors none mysrc/files.yaml shelephant_hostinfo.yaml"
+        )
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
 
@@ -745,7 +747,9 @@ class Test_send(unittest.TestCase):
         output = run(
             "shelephant_hostinfo --force -f mydest/files.yaml -c mydest/checksum.yaml"
         )
-        output = run("shelephant_send -f -d -q --colors none mysrc/files.yaml")
+        output = run(
+            "shelephant_send -f -d -q --colors none mysrc/files.yaml shelephant_hostinfo.yaml"
+        )
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
 
@@ -809,7 +813,18 @@ class Test_send(unittest.TestCase):
             "shelephant_hostinfo --force -o local.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml"
         )
         output = run(
-            "shelephant_send -f -d -q --colors none -l local.yaml mysrc/files.yaml"
+            " ".join(
+                [
+                    "shelephant_send",
+                    "-f",
+                    "-d",
+                    "-q",
+                    "--colors none",
+                    "-l local.yaml",
+                    "mysrc/files.yaml",
+                    "shelephant_hostinfo.yaml",
+                ]
+            )
         )
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
