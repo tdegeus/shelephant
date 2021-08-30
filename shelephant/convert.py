@@ -101,7 +101,7 @@ def get(data, key):
     if len(key) > 0:
         try:
             return functools.reduce(operator.getitem, key, data)
-        except:
+        except KeyError:
             raise OSError('"{:s}" not found'.format("/".join(key)))
 
     return data

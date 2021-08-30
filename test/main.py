@@ -644,12 +644,8 @@ class Test_send(unittest.TestCase):
         run("shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml")
         run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
         run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
-        run(
-            "shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml"
-        )
-        output = run(
-            "shelephant_send -f -d -q --colors none mysrc/files.yaml hostinfo.yaml"
-        )
+        run("shelephant_hostinfo --force -f mydest/files.yaml -c mydest/checksum.yaml")
+        output = run("shelephant_send -f -d -q --colors none mysrc/files.yaml")
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
 
@@ -669,7 +665,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-        os.remove("hostinfo.yaml")
+        os.remove("shelephant_hostinfo.yaml")
 
     def test_empty_remote(self):
 
@@ -747,11 +743,9 @@ class Test_send(unittest.TestCase):
         output = run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
         output = run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
         output = run(
-            "shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml"
+            "shelephant_hostinfo --force -f mydest/files.yaml -c mydest/checksum.yaml"
         )
-        output = run(
-            "shelephant_send -f -d -q --colors none mysrc/files.yaml hostinfo.yaml"
-        )
+        output = run("shelephant_send -f -d -q --colors none mysrc/files.yaml")
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
 
@@ -771,7 +765,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-        os.remove("hostinfo.yaml")
+        os.remove("shelephant_hostinfo.yaml")
 
     def test_partial_localchecksum(self):
 
@@ -809,13 +803,13 @@ class Test_send(unittest.TestCase):
         output = run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
         output = run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
         output = run(
-            "shelephant_hostinfo --force -o hostinfo.yaml -f mydest/files.yaml -c mydest/checksum.yaml"
+            "shelephant_hostinfo --force -f mydest/files.yaml -c mydest/checksum.yaml"
         )
         output = run(
             "shelephant_hostinfo --force -o local.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml"
         )
         output = run(
-            "shelephant_send -f -d -q --colors none -l local.yaml mysrc/files.yaml hostinfo.yaml"
+            "shelephant_send -f -d -q --colors none -l local.yaml mysrc/files.yaml"
         )
 
         self.assertEqual(list(filter(None, output.split("\n"))), operations)
@@ -836,7 +830,7 @@ class Test_send(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-        os.remove("hostinfo.yaml")
+        os.remove("shelephant_hostinfo.yaml")
         os.remove("local.yaml")
 
     def test_partial_rsync(self):
