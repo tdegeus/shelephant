@@ -88,4 +88,3 @@ Details
 
 .. automodule:: shelephant
   :members:
-

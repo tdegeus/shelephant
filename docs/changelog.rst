@@ -174,4 +174,3 @@ v0.4.0
 *   shelephant_get: fixing counter
 *   shelephant_checksum: accepting default source-file
 *   Checksum: updating chunk size
-

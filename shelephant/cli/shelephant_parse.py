@@ -1,4 +1,4 @@
-'''Parse a YAML-file, and print to screen.
+"""Parse a YAML-file, and print to screen.
 
 :usage:
 
@@ -17,7 +17,7 @@
         Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
-'''
+"""
 
 import argparse
 
@@ -25,28 +25,29 @@ from .. import version
 from .. import yaml
 
 
+def main_impl():
+    class Parser(argparse.ArgumentParser):
+        def print_help(self):
+            print(__doc__)
+
+    parser = Parser()
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("file")
+    args = parser.parse_args()
+
+    data = yaml.read(args.file)
+    yaml.view(data)
+
+
 def main():
 
     try:
-
-        class Parser(argparse.ArgumentParser):
-            def print_help(self):
-                print(__doc__)
-
-        parser = Parser()
-        parser.add_argument('-v', '--version', action='version', version=version)
-        parser.add_argument('file')
-        args = parser.parse_args()
-
-        data = yaml.read(args.file)
-        yaml.view(data)
-
+        main_impl()
     except Exception as e:
-
         print(e)
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()

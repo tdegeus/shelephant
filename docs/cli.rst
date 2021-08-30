@@ -86,4 +86,3 @@ shelephant_extract
 ------------------
 
 .. automodule:: shelephant.cli.shelephant_extract
-

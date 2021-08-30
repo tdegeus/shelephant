@@ -1,4 +1,4 @@
-'''Move files listed in a (field of a) YAML-file.
+"""Move files listed in a (field of a) YAML-file.
 The filenames are assumed either absolute, or relative to the input YAML-file.
 
 :usage:
@@ -45,7 +45,7 @@ The filenames are assumed either absolute, or relative to the input YAML-file.
         Show version.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
-'''
+"""
 
 import argparse
 import os
@@ -53,58 +53,61 @@ import os
 from .. import detail
 from .. import version
 from .. import yaml
+from .defaults import f_dump
+
+
+def main_impl():
+    class Parser(argparse.ArgumentParser):
+        def print_help(self):
+            print(__doc__)
+
+    parser = Parser()
+    parser.add_argument("-c", "--checksum", action="store_true")
+    parser.add_argument("-k", "--key", default="/")
+    parser.add_argument("--colors", default="dark")
+    parser.add_argument("-s", "--summary", action="store_true")
+    parser.add_argument("-d", "--details", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true")
+    parser.add_argument("-q", "--quiet", action="store_true")
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("args", nargs="+")
+    args = parser.parse_args()
+
+    if len(args.args) == 1:
+        source = f_dump
+        dest_dir = args.args[0]
+    elif len(args.args) == 2:
+        source = args.args[0]
+        dest_dir = args.args[1]
+    else:
+        raise OSError("Too many arguments specified")
+
+    key = list(filter(None, args.key.split("/")))
+
+    return detail.copy(
+        copy_function=os.rename,
+        files=yaml.read_item(source, key),
+        src_dir=os.path.dirname(source),
+        dest_dir=dest_dir,
+        checksum=args.checksum,
+        quiet=args.quiet,
+        force=args.force,
+        print_details=not (args.force or args.summary) or args.details,
+        print_summary=not (args.force or args.details) or args.summary,
+        print_all=args.details,
+        theme_name=args.colors.lower(),
+    )
 
 
 def main():
 
     try:
-
-        class Parser(argparse.ArgumentParser):
-            def print_help(self):
-                print(__doc__)
-
-        parser = Parser()
-        parser.add_argument('-c', '--checksum', required=False, action='store_true')
-        parser.add_argument('-k', '--key', required=False, default='/')
-        parser.add_argument(      '--colors', required=False, default='dark')
-        parser.add_argument('-s', '--summary', required=False, action='store_true')
-        parser.add_argument('-d', '--details', required=False, action='store_true')
-        parser.add_argument('-f', '--force', required=False, action='store_true')
-        parser.add_argument('-q', '--quiet', required=False, action='store_true')
-        parser.add_argument('-v', '--version', action='version', version=version)
-        parser.add_argument('args', nargs='+')
-        args = parser.parse_args()
-
-        if len(args.args) == 1:
-            source = 'shelephant_dump.yaml'
-            dest_dir = args.args[0]
-        elif len(args.args) == 2:
-            source = args.args[0]
-            dest_dir = args.args[1]
-        else:
-            raise IOError('Too many arguments specified')
-
-        key = list(filter(None, args.key.split('/')))
-
-        return detail.copy(
-            copy_function = os.rename,
-            files = yaml.read_item(source, key),
-            src_dir = os.path.dirname(source),
-            dest_dir = dest_dir,
-            checksum = args.checksum,
-            quiet = args.quiet,
-            force = args.force,
-            print_details = not (args.force or args.summary) or args.details,
-            print_summary = not (args.force or args.details) or args.summary,
-            print_all = args.details,
-            theme_name = args.colors.lower())
-
+        main_impl()
     except Exception as e:
-
         print(e)
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()
