@@ -38,8 +38,8 @@ Command-line arguments with a memory (stored in YAML-files).
 ## Hallmark feature: Copy with restart
 
 *shelephant* presents you with a way to copy files (from a remote, using SSH) in two steps:
-1.  Collect a list of files that should be copied in a YAML-file, 
-    allowing you to **review and customise** the copy operation 
+1.  Collect a list of files that should be copied in a YAML-file,
+    allowing you to **review and customise** the copy operation
     (e.g. by *changing the order* and making last-minute manual changes).
 2.  Perform the copy, efficiently skipping files that are identical.
 
@@ -49,9 +49,9 @@ Typical workflow:
 # Collect files to copy & compute their checksum (e.g. on remote system)
 # - creates "shelephant_dump.yaml"
 shelephant_dump *.hdf5
-# - reads "shelephant_dump.yaml" 
+# - reads "shelephant_dump.yaml"
 # - creates "shelephant_checksum.yaml"
-shelephant_checksum 
+shelephant_checksum
 
 # Combine all needed info (locally)
 # - reads "shelephant_dump.yaml" and "shelephant_checksum.yaml"
@@ -146,11 +146,11 @@ ssh hostname
 # go the relevant location at the host
 cd "/path/where/files/are/stored/on/remote"
 
-# list files to copy 
+# list files to copy
 shelephant_dump -o files_to_copy.yaml *.txt
 
-# optional but useful, get the checksum of the files to copy 
-shelephant_checksum -o files_checksum.yaml files_to_copy.yaml 
+# optional but useful, get the checksum of the files to copy
+shelephant_checksum -o files_checksum.yaml files_to_copy.yaml
 
 # disconnect
 exit # or press Ctrl + D
@@ -163,14 +163,14 @@ Second step, copy files to the *local system*, collecting everything in a single
 # (often this is new directory)
 cd "/path/where/to/copy/to"
 
-# get the file-information compiled on the host 
+# get the file-information compiled on the host
 # and store in a (temporary) local file
-# note that all paths are on the remote system, 
+# note that all paths are on the remote system,
 # and that they are now copied using secure-copy (scp)
-shelephant_hostinfo \ 
-    -o remote_info.yaml \ 
-    --host "hostname" \ 
-    --prefix "/path/where/files/are/stored/on/remote" \  
+shelephant_hostinfo \
+    -o remote_info.yaml \
+    --host "hostname" \
+    --prefix "/path/where/files/are/stored/on/remote" \
     --files "files_to_copy.yaml " \
     --checksum "files_checksum.yaml"
 
@@ -180,13 +180,13 @@ shelephant_hostinfo \
 shelephant_get remote_info.yaml
 ```
 
->   If you use the default filenames for `shelephant_dump` (`shelephant_dump.yaml`) and 
->   `shelephant_checksum` (`shelephant_checksum.yaml`) remotely, 
+>   If you use the default filenames for `shelephant_dump` (`shelephant_dump.yaml`) and
+>   `shelephant_checksum` (`shelephant_checksum.yaml`) remotely,
 >   you can also specify `--files` and `--checksum` without an argument.
 
 An interesting benefit that derives from having computed the checksums on the host,
 is that `shelephant_get` can be stopped and restarted:
-**only files that do not exist locally, or that were only partially copied 
+**only files that do not exist locally, or that were only partially copied
 (whose checksum does not match the remotely computed checksum), will be copied;
 all fully copied files will be skipped**.
 
@@ -222,15 +222,15 @@ checksum:
     - fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9
 ```
 
-`shelephant_get` will now copy `foo.txt` and `bar.txt` relative to the directory of 
-`remote_info.yaml` 
+`shelephant_get` will now copy `foo.txt` and `bar.txt` relative to the directory of
+`remote_info.yaml`
 (in this case in the same folder as `remote_info.yaml`).
 It will skip any files whose filename and checksum match to target ones.
 
 ### Avoid recomputing checksums
 
 Suppose that we want to restart multiple times, or that we
-update the files present on the remote after copying them initially. 
+update the files present on the remote after copying them initially.
 In that case, we can use previously computed
 checksums to avoid recomputing them
 (which can be costly for large files).
@@ -247,7 +247,7 @@ cd "/path/where/files/are/stored/on/remote"
 # collect the previously computed information
 shelephant_hostinfo -o precomputed_checksums.yaml -f files_to_copy.yaml -c files_checksum.yaml
 
-# list files to copy 
+# list files to copy
 shelephant_dump -o files_to_copy.yaml *.txt
 
 # get the checksum of the files to copy, where possible reading precomputed values
@@ -277,12 +277,12 @@ shelephant_checksum -o files_checksum.yaml files_present.yaml -l precomputed_che
 shelephant_hostinfo -o precomputed_checksums.yaml -f files_present.yaml -c files_checksum.yaml
 
 # get the file-information compiled on the host [as before]
-shelephant_hostinfo \ 
-    -o remote_info.yaml \ 
-    --host "hostname" \ 
-    --prefix "/path/where/files/are/stored/on/remote" \  
+shelephant_hostinfo \
+    -o remote_info.yaml \
+    --host "hostname" \
+    --prefix "/path/where/files/are/stored/on/remote" \
     --files "files_to_copy.yaml " \
-    --checksum "files_checksum.yaml" 
+    --checksum "files_checksum.yaml"
 
 # get the files using secure copy
 # use the precomputed checksums instead of computing them
@@ -294,7 +294,7 @@ shelephant_get remote_info.yaml --local "precomputed_checksums.yaml"
 ### Basic copy
 
 Suppose that we want to copy all `*.txt` files
-from a certain local directory `/path/where/files/are/stored/locally`, 
+from a certain local directory `/path/where/files/are/stored/locally`,
 to a remote host `hostname`.
 
 First, we will collect information *locally*:
@@ -303,7 +303,7 @@ First, we will collect information *locally*:
 # go the relevant location (locally)
 cd /path/where/files/are/stored/locally
 
-# list files to copy 
+# list files to copy
 shelephant_dump -o files_to_copy.yaml *.txt
 ```
 
@@ -312,10 +312,10 @@ Then, we will specify some basic information about the host
 ```bash
 # specify basic information about the host
 # and store in a (temporary) local file
-shelephant_hostinfo \ 
-    -o remote_info.yaml \ 
-    --host "hostname" \ 
-    --prefix "/path/where/to/copy/to/on/remote" \  
+shelephant_hostinfo \
+    -o remote_info.yaml \
+    --host "hostname" \
+    --prefix "/path/where/to/copy/to/on/remote" \
 ```
 
 Now we can copy the files:
@@ -325,10 +325,10 @@ shelephant_send files_to_copy.yaml remote_info.yaml
 
 ### Restart
 
-Suppose that copying was interrupted before completing. 
-We can avoid recopying by again using the checksums. 
+Suppose that copying was interrupted before completing.
+We can avoid recopying by again using the checksums.
 We therefore need to know which files are already present remotely
-and which checksum they have. 
+and which checksum they have.
 Thereto:
 
 ```bash
@@ -338,11 +338,11 @@ ssh hostname
 # go the relevant location at the host
 cd "/path/where/to/copy/to/on/remote"
 
-# list files to copy 
+# list files to copy
 shelephant_dump -o files_to_copy.yaml *.txt
 
-# get the checksum of the files to copy 
-shelephant_checksum -o files_checksum.yaml files_to_copy.yaml 
+# get the checksum of the files to copy
+shelephant_checksum -o files_checksum.yaml files_to_copy.yaml
 
 # disconnect
 exit # or press Ctrl + D
@@ -350,10 +350,10 @@ exit # or press Ctrl + D
 
 Now we will complement the basic host-info:
 ```bash
-shelephant_hostinfo \ 
-    -o remote_info.yaml \ 
-    --host "hostname" \ 
-    --prefix "/path/where/to/copy/to/on/remote" \  
+shelephant_hostinfo \
+    -o remote_info.yaml \
+    --host "hostname" \
+    --prefix "/path/where/to/copy/to/on/remote" \
     --files "files_to_copy.yaml " \
     --checksum "files_checksum.yaml"
 ```

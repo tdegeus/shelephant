@@ -1,8 +1,8 @@
-r'''
+r"""
 Compute checksums.
 
 (c) Tom de Geus, 2021, MIT
-'''
+"""
 
 import numpy as np
 import os
@@ -12,42 +12,42 @@ from .relpath import add_prefix
 from .yaml import read
 
 
-def sha256(filename, size = 2 ** 10):
-    r'''
-Get sha256 of a file.
-    '''
+def sha256(filename, size=2 ** 10):
+    r"""
+    Get sha256 of a file.
+    """
 
     import hashlib
 
     h = hashlib.sha256()
 
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         for byte_block in iter(lambda: f.read(size * h.block_size), b""):
             h.update(byte_block)
         return h.hexdigest()
 
 
 def get(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
-    r'''
-Compute the checksums of a list of files.
+    r"""
+    Compute the checksums of a list of files.
 
-:param list filepaths: List of file-paths.
+    :param list filepaths: List of file-paths.
 
-:param set yaml_hostinfo:
-    File-path of a host-info file (see :py:mod:`shelephant.cli.hostinfo`).
-    If specified the checksums are **not** computed, but exclusively read from the
-    host-file. The user is responsible for keeping them up-to-date.
+    :param set yaml_hostinfo:
+        File-path of a host-info file (see :py:mod:`shelephant.cli.hostinfo`).
+        If specified the checksums are **not** computed, but exclusively read from the
+        host-file. The user is responsible for keeping them up-to-date.
 
-:param bool hybrid:
-    If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
-    computes missing items on the fly.
+    :param bool hybrid:
+        If ``True``, the function first tries to read from ``yaml_hostinfo``, and then
+        computes missing items on the fly.
 
-:param bool progress: Show a progress-bar.
+    :param bool progress: Show a progress-bar.
 
-:return:
-    List of checksums, of same length as ``filepaths``.
-    The entry is ``None`` if no checksum was found/read.
-    '''
+    :return:
+        List of checksums, of same length as ``filepaths``.
+        The entry is ``None`` if no checksum was found/read.
+    """
 
     if type(filepaths) == str:
         filepaths = [filepaths]
@@ -59,7 +59,7 @@ Compute the checksums of a list of files.
 
     if not yaml_hostinfo:
 
-        for i in tqdm.trange(n, disable=not progress, desc='Processing'):
+        for i in tqdm.trange(n, disable=not progress, desc="Processing"):
             if os.path.isfile(filepaths[i]):
                 ret[i] = sha256(filepaths[i])
 
@@ -68,9 +68,9 @@ Compute the checksums of a list of files.
     # Read pre-computed
 
     data = read(yaml_hostinfo)
-    files = data['files']
-    prefix = data['prefix']
-    check_sums = data['checksum']
+    files = data["files"]
+    prefix = data["prefix"]
+    check_sums = data["checksum"]
     check_paths = add_prefix(prefix, files)
 
     sorter = np.argsort(filepaths)
@@ -89,7 +89,7 @@ Compute the checksums of a list of files.
     ret = list(out)
 
     if hybrid:
-        for i in tqdm.trange(n, disable=not progress, desc='Processing'):
+        for i in tqdm.trange(n, disable=not progress, desc="Processing"):
             if ret[i] is None:
                 if os.path.isfile(filepaths[i]):
                     ret[i] = sha256(filepaths[i])
