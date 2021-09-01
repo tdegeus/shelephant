@@ -18,7 +18,6 @@
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 """
-
 import argparse
 
 from .. import version

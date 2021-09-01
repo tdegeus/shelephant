@@ -3,7 +3,6 @@ Copy using scp.
 
 (c) Tom de Geus, 2021, MIT
 """
-
 from .external import exec_cmd
 
 

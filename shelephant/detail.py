@@ -4,11 +4,10 @@ Not part of public API.
 
 (c) Tom de Geus, 2021, MIT
 """
-
+import os
 
 import click
 import numpy as np
-import os
 import tqdm
 
 from .checksum import get

@@ -3,10 +3,10 @@ FIle operations.
 
 (c) Tom de Geus, 2021, MIT
 """
-
-from collections import defaultdict
-import click
 import os
+from collections import defaultdict
+
+import click
 
 
 def _to_tree(d):

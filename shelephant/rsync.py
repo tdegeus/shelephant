@@ -3,12 +3,12 @@ Copy & query using *rsync*.
 
 (c) Tom de Geus, 2021, MIT
 """
-
-import click
-import numpy as np
 import os
 import re
 import subprocess
+
+import click
+import numpy as np
 import tqdm
 
 from .external import exec_cmd

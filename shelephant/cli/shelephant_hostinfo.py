@@ -51,17 +51,19 @@ r"""Collect file information from location (on a remote host).
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 """
-
 import argparse
 import os
-import tempfile
 import shutil
+import tempfile
+
 import numpy as np
 
 from .. import scp
 from .. import version
 from .. import yaml
-from .defaults import f_checksum, f_dump, f_hostinfo
+from .defaults import f_checksum
+from .defaults import f_dump
+from .defaults import f_hostinfo
 
 
 def remove(data, rm):

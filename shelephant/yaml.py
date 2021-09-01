@@ -3,10 +3,10 @@ Yaml IO.
 
 (c) Tom de Geus, 2021, MIT
 """
-
-import yaml
-import click
 import os
+
+import click
+import yaml
 
 from . import convert
 

@@ -65,7 +65,6 @@ Typically, *rsync* will be faster, especially in copying a lot of small files.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 """
-
 import argparse
 import os
 import shutil
@@ -75,7 +74,9 @@ from .. import rsync
 from .. import scp
 from .. import version
 from .. import yaml
-from .defaults import f_dump, f_hostinfo, f_temp
+from .defaults import f_dump
+from .defaults import f_hostinfo
+from .defaults import f_temp
 
 
 def main_impl():

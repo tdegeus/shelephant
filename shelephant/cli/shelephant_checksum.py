@@ -34,7 +34,6 @@ The filenames are assumed either absolute, or relative to the input YAML-file.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 """
-
 import argparse
 import os
 
@@ -42,7 +41,8 @@ from .. import checksum
 from .. import relpath
 from .. import version
 from .. import yaml
-from .defaults import f_checksum, f_dump
+from .defaults import f_checksum
+from .defaults import f_dump
 
 
 def main_impl():

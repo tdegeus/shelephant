@@ -1,8 +1,10 @@
-import unittest
-import subprocess
 import os
 import shutil
+import subprocess
+import unittest
+
 import numpy as np
+
 import shelephant
 
 

@@ -3,7 +3,6 @@ Query using ssh.
 
 (c) Tom de Geus, 2021, MIT
 """
-
 from .external import exec_cmd
 
 

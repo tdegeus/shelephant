@@ -3,7 +3,6 @@ Convert nested ``list`` or ``dict``.
 
 (c) Tom de Geus, 2021, MIT
 """
-
 import collections.abc
 import functools
 import operator

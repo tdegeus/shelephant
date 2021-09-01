@@ -38,11 +38,11 @@ to being relative to --output.
 
 (c - MIT) T.W.J. de Geus | tom@geus.me | www.geus.me | github.com/tdegeus/shelephant
 """
-
 import argparse
-import os
-import mergedeep
 import functools
+import os
+
+import mergedeep
 
 from .. import convert
 from .. import relpath

@@ -3,9 +3,9 @@ Compute checksums.
 
 (c) Tom de Geus, 2021, MIT
 """
+import os
 
 import numpy as np
-import os
 import tqdm
 
 from .relpath import add_prefix
