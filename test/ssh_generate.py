@@ -23,13 +23,7 @@ with open("myssh_send/foo.txt", "w") as file:
 with open("myssh_get/foo.txt", "w") as file:
     file.write("foo")
 
-run(
-    "shelephant_dump -o myssh_send/shelephant_dump.yaml myssh_send/bar.txt myssh_send/foo.txt"
-)
+run("shelephant_dump -o myssh_send/shelephant_dump.yaml myssh_send/bar.txt myssh_send/foo.txt")
 run("shelephant_dump -o myssh_get/shelephant_dump.yaml myssh_get/foo.txt")
-run(
-    "shelephant_checksum -o myssh_send/shelephant_checksum.yaml myssh_send/shelephant_dump.yaml"
-)
-run(
-    "shelephant_checksum -o myssh_get/shelephant_checksum.yaml myssh_get/shelephant_dump.yaml"
-)
+run("shelephant_checksum -o myssh_send/shelephant_checksum.yaml myssh_send/shelephant_dump.yaml")
+run("shelephant_checksum -o myssh_get/shelephant_checksum.yaml myssh_get/shelephant_dump.yaml")

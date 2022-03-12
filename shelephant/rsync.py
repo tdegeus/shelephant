@@ -14,9 +14,7 @@ import tqdm
 from .external import exec_cmd
 
 
-def _rsync(
-    source_dir, dest_dir, tempfilename, files, force=False, verbose=False, progress=True
-):
+def _rsync(source_dir, dest_dir, tempfilename, files, force=False, verbose=False, progress=True):
     r"""
     Copy files to a destination using ``rsync -a --files-from``.
 
@@ -42,10 +40,8 @@ def _rsync(
 
     if not progress:
 
-        cmd = (
-            'rsync -a --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
-                source_dir=source_dir, dest_dir=dest_dir, files=tempfilename
-            )
+        cmd = 'rsync -a --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
+            source_dir=source_dir, dest_dir=dest_dir, files=tempfilename
         )
 
         return exec_cmd(cmd, verbose)
@@ -66,9 +62,7 @@ def _rsync(
 
     for line in iter(process.stdout.readline, b""):
         line = line.decode("utf-8")
-        if re.match(
-            r"(.*)(xf)([e]?)(r\#)([0-9])(.*)(to\-ch)([e]?[c]?)(k\=)([0-9])(.*)", line
-        ):
+        if re.match(r"(.*)(xf)([e]?)(r\#)([0-9])(.*)(to\-ch)([e]?[c]?)(k\=)([0-9])(.*)", line):
             e = int(list(filter(None, line.split(" ")))[-6].replace(",", ""))
             pbar.update()
             sbar.update(e)
@@ -184,10 +178,8 @@ def diff(
     if checksum:
         opt += "c"
 
-    cmd = (
-        'rsync {opt:s} --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
-            source_dir=source_dir, dest_dir=dest_dir, files=tempfilename, opt=opt
-        )
+    cmd = 'rsync {opt:s} --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
+        source_dir=source_dir, dest_dir=dest_dir, files=tempfilename, opt=opt
     )
 
     lines = list(filter(None, exec_cmd(cmd, verbose).split("\n")))

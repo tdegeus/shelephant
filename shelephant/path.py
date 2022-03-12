@@ -18,10 +18,7 @@ def _to_tree(d):
     t = defaultdict(list)
     for a, *b in d:
         t[a].append(b)
-    return {
-        a: None if not (k := list(filter(None, b))) else _to_tree(k)
-        for a, b in t.items()
-    }
+    return {a: None if not (k := list(filter(None, b))) else _to_tree(k) for a, b in t.items()}
 
 
 def _get_deepest_paths(d, c=[]):

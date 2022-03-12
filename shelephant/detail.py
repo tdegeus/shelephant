@@ -119,9 +119,7 @@ def copy(
         for i in range(n):
             if os.path.isfile(dest[i]):
                 if checksum:
-                    if (src_checksums[i] == dest_checksums[i]) and (
-                        src_checksums[i] is not None
-                    ):
+                    if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
                         skip[i] = True
                         continue
                 overwrite[i] = True
@@ -146,9 +144,7 @@ def copy(
             ).format()
         ]
     if noverwrite > 0:
-        overview += [
-            String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()
-        ]
+        overview += [String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()]
     if nskip > 0:
         overview += [
             String(
@@ -336,9 +332,7 @@ def copy_ssh(
         for i in range(n):
             if dest_exists[i]:
                 if checksum:
-                    if (src_checksums[i] == dest_checksums[i]) and (
-                        src_checksums[i] is not None
-                    ):
+                    if (src_checksums[i] == dest_checksums[i]) and (src_checksums[i] is not None):
                         skip[i] = True
                         continue
                 overwrite[i] = True
@@ -363,9 +357,7 @@ def copy_ssh(
             ).format()
         ]
     if noverwrite > 0:
-        overview += [
-            String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()
-        ]
+        overview += [String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()]
     if nskip > 0:
         overview += [
             String(

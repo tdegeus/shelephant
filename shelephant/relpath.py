@@ -25,9 +25,7 @@ def chroot(files, old_root, new_root, in_place=False):
         ]
 
     for i in range(len(files)):
-        files[i] = os.path.relpath(
-            os.path.abspath(os.path.join(old_root, files[i])), new_root
-        )
+        files[i] = os.path.relpath(os.path.abspath(os.path.join(old_root, files[i])), new_root)
 
     return files
 

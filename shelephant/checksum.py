@@ -12,7 +12,7 @@ from .relpath import add_prefix
 from .yaml import read
 
 
-def sha256(filename, size=2 ** 10):
+def sha256(filename, size=2**10):
     r"""
     Get sha256 of a file.
     """
