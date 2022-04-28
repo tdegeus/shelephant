@@ -1,10 +1,14 @@
 channels:
 - conda-forge
 dependencies:
-- python
-- docopt
-- pyyaml
 - click
-- numpy
+- docopt
 - mergedeep
+- numpy
+- python
+- pyyaml
+- setuptools_scm
+- sphinx
+- sphinx-argparse
+- sphinx_rtd_theme
 - tqdm
