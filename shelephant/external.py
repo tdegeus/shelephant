@@ -1,3 +1,6 @@
+"""
+Run external commands.
+"""
 import subprocess
 
 

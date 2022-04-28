@@ -101,9 +101,7 @@ def main_impl():
     args = parser.parse_args()
 
     if len(args.args) != 2:
-        raise OSError(
-            "Unknown number of arguments: allowed are 0 or 2 positional arguments"
-        )
+        raise OSError("Unknown number of arguments: allowed are 0 or 2 positional arguments")
 
     source = args.args[0]
     hostinfo = args.args[1]

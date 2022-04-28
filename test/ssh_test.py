@@ -90,9 +90,7 @@ output = run(
     ).format(args["--host"], os.path.join(args["--prefix"], "myssh_send"))
 )
 
-output = run(
-    "shelephant_get --detail --colors none --force myssh_get/shelephant_hostinfo.yaml"
-)
+output = run("shelephant_get --detail --colors none --force myssh_get/shelephant_hostinfo.yaml")
 
 output = list(filter(None, output.split("\n")))
 assert output == operations
