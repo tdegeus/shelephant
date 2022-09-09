@@ -611,7 +611,6 @@ class Test_get(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-        os.remove("shelephant_files.txt")
 
 
 class Test_send(unittest.TestCase):
@@ -878,7 +877,6 @@ class Test_send(unittest.TestCase):
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
         os.remove("hostinfo.yaml")
-        os.remove("shelephant_files.txt")
 
 
 class Test_mv(unittest.TestCase):
@@ -996,7 +994,6 @@ class Test_cp(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-        os.remove("shelephant_files.txt")
 
     def test_nested(self):
 

@@ -26,9 +26,6 @@ The filenames are assumed either absolute, or relative to the input YAML-file.
         This is much faster than using checksums but is only approximate.
         Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
 
-    --temp=arg
-        Temporary filename to communicate with *rsync*. [default: shelephant_files.txt]
-
     -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
 
@@ -72,7 +69,6 @@ def main_impl():
     parser = Parser()
     parser.add_argument("-c", "--checksum", action="store_true")
     parser.add_argument("-r", "--check-rsync", action="store_true")
-    parser.add_argument("--temp", default="shelephant_files.txt")
     parser.add_argument("-k", "--key", default="/")
     parser.add_argument("--colors", default="dark")
     parser.add_argument("-s", "--summary", action="store_true")
@@ -100,7 +96,7 @@ def main_impl():
         src_dir=os.path.dirname(source),
         dest_dir=dest_dir,
         checksum=args.checksum,
-        check_rsync=None if not args.check_rsync else args.temp,
+        check_rsync=args.check_rsync,
         quiet=args.quiet,
         force=args.force,
         print_details=not (args.force or args.summary) or args.details,
