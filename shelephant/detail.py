@@ -25,7 +25,7 @@ def copy(
     src_dir,
     dest_dir,
     checksum=False,
-    check_rsync=None,
+    check_rsync: bool = True,
     quiet=False,
     force=False,
     print_details=True,
@@ -49,7 +49,7 @@ def copy(
     :param str src_dir: The source directory.
     :param str dest_dir: The destination directory.
     :param bool checksum: Use checksum to skip files that are the same.
-    :param str check_rsync: Use rsync to check files to skip, specify temporary file name.
+    :param check_rsync: Use rsync to check files to skip.
     :param bool quiet: Proceed without printing progress.
     :param bool force: Continue without prompt.
     :param bool print_details: Print copy details.
@@ -95,12 +95,11 @@ def copy(
 
         create = [True for i in range(n)]
 
-    elif check_rsync is not None:
+    elif check_rsync:
 
         tmp = diff(
             source_dir=src_dir,
             dest_dir=dest_dir,
-            tempfilename=check_rsync,
             files=files,
             checksum=checksum,
             force=force,
@@ -222,7 +221,7 @@ def copy_ssh(
     dest_dir,
     to_remote,
     checksum=False,
-    check_rsync=None,
+    check_rsync: bool = True,
     quiet=False,
     force=False,
     print_details=True,
@@ -232,7 +231,6 @@ def copy_ssh(
     theme_name="none",
     yaml_hostinfo_src=None,
     yaml_hostinfo_dest=None,
-    tempfilename=None,
 ):
     r"""
     Get/send files.
@@ -251,7 +249,7 @@ def copy_ssh(
     :param str dest_dir: The destination directory.
     :param bool to_remote: Sets direction of copy operation.
     :param bool checksum: Use checksum to skip files that are the same.
-    :param str check_rsync: Use rsync to check files to skip, specify temporary file name.
+    :param check_rsync: Use rsync to check files to skip.
     :param bool quiet: Proceed without printing progress.
     :param bool force: Continue without prompt.
     :param bool print_details: Print copy details.
@@ -270,8 +268,6 @@ def copy_ssh(
     :param yaml_hostinfo_dest:
         Filename of hostinfo for the destination, see :py:mod:`shelephant.cli.hostinfo`.
         Specify these files *only* to use precomputed checksums.
-
-    :param str tempfilename: Filename for temporary file to use (e.g. for ``rsync``).
     """
 
     assert type(files) == list
@@ -296,12 +292,11 @@ def copy_ssh(
 
         create = [True for i in range(n)]
 
-    elif check_rsync is not None:
+    elif check_rsync:
 
         tmp = diff(
             source_dir=src_dir if to_remote else host + ":" + src_dir,
             dest_dir=host + ":" + dest_dir if to_remote else dest_dir,
-            tempfilename=check_rsync,
             files=files,
             checksum=checksum,
             force=force,
@@ -430,9 +425,7 @@ def copy_ssh(
     files = np.array(files)[i]
 
     if use_rsync:
-        return copy_function(
-            host, src_dir, dest_dir, tempfilename, files, force, verbose, not quiet
-        )
+        return copy_function(host, src_dir, dest_dir, files, force, verbose, not quiet)
 
     pbar = tqdm.trange(len(files), disable=quiet)
     for i in pbar:

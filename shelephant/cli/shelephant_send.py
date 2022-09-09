@@ -36,9 +36,6 @@ Typically, *rsync* will be faster, especially in copying a lot of small files.
         This is much faster than using checksums but is only approximate.
         Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
 
-    --temp=arg
-        Temporary filename to communicate with *rsync*. [default: shelephant_files.txt]
-
     --colors=arg
         Select color scheme from: none, dark. [default: dark]
 
@@ -76,7 +73,6 @@ from .. import version
 from .. import yaml
 from .defaults import f_dump
 from .defaults import f_hostinfo
-from .defaults import f_temp
 
 
 def main_impl():
@@ -89,7 +85,6 @@ def main_impl():
     parser.add_argument("-l", "--local")
     parser.add_argument("--scp", action="store_true")
     parser.add_argument("-r", "--check-rsync", action="store_true")
-    parser.add_argument("--temp", default=f_temp)
     parser.add_argument("--colors", default="dark")
     parser.add_argument("-s", "--summary", action="store_true")
     parser.add_argument("-d", "--details", action="store_true")
@@ -119,7 +114,7 @@ def main_impl():
             src_dir=src_dir,
             dest_dir=data["prefix"],
             checksum="checksum" in data,
-            check_rsync=None if not args.check_rsync else args.temp,
+            check_rsync=args.check_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
@@ -141,7 +136,7 @@ def main_impl():
             dest_dir=dest_dir,
             to_remote=True,
             checksum="checksum" in data,
-            check_rsync=None if not args.check_rsync else args.temp,
+            check_rsync=args.check_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
@@ -164,7 +159,7 @@ def main_impl():
             dest_dir=dest_dir,
             to_remote=True,
             checksum="checksum" in data,
-            check_rsync=None if not args.check_rsync else args.temp,
+            check_rsync=args.check_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
@@ -174,7 +169,6 @@ def main_impl():
             theme_name=args.colors.lower(),
             yaml_hostinfo_src=args.local,
             yaml_hostinfo_dest=hostinfo,
-            tempfilename=args.temp,
         )
 
 
