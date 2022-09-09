@@ -49,6 +49,23 @@ output = run(
 output = list(filter(None, output.split("\n")))
 assert output == operations
 
+# shelephant_diff
+
+operations = {
+    "!=": ["foo.txt"],  # I do not completely get this
+    "==": ["bar.txt"],
+}
+
+output = run(
+    "shelephant_diff -f --yaml shelephant_diff.yaml "
+    "myssh_send/shelephant_dump.yaml myssh_send/shelephant_hostinfo.yaml"
+)
+
+output = shelephant.yaml.read("shelephant_diff.yaml")
+
+for key in operations:
+    assert output[key] == operations[key]
+
 # shelephant_send - local checksum
 
 operations = [

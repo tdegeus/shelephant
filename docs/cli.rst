@@ -69,6 +69,17 @@ shelephant_send
 
 .. automodule:: shelephant.cli.shelephant_send
 
+Synchronisation information
+===========================
+
+shelephant_diff
+---------------
+
+.. argparse::
+    :module: helephant
+    :func: _shelephant_diff_parser
+    :prog: shelephant_diff
+
 Modifying YAML-file
 ===================
 
