@@ -6,7 +6,6 @@ Copy with a memory.
 import argparse
 import os
 import sys
-import tempfile
 
 import numpy as np
 import prettytable
@@ -93,34 +92,29 @@ def shelephant_diff(args: list[str]):
 
     ret = {}
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_file = os.path.join(temp_dir, "rsync.txt")
+    to_remote = rsync.diff(
+        source_dir=local_dir,
+        dest_dir=remote_dir,
+        files=local["files"],
+        force=True,
+        checksum=args.checksum,
+    )
+    files = np.array(local["files"])
+    ret["=="] = list(files[to_remote["skip"]])
+    ret["!="] = list(files[to_remote["overwrite"]])
+    ret["->"] = list(files[to_remote["create"]])
 
-        to_remote = rsync.diff(
-            source_dir=local_dir,
-            dest_dir=remote_dir,
-            files=local["files"],
-            tempfilename=temp_file,
-            force=True,
-            checksum=args.checksum,
-        )
-        files = np.array(local["files"])
-        ret["=="] = list(files[to_remote["skip"]])
-        ret["!="] = list(files[to_remote["overwrite"]])
-        ret["->"] = list(files[to_remote["create"]])
-
-        from_remote = rsync.diff(
-            source_dir=remote_dir,
-            dest_dir=local_dir,
-            files=remote["files"],
-            tempfilename=temp_file,
-            force=True,
-            checksum=args.checksum,
-        )
-        files = np.array(remote["files"])
-        ret["=="] += list(files[from_remote["skip"]])
-        ret["!="] += list(files[from_remote["overwrite"]])
-        ret["<-"] = list(files[from_remote["create"]])
+    from_remote = rsync.diff(
+        source_dir=remote_dir,
+        dest_dir=local_dir,
+        files=remote["files"],
+        force=True,
+        checksum=args.checksum,
+    )
+    files = np.array(remote["files"])
+    ret["=="] += list(files[from_remote["skip"]])
+    ret["!="] += list(files[from_remote["overwrite"]])
+    ret["<-"] = list(files[from_remote["create"]])
 
     for key in ["==", "!="]:
         ret[key] = [str(i) for i in np.unique(ret[key])]
