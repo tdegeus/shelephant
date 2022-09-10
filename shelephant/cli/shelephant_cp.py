@@ -1,6 +1,16 @@
 """Copy files listed in a (field of a) YAML-file.
 The filenames are assumed either absolute, or relative to the input YAML-file.
 
+By default, *rsync* is used to check if files are different.
+*rsync* uses basic criteria such as file size and creation and modification date,
+see `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
+This is fast but is only approximate.
+In addition you can use:
+
+*   ``--checksum``: Have *rsync* compare checksums of files.
+*   ``--check-manual``: Do not use *rsync*.
+    If ``--checksum`` is used, checksums are compared (that are optionally precomputed).
+
 :usage:
 
     shelephant_cp [options] <destination>
@@ -20,11 +30,8 @@ The filenames are assumed either absolute, or relative to the input YAML-file.
     -c, --checksum
         Use checksum to skip files that are the same.
 
-    --check-rsync
-        Check if files are different using *rsync*.
-        *rsync* uses basic criteria such as file size and creation and modification date.
-        This is much faster than using checksums but is only approximate.
-        Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
+    -M, --check-manual
+        Use internal algorithms instead of *rsync*.
 
     -k, --key=arg
         Path in the YAML-file, separated by "/". [default: /]
@@ -55,6 +62,7 @@ The filenames are assumed either absolute, or relative to the input YAML-file.
 import argparse
 import os
 import shutil
+import warnings
 
 from .. import detail
 from .. import version
@@ -68,7 +76,7 @@ def main_impl():
 
     parser = Parser()
     parser.add_argument("-c", "--checksum", action="store_true")
-    parser.add_argument("-r", "--check-rsync", action="store_true")
+    parser.add_argument("-M", "--check-manual", action="store_true")
     parser.add_argument("-k", "--key", default="/")
     parser.add_argument("--colors", default="dark")
     parser.add_argument("-s", "--summary", action="store_true")
@@ -78,6 +86,13 @@ def main_impl():
     parser.add_argument("-v", "--version", action="version", version=version)
     parser.add_argument("args", nargs="+")
     args = parser.parse_args()
+
+    use_rsync = True
+    if args.check_manual:
+        use_rsync = False
+    if not shutil.which("rsync"):
+        warnings.warn("rsync not found, using internal fallback")
+        use_rsync = False
 
     if len(args.args) == 1:
         source = "shelephant_dump.yaml"
@@ -96,7 +111,7 @@ def main_impl():
         src_dir=os.path.dirname(source),
         dest_dir=dest_dir,
         checksum=args.checksum,
-        check_rsync=args.check_rsync,
+        check_rsync=use_rsync,
         quiet=args.quiet,
         force=args.force,
         print_details=not (args.force or args.summary) or args.details,

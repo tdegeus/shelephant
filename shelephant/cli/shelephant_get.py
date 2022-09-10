@@ -1,7 +1,17 @@
 """Copy files from remote, using earlier collected host-information.
 Use ``shelephant_hostinfo`` to collect host-information.
 
-By default the back-end is ``rysnc -a --from-file="temp" host:source_dir dest_dir``.
+By default, *rsync* is used to check if files are different.
+*rsync* uses basic criteria such as file size and creation and modification date,
+see `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
+This is fast but is only approximate.
+In addition you can use:
+
+*   ``--checksum``: Have *rsync* compare checksums of files.
+*   ``--check-manual``: Do not use *rsync*.
+    If ``--checksum`` is used, checksums are compared (that are optionally precomputed).
+
+The default copy backend is ``rysnc -a --from-file="temp" host:source_dir dest_dir``.
 Alternatively ``scp -p host:source_file dest_file`` can be used.
 Typically, *rsync* will be faster, especially in copying a lot of small files.
 
@@ -23,11 +33,8 @@ Typically, *rsync* will be faster, especially in copying a lot of small files.
     --scp
         Use ``scp`` instead of ``rysnc`` as backend.
 
-    --check-rsync
-        Check if files are different using *rsync*.
-        *rsync* uses basic criteria such as file size and creation and modification date.
-        This is much faster than using checksums but is only approximate.
-        Note that *rsync* can also check based on checksum, enabled using ``--checksum``.
+    -M, --check-manual
+        Use internal algorithms instead of *rsync*.
 
     --colors=arg
         Select color scheme from: none, dark. [default: dark]
@@ -58,6 +65,7 @@ Typically, *rsync* will be faster, especially in copying a lot of small files.
 import argparse
 import os
 import shutil
+import warnings
 
 from .. import detail
 from .. import rsync
@@ -75,7 +83,7 @@ def main_impl():
     parser = Parser()
     parser.add_argument("-l", "--local")
     parser.add_argument("--scp", action="store_true")
-    parser.add_argument("-r", "--check-rsync", action="store_true")
+    parser.add_argument("-M", "--check-manual", action="store_true")
     parser.add_argument("--colors", default="dark")
     parser.add_argument("-s", "--summary", action="store_true")
     parser.add_argument("-d", "--details", action="store_true")
@@ -85,6 +93,13 @@ def main_impl():
     parser.add_argument("-v", "--version", action="version", version=version)
     parser.add_argument("hostinfo", nargs="?", default=f_hostinfo)
     args = parser.parse_args()
+
+    use_rsync = True
+    if args.check_manual:
+        use_rsync = False
+    if not shutil.which("rsync"):
+        warnings.warn("rsync not found, using internal fallback")
+        use_rsync = False
 
     source = args.hostinfo
     data = yaml.read(source)
@@ -97,7 +112,7 @@ def main_impl():
             src_dir=data["prefix"],
             dest_dir=os.path.dirname(source),
             checksum="checksum" in data,
-            check_rsync=args.check_rsync,
+            check_rsync=use_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
@@ -119,7 +134,7 @@ def main_impl():
             dest_dir=os.path.dirname(source),
             checksum="checksum" in data,
             to_remote=False,
-            check_rsync=args.check_rsync,
+            check_rsync=use_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
@@ -142,7 +157,7 @@ def main_impl():
             dest_dir=os.path.dirname(source),
             checksum="checksum" in data,
             to_remote=False,
-            check_rsync=args.check_rsync,
+            check_rsync=use_rsync,
             quiet=args.quiet,
             force=args.force,
             print_details=not (args.force or args.summary) or args.details,
