@@ -27,7 +27,7 @@ def run(cmd):
 
 args = docopt.docopt(__doc__, version=shelephant.version)
 
-# shelephant_send - basic
+# shelephant_send - local checksum
 
 operations = [
     "bar.txt -> bar.txt",
@@ -49,11 +49,36 @@ output = run(
 output = list(filter(None, output.split("\n")))
 assert output == operations
 
+
+# shelephant_send - basic
+
+operations = [
+    "bar.txt == bar.txt",
+    "foo.txt -> foo.txt",
+]
+
+output = run(
+    (
+        "shelephant_hostinfo -o myssh_send/shelephant_hostinfo.yaml --force "
+        '--host "{:s}" --prefix "{:s}" -f'
+    ).format(args["--host"], os.path.join(args["--prefix"], "myssh_get"))
+)
+
+output = run(
+    "shelephant_send --detail --colors none --force "
+    "myssh_send/shelephant_dump.yaml myssh_send/shelephant_hostinfo.yaml"
+)
+
+output = list(filter(None, output.split("\n")))
+assert output == operations
+
 # shelephant_diff
 
 operations = {
-    "!=": ["foo.txt"],  # I do not completely get this
-    "==": ["bar.txt"],
+    "<-": [],
+    "->": [],
+    "!=": [],
+    "==": ["bar.txt", "foo.txt"],
 }
 
 output = run(
@@ -65,33 +90,6 @@ output = shelephant.yaml.read("shelephant_diff.yaml")
 
 for key in operations:
     assert output[key] == operations[key]
-
-# shelephant_send - local checksum
-
-operations = [
-    "bar.txt -> bar.txt",
-    "foo.txt == foo.txt",
-]
-
-output = run(
-    (
-        "shelephant_hostinfo -o myssh_send/shelephant_hostinfo.yaml --force "
-        '--host "{:s}" --prefix "{:s}" -f -c'
-    ).format(args["--host"], os.path.join(args["--prefix"], "myssh_get"))
-)
-
-output = run(
-    "shelephant_hostinfo -o myssh_send/shelephant_local.yaml --force "
-    "-f myssh_send/shelephant_dump.yaml -c myssh_send/shelephant_checksum.yaml"
-)
-
-output = run(
-    "shelephant_send -M --detail --colors none --force "
-    "myssh_send/shelephant_dump.yaml myssh_send/shelephant_hostinfo.yaml"
-)
-
-output = list(filter(None, output.split("\n")))
-assert output == operations
 
 # shelephant_get - basic
 
