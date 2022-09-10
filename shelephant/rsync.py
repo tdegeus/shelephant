@@ -128,13 +128,12 @@ def to_remote(
 
 
 def diff(
-    source_dir,
-    dest_dir,
-    files,
-    checksum=False,
-    force=False,
-    verbose=False,
-):
+    source_dir: str,
+    dest_dir: str,
+    files: list[str],
+    checksum: bool = False,
+    verbose: bool = False,
+) -> np.array:
     r"""
     Check if files are different using *rsync*.
     *rsync* uses basic criteria such as file size and creation and modification date.
@@ -144,9 +143,8 @@ def diff(
     :param str source_dir: Source directory.
     :param str dest_dir: Source directory.
     :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool checksum: Use checksum to test file difference.
-    :param bool force: Continue without prompt.
-    :param bool verbose: Verbose commands.
+    :param checksum: Use checksum to test file difference.
+    :param verbose: Verbose commands.
     """
 
     with tempfile.TemporaryDirectory() as temp_dir:

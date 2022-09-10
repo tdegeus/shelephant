@@ -82,7 +82,6 @@ def shelephant_diff(args: list[str]):
         source_dir=local["dirname"],
         dest_dir=remote["dirname"],
         files=local["files"],
-        force=True,
         checksum=args.checksum,
     )
     ret["=="] = list(local["files"][to_remote["skip"]])
@@ -93,7 +92,6 @@ def shelephant_diff(args: list[str]):
         source_dir=remote["dirname"],
         dest_dir=local["dirname"],
         files=remote["files"],
-        force=True,
         checksum=args.checksum,
     )
     ret["=="] += list(remote["files"][from_remote["skip"]])

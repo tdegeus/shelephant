@@ -102,7 +102,6 @@ def copy(
             dest_dir=dest_dir,
             files=files,
             checksum=checksum,
-            force=force,
         )
 
         skip = tmp["skip"]
@@ -299,7 +298,6 @@ def copy_ssh(
             dest_dir=host + ":" + dest_dir if to_remote else dest_dir,
             files=files,
             checksum=checksum,
-            force=force,
             verbose=verbose,
         )
 
