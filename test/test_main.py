@@ -1060,6 +1060,46 @@ class Test_rm(unittest.TestCase):
         os.remove("shelephant_dump.yaml")
 
 
+class Test_diff(unittest.TestCase):
+    def test_basic(self):
+
+        for dirname in ["mysrc", "mydest"]:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir("mysrc")
+        os.mkdir("mydest")
+
+        with open("mysrc/foo.txt", "w") as file:
+            file.write("foo")
+
+        with open("mysrc/bar.txt", "w") as file:
+            file.write("bar")
+
+        with open("mydest/bar.txt", "w") as file:
+            file.write("foobar")
+
+        with open("mydest/foobar.txt", "w") as file:
+            file.write("foobar")
+
+        run("shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt")
+        run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
+        run("shelephant_diff mysrc/files.yaml mydest/files.yaml --yaml mysrc/diff.yaml")
+
+        data = shelephant.yaml.read("mysrc/diff.yaml")
+        expect = {
+            "==": [],
+            "!=": ["bar.txt"],
+            "->": ["foo.txt"],
+            "<-": ["foobar.txt"],
+        }
+
+        self.assertDictEqual(data, expect)
+
+        shutil.rmtree("mysrc")
+        shutil.rmtree("mydest")
+
+
 class Test_parse(unittest.TestCase):
     def test_basic(self):
 
