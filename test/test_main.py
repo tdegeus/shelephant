@@ -166,10 +166,10 @@ class Test_checksum(unittest.TestCase):
 class Test_dump(unittest.TestCase):
     def test_basic(self):
 
-        with open("foo.txt", "w") as file:
+        with open("myfile_foo.txt", "w") as file:
             file.write("foo")
 
-        with open("bar.txt", "w") as file:
+        with open("myfile_bar.txt", "w") as file:
             file.write("bar")
 
         for dirname in ["mydir"]:
@@ -178,15 +178,16 @@ class Test_dump(unittest.TestCase):
 
         os.mkdir("mydir")
 
-        with open("mydir/foo.txt", "w") as file:
+        with open("mydir/myfile_foo.txt", "w") as file:
             file.write("foo")
 
-        with open("mydir/bar.txt", "w") as file:
+        with open("mydir/myfile_bar.txt", "w") as file:
             file.write("bar")
 
-        run("shelephant_dump -f -s -o dump_1.yaml foo.txt bar.txt")
+        run("shelephant_dump -f -s -o dump_1.yaml myfile_foo.txt myfile_bar.txt")
         run("shelephant_dump -f -s -o dump_2.yaml *.txt")
-        run("shelephant_dump -f -s -o mydir/dump_3.yaml mydir/*.txt")
+        run("shelephant_dump -f -s -o dump_3.yaml --command \"find . -d 1 -iname 'myfile_*.txt'\"")
+        run("shelephant_dump -f -s -o mydir/dump_4.yaml mydir/*.txt")
 
         with open("dump_1.yaml") as file:
             dump_1 = file.read()
@@ -194,16 +195,21 @@ class Test_dump(unittest.TestCase):
         with open("dump_2.yaml") as file:
             dump_2 = file.read()
 
-        with open("mydir/dump_3.yaml") as file:
+        with open("dump_3.yaml") as file:
             dump_3 = file.read()
+
+        with open("mydir/dump_4.yaml") as file:
+            dump_4 = file.read()
 
         self.assertEqual(dump_1, dump_2)
         self.assertEqual(dump_1, dump_3)
+        self.assertEqual(dump_1, dump_4)
 
-        os.remove("foo.txt")
-        os.remove("bar.txt")
+        os.remove("myfile_foo.txt")
+        os.remove("myfile_bar.txt")
         os.remove("dump_1.yaml")
         os.remove("dump_2.yaml")
+        os.remove("dump_3.yaml")
         shutil.rmtree("mydir")
 
     def test_append(self):

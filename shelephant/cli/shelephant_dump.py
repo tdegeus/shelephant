@@ -19,6 +19,9 @@
     -c, --command
         Interpret the input as a command (instead of as filenames).
 
+    --cwd=arg
+        Directory to run the command in.
+
     --abspath
         Store absolute paths (default: relative to the output file).
 
@@ -54,6 +57,7 @@ def main_impl():
     parser.add_argument("-o", "--output", default=f_dump)
     parser.add_argument("-a", "--append", action="store_true")
     parser.add_argument("-c", "--command", action="store_true")
+    parser.add_argument("--cwd", type=str)
     parser.add_argument("--abspath", action="store_true")
     parser.add_argument("-s", "--sort", action="store_true")
     parser.add_argument("-f", "--force", action="store_true")
@@ -66,8 +70,12 @@ def main_impl():
 
     if args.command:
         command = " ".join(files)
-        files = subprocess.check_output(command, shell=True).decode("utf-8").split("\n")
+        files = (
+            subprocess.check_output(command, shell=True, cwd=args.cwd).decode("utf-8").split("\n")
+        )
         files = sorted(list(filter(None, files)))
+        if args.cwd is not None:
+            files = [os.path.join(args.cwd, file) for file in files]
 
     if args.abspath:
         files = [os.path.abspath(file) for file in files]
