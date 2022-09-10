@@ -423,7 +423,7 @@ def copy_ssh(
     files = np.array(files)[i]
 
     if use_rsync:
-        return copy_function(host, src_dir, dest_dir, files, force, verbose, not quiet)
+        return copy_function(host, src_dir, dest_dir, files, verbose, not quiet)
 
     pbar = tqdm.trange(len(files), disable=quiet)
     for i in pbar:

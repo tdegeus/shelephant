@@ -14,14 +14,13 @@ import tqdm
 from .external import exec_cmd
 
 
-def _rsync(source_dir, dest_dir, files, force=False, verbose=False, progress=True):
+def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
     r"""
     Copy files to a destination using ``rsync -a --files-from``.
 
     :param str source_dir: Source directory.
     :param str dest_dir: Source directory.
     :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool force: Continue without prompt.
     :param bool verbose: Verbose commands.
     :param bool progress: Show progress bar.
     """
@@ -70,7 +69,6 @@ def from_remote(
     source_dir,
     dest_dir,
     files,
-    force=False,
     verbose=False,
     progress=True,
 ):
@@ -81,7 +79,6 @@ def from_remote(
     :param str source_dir: Source directory.
     :param str dest_dir: Source directory.
     :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool force: Continue without prompt.
     :param bool verbose: Verbose commands.
     :param bool progress: Show progress bar.
     """
@@ -90,7 +87,6 @@ def from_remote(
         source_dir=hostname + ":" + source_dir,
         dest_dir=dest_dir,
         files=files,
-        force=force,
         verbose=verbose,
         progress=progress,
     )
@@ -101,7 +97,6 @@ def to_remote(
     source_dir,
     dest_dir,
     files,
-    force=False,
     verbose=False,
     progress=True,
 ):
@@ -112,7 +107,6 @@ def to_remote(
     :param str source_dir: Source directory.
     :param str dest_dir: Source directory.
     :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool force: Continue without prompt.
     :param bool verbose: Verbose commands.
     :param bool progress: Show progress bar.
     """
@@ -121,7 +115,6 @@ def to_remote(
         source_dir=source_dir,
         dest_dir=hostname + ":" + dest_dir,
         files=files,
-        force=force,
         verbose=verbose,
         progress=progress,
     )
