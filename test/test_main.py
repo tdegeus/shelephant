@@ -186,7 +186,7 @@ class Test_dump(unittest.TestCase):
 
         run("shelephant_dump -f -s -o dump_1.yaml myfile_foo.txt myfile_bar.txt")
         run("shelephant_dump -f -s -o dump_2.yaml *.txt")
-        run("shelephant_dump -f -s -o dump_3.yaml --command \"find . -d 1 -iname 'myfile_*.txt'\"")
+        run("shelephant_dump -f -s -o dump_3.yaml -c \"find . -maxdepth 1 -iname 'myfile_*.txt'\"")
         run("shelephant_dump -f -s -o mydir/dump_4.yaml mydir/*.txt")
 
         with open("dump_1.yaml") as file:
