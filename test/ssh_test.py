@@ -86,7 +86,7 @@ output = run(
 )
 
 output = run(
-    "shelephant_send --detail --colors none --force "
+    "shelephant_send -M --detail --colors none --force "
     "myssh_send/shelephant_dump.yaml myssh_send/shelephant_hostinfo.yaml"
 )
 
