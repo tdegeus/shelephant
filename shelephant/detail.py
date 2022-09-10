@@ -142,7 +142,7 @@ def copy(
             ).format()
         ]
     if noverwrite > 0:
-        overview += [String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()]
+        overview += [String(f"overwrite (->): {noverwrite:d}", color=color["overwrite"]).format()]
     if nskip > 0:
         overview += [
             String(
@@ -183,7 +183,7 @@ def copy(
                 print(
                     "{:s} {:s} {:s}".format(
                         String(files[i], width=width, color=color["bright"]).format(),
-                        String("=>", color=color["bright"]).format(),
+                        String("->", color=color["bright"]).format(),
                         String(files[i], color=color["overwrite"]).format(),
                     )
                 )
@@ -350,7 +350,7 @@ def copy_ssh(
             ).format()
         ]
     if noverwrite > 0:
-        overview += [String(f"overwrite (=>): {noverwrite:d}", color=color["overwrite"]).format()]
+        overview += [String(f"overwrite (->): {noverwrite:d}", color=color["overwrite"]).format()]
     if nskip > 0:
         overview += [
             String(
@@ -397,7 +397,7 @@ def copy_ssh(
                 print(
                     "{:s} {:s} {:s}".format(
                         String(files[i], width=width, color=color["bright"]).format(),
-                        String("=>", color=color["bright"]).format(),
+                        String("->", color=color["bright"]).format(),
                         String(files[i], color=color["overwrite"]).format(),
                     )
                 )
