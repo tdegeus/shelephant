@@ -36,14 +36,12 @@ def _shelephant_diff_parser():
     parser.add_argument("--sort", type=str, help="Sort printed table by column.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
     parser.add_argument("--checksum", action="store_true", help="Check sums.")
-    parser.add_argument("--local-host", type=str, help="Host to use for local.")
-    parser.add_argument("--remote-host", type=str, help="Host to use for remote.")
-    parser.add_argument("--local-prefix", type=str, help="Prefix to use for local.")
-    parser.add_argument("--remote-prefix", type=str, help="Prefix to use for remote.")
-    parser.add_argument("--get", type=str, help="Save to get '<-' files.")
+    parser.add_argument("--get-new", type=str, help="Save to get '<-' files.")
+    parser.add_argument("--get-diff", type=str, help="Save to get ''!=' files.")
     parser.add_argument("--get-all", type=str, help="Save to get '<-' and '!=' files.")
-    parser.add_argument("--send", type=str, nargs=2, help="Save to send '->' files.")
-    parser.add_argument("--send-all", type=str, nargs=2, help="Save to send '->' and '!=' files.")
+    parser.add_argument("--send-new", type=str, nargs=2, help="Save to send '<-' files.")
+    parser.add_argument("--send-diff", type=str, nargs=2, help="Save to send ''!=' files.")
+    parser.add_argument("--send-all", type=str, nargs=2, help="Save to send '<-' and '!=' files.")
     parser.add_argument("local", type=str, help="Local files to consider, see shelephant_dump.")
     parser.add_argument("remote", type=str, help="Remote files to consider, see shelephant_dump.")
     return parser
@@ -62,59 +60,45 @@ def shelephant_diff(args: list[str]):
     remote = yaml.read(args.remote)
 
     if type(local) is list:
-        local = {"files": local, "prefix": os.path.dirname(args.local)}
+        local = {"files": local, "prefix": os.path.dirname(args.local), "list": True}
     if type(remote) is list:
-        remote = {"files": remote, "prefix": os.path.dirname(args.remote)}
+        remote = {"files": remote, "prefix": os.path.dirname(args.remote), "list": True}
 
-    if args.local_host is not None:
-        local["host"] = args.local_host
-    if args.remote_host is not None:
-        remote["host"] = args.remote_host
-    if args.local_prefix is not None:
-        local["prefix"] = args.local_prefix
-    if args.remote_prefix is not None:
-        remote["prefix"] = args.remote_prefix
+    for field in [local, remote]:
 
-    if "host" in local:
-        local_dir = local["host"] + ":" + local["prefix"]
-    else:
-        local_dir = local["prefix"]
+        if "host" in local:
+            field["dirname"] = field["host"] + ":" + field["prefix"]
+        else:
+            field["dirname"] = field["prefix"]
 
-    if "host" in remote:
-        remote_dir = remote["host"] + ":" + remote["prefix"]
-    else:
-        remote_dir = remote["prefix"]
+        if len(field["dirname"]) == 0:
+            field["dirname"] = "."
 
-    if len(local_dir) == 0:
-        local_dir = "."
-    if len(remote_dir) == 0:
-        remote_dir = "."
+        field["files"] = np.array(field["files"])
 
     ret = {}
 
     to_remote = rsync.diff(
-        source_dir=local_dir,
-        dest_dir=remote_dir,
+        source_dir=local["dirname"],
+        dest_dir=remote["dirname"],
         files=local["files"],
         force=True,
         checksum=args.checksum,
     )
-    files = np.array(local["files"])
-    ret["=="] = list(files[to_remote["skip"]])
-    ret["!="] = list(files[to_remote["overwrite"]])
-    ret["->"] = list(files[to_remote["create"]])
+    ret["=="] = list(local["files"][to_remote["skip"]])
+    ret["!="] = list(local["files"][to_remote["overwrite"]])
+    ret["->"] = list(local["files"][to_remote["create"]])
 
     from_remote = rsync.diff(
-        source_dir=remote_dir,
-        dest_dir=local_dir,
+        source_dir=remote["dirname"],
+        dest_dir=local["dirname"],
         files=remote["files"],
         force=True,
         checksum=args.checksum,
     )
-    files = np.array(remote["files"])
-    ret["=="] += list(files[from_remote["skip"]])
-    ret["!="] += list(files[from_remote["overwrite"]])
-    ret["<-"] = list(files[from_remote["create"]])
+    ret["=="] += list(remote["files"][from_remote["skip"]])
+    ret["!="] += list(remote["files"][from_remote["overwrite"]])
+    ret["<-"] = list(remote["files"][from_remote["create"]])
 
     for key in ["==", "!="]:
         ret[key] = [str(i) for i in np.unique(ret[key])]
@@ -123,23 +107,37 @@ def shelephant_diff(args: list[str]):
 
     stop = False
 
-    if args.get is not None:
-        yaml.dump(args.get, {"files": ret["<-"], **remote}, force=args.force)
-        stop = True
+    for filename, value in zip(
+        [args.get_new, args.get_diff, args.get_all], [ret["<-"], ret["!="], ret["<-"] + ret["!="]]
+    ):
 
-    if args.get_all is not None:
-        yaml.dump(args.get_all, {"files": ret["<-"] + ret["!="], **remote}, force=args.force)
-        stop = True
+        if filename is not None:
 
-    if args.send is not None:
-        yaml.dump(args.send[0], ret["->"], force=args.force)
-        yaml.dump(args.send[1], remote, force=args.force)
-        stop = True
+            stop = True
+            tmp = {"files": value}
+            for key in ["host", "prefix"]:
+                if key in remote:
+                    tmp[key] = remote[key]
+            yaml.dump(filename, tmp, force=args.force)
 
-    if args.send_all is not None:
-        yaml.dump(args.send_all[0], ret["->"] + ret["!="], force=args.force)
-        yaml.dump(args.send_all[1], **remote, force=args.force)
-        stop = True
+    for filename, value in zip(
+        [args.send_new, args.send_diff, args.send_all],
+        [ret["->"], ret["!="], ret["->"] + ret["!="]],
+    ):
+
+        if filename is not None:
+
+            assert "host" not in local, "Not supported by shelephant_send."
+            assert len(os.path.dirname(args.local)) == 0, "Not supported by shelephant_send."
+            stop = True
+
+            yaml.dump(filename[0], value, force=args.force)
+
+            tmp = {}
+            for key in ["host", "prefix"]:
+                if key in remote:
+                    tmp[key] = remote[key]
+            yaml.dump(filename[1], tmp, force=args.force)
 
     if args.yaml is not None:
         yaml.dump(args.yaml, ret, force=args.force)
