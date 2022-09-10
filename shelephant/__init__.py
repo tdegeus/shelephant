@@ -66,7 +66,7 @@ def shelephant_diff(args: list[str]):
 
     for field in [local, remote]:
 
-        if "host" in local:
+        if "host" in field:
             field["dirname"] = field["host"] + ":" + field["prefix"]
         else:
             field["dirname"] = field["prefix"]
