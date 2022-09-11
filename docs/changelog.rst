@@ -3,6 +3,22 @@
 Change-log
 **********
 
+v0.18.0
+=======
+
+API changes
+-----------
+
+*   Making rsync default to check difference (removes ``--check-rsync`` option).
+    To get the old default use ``--check-manual``.
+
+*   ``shelephant.rsync``: removing ``tempfilename`` and ``force`` options.
+    The temporary file is now internal, with the proper clean-up.
+
+*   ``shelephant.rsync``: removing ``rsync`` option. Use ``rsync_path`` instead.
+
+*   ``shelephant_dump``: adding ``--cwd`` option.
+
 v0.17.5
 =======
 
