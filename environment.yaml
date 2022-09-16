@@ -6,6 +6,7 @@ dependencies:
 - furo
 - mergedeep
 - numpy
+- pre-commit
 - prettytable
 - python
 - pyyaml
