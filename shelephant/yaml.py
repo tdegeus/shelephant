@@ -17,7 +17,7 @@ def read(filename):
     """
 
     if not os.path.isfile(filename):
-        raise OSError(f'"{filename:s} does not exist')
+        raise OSError(f'"{filename} does not exist')
 
     with open(filename) as file:
         return yaml.load(file.read(), Loader=yaml.FullLoader)
@@ -50,7 +50,7 @@ def read_item(filename, key=[]):
     if type(data) == list and len(key) == 0:
         return data
 
-    raise OSError('"{:s}" not in "{:s}"'.format("/".join(key), filename))
+    raise OSError(f'"{"/".join(key)}" not in "{filename}"')
 
 
 def dump(filename, data, force=False):
@@ -71,10 +71,10 @@ def dump(filename, data, force=False):
 
     if not force:
         if os.path.isfile(filename):
-            if not click.confirm(f'Overwrite "{filename:s}"?'):
+            if not click.confirm(f'Overwrite "{filename}"?'):
                 raise OSError("Cancelled")
         elif not os.path.isdir(dirname) and len(dirname) > 0:
-            if not click.confirm(f'Create "{os.path.dirname(filename):s}"?'):
+            if not click.confirm(f'Create "{os.path.dirname(filename)}"?'):
                 raise OSError("Cancelled")
 
     if not os.path.isdir(dirname) and len(dirname) > 0:
