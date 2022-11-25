@@ -31,6 +31,7 @@ def copy(
     print_details=True,
     print_summary=True,
     print_all=False,
+    print_skipped=True,
     theme_name="none",
     yaml_hostinfo_src=None,
     yaml_hostinfo_dest=None,
@@ -55,6 +56,7 @@ def copy(
     :param bool print_details: Print copy details.
     :param bool print_summary: Print copy summary.
     :param bool print_all: If ``False`` auto-truncation of long output is applied.
+    :param bool print_skipped: If ``False`` skipped files are not printed.
 
     :type theme_name: str or None
     :param theme_name: The name of the color-theme. See :py:mod:`shelephant.rich.theme`.
@@ -171,7 +173,7 @@ def copy(
                         String(files[i], color=color["new"]).format(),
                     )
                 )
-            elif skip[i] and pskip:
+            elif skip[i] and pskip and print_skipped:
                 print(
                     "{:s} {:s} {:s}".format(
                         String(files[i], width=width, color=color["skip"]).format(),
@@ -226,6 +228,7 @@ def copy_ssh(
     print_details=True,
     print_summary=True,
     print_all=False,
+    print_skipped=True,
     verbose=False,
     theme_name="none",
     yaml_hostinfo_src=None,
@@ -254,6 +257,7 @@ def copy_ssh(
     :param bool print_details: Print copy details.
     :param bool print_summary: Print copy summary.
     :param bool print_all: If ``False`` auto-truncation of long output is applied.
+    :param bool print_skipped: If ``False`` skipped files are not printed.
 
     :type theme_name: str or None
     :param theme_name: The name of the color-theme. See :py:fun:`shelephant.rich.theme`.
@@ -385,7 +389,7 @@ def copy_ssh(
                         String(files[i], color=color["new"]).format(),
                     )
                 )
-            elif skip[i] and pskip:
+            elif skip[i] and pskip and print_skipped:
                 print(
                     "{:s} {:s} {:s}".format(
                         String(files[i], width=width, color=color["skip"]).format(),

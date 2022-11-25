@@ -45,6 +45,9 @@ Typically, *rsync* will be faster, especially in copying a lot of small files.
     -d, --details
         Print details (and no summary unless specified).
 
+    --changes
+        Print changed filed only, do not print skipped files. (Can be combined with ``--details``.)
+
     -f, --force
         Force overwrite of all existing (but not matching) files.
 
@@ -87,6 +90,7 @@ def main_impl():
     parser.add_argument("--colors", default="dark")
     parser.add_argument("-s", "--summary", action="store_true")
     parser.add_argument("-d", "--details", action="store_true")
+    parser.add_argument("--changes", action="store_true")
     parser.add_argument("-f", "--force", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("-q", "--quiet", action="store_true")
@@ -118,6 +122,7 @@ def main_impl():
             print_details=not (args.force or args.summary) or args.details,
             print_summary=not (args.force or args.details) or args.summary,
             print_all=args.details,
+            print_skipped=not args.changes,
             theme_name=args.colors.lower(),
             yaml_hostinfo_src=source,
             yaml_hostinfo_dest=args.local,
@@ -140,6 +145,7 @@ def main_impl():
             print_details=not (args.force or args.summary) or args.details,
             print_summary=not (args.force or args.details) or args.summary,
             print_all=args.details,
+            print_skipped=not args.changes,
             verbose=args.verbose,
             theme_name=args.colors.lower(),
             yaml_hostinfo_src=source,
@@ -163,6 +169,7 @@ def main_impl():
             print_details=not (args.force or args.summary) or args.details,
             print_summary=not (args.force or args.details) or args.summary,
             print_all=args.details,
+            print_skipped=not args.changes,
             verbose=args.verbose,
             theme_name=args.colors.lower(),
             yaml_hostinfo_src=source,
