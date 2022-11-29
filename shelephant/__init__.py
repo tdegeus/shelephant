@@ -22,6 +22,8 @@ from . import ssh
 from . import yaml
 from ._version import version
 from ._version import version_tuple
+from .cli.defaults import f_dump
+from .cli.defaults import f_hostinfo
 
 
 def _shelephant_diff_parser():
@@ -31,6 +33,7 @@ def _shelephant_diff_parser():
 
     desc = "Compare local and remote files and list differences."
     parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument("--version", action="version", version=version)
     parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
     parser.add_argument("--yaml", type=str, help="Dump as YAML file.")
     parser.add_argument("--sort", type=str, help="Sort printed table by column.")
@@ -42,8 +45,16 @@ def _shelephant_diff_parser():
     parser.add_argument("--send-new", type=str, nargs=2, help="Save to send '<-' files.")
     parser.add_argument("--send-diff", type=str, nargs=2, help="Save to send ''!=' files.")
     parser.add_argument("--send-all", type=str, nargs=2, help="Save to send '<-' and '!=' files.")
-    parser.add_argument("local", type=str, help="Local files to consider, see shelephant_dump.")
-    parser.add_argument("remote", type=str, help="Remote files to consider, see shelephant_dump.")
+    parser.add_argument(
+        "local", type=str, nargs="?", default=f_dump, help="Local files, see shelephant_dump."
+    )
+    parser.add_argument(
+        "remote",
+        type=str,
+        nargs="?",
+        default=f_hostinfo,
+        help="Remote files, see shelephant_hostinfo.",
+    )
     return parser
 
 
