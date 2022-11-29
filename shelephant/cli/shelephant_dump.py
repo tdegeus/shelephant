@@ -4,6 +4,8 @@ import re
 import subprocess
 import sys
 
+import numpy as np
+
 from .. import version
 from .. import yaml
 from .defaults import f_dump
@@ -74,10 +76,10 @@ def shelephant_dump(args: list[str]):
         files = ret
 
     if args.exclude:
-        ret = []
+        excl = np.zeros(len(files), dtype=bool)
         for pattern in args.exclude:
-            ret += [file for file in files if not re.match(pattern, file)]
-        files = ret
+            excl = np.logical_or(excl, np.array([re.match(pattern, file) for file in files]))
+        files = [file for file, ex in zip(files, excl) if not ex]
 
     if args.sort:
         files = sorted(files)
