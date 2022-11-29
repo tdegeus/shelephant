@@ -19,6 +19,9 @@ def _shelephant_dump_parser():
     parser.add_argument("-o", "--output", default=f_dump, help="Output YAML-file.")
     parser.add_argument("-a", "--append", action="store_true", help="Append existing file.")
     parser.add_argument(
+        "-e", "--exclude", type=str, action="append", help="Exclude files matching this pattern."
+    )
+    parser.add_argument(
         "-c",
         "--command",
         action="store_true",
@@ -68,6 +71,12 @@ def shelephant_dump(args: list[str]):
         ret = []
         for pattern in args.keep:
             ret += [file for file in files if re.match(pattern, file)]
+        files = ret
+
+    if args.exclude:
+        ret = []
+        for pattern in args.exclude:
+            ret += [file for file in files if not re.match(pattern, file)]
         files = ret
 
     if args.sort:
