@@ -23,6 +23,7 @@ def _shelephant_dump_parser():
     parser.add_argument(
         "-e", "--exclude", type=str, action="append", help="Exclude files matching this pattern."
     )
+    parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
     parser.add_argument(
         "-c",
         "--command",
@@ -83,6 +84,9 @@ def shelephant_dump(args: list[str]):
 
     if args.sort:
         files = sorted(files)
+
+    if args.fmt:
+        files = [args.fmt.format(file) for file in files]
 
     if args.append:
         main = yaml.read(args.output)
