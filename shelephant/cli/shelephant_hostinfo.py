@@ -202,12 +202,7 @@ def main_impl():
 
 
 def main():
-
-    try:
-        main_impl()
-    except Exception as e:
-        print(e)
-        return 1
+    main_impl()
 
 
 if __name__ == "__main__":
