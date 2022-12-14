@@ -434,12 +434,12 @@ class Test_get(unittest.TestCase):
         with open("mysrc/foo.txt", "w") as file:
             file.write("foo")
 
-        with open("mysrc/bar.txt", "w") as file:
+        with open("mysrc/bar 1.txt", "w") as file:
             file.write("bar")
 
         operations = [
-            "bar.txt -> bar.txt",
-            "foo.txt -> foo.txt",
+            "bar 1.txt -> bar 1.txt",
+            "foo.txt   -> foo.txt",
         ]
 
         output = run("shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt")
