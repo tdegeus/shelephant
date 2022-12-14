@@ -169,7 +169,7 @@ def diff(
                 "overwrite": np.zeros((len(files)), dtype=np.bool),
             }
 
-        check_paths = [line.split(" ")[1] for line in lines]
+        check_paths = [line.split(" ", 1)[1] for line in lines]
         mode = np.zeros((len(check_paths)), dtype=np.int16)
 
         for i, line in enumerate(lines):
