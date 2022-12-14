@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 import shelephant
+from shelephant.cli.shelephant_dump import shelephant_dump
 
 
 def run(cmd, verbose=False):
@@ -239,6 +240,17 @@ class Test_dump(unittest.TestCase):
         os.remove("foo.pdf")
         os.remove("bar.pdf")
         os.remove("shelephant_dump.yaml")
+
+    def test_exclude(self):
+
+        shelephant_dump(["a.txt", "b.bak", "c.h5", "-E", ".bak", "-o", "dump.yaml"])
+
+        self.assertEqual(
+            shelephant.yaml.read("dump.yaml"),
+            ["a.txt", "c.h5"],
+        )
+
+        os.remove("dump.yaml")
 
 
 class Test_extract(unittest.TestCase):

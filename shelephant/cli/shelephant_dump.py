@@ -1,5 +1,6 @@
 import argparse
 import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -22,6 +23,14 @@ def _shelephant_dump_parser():
     parser.add_argument("-a", "--append", action="store_true", help="Append existing file.")
     parser.add_argument(
         "-e", "--exclude", type=str, action="append", help="Exclude files matching this pattern."
+    )
+    parser.add_argument(
+        "-E",
+        "--exclude-extension",
+        type=str,
+        action="append",
+        default=[],
+        help='Exclude files based on their extension (e.g. ".bak").',
     )
     parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
     parser.add_argument(
@@ -81,6 +90,9 @@ def shelephant_dump(args: list[str]):
         for pattern in args.exclude:
             excl = np.logical_or(excl, np.array([re.match(pattern, file) for file in files]))
         files = [file for file, ex in zip(files, excl) if not ex]
+
+    if args.exclude_extension:
+        files = [file for file in files if pathlib.Path(file).suffix not in args.exclude_extension]
 
     if args.sort:
         files = sorted(files)
