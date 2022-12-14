@@ -65,4 +65,4 @@ jobs:
     - name: Run SSH tests
       if: runner.os == 'Linux'
       working-directory: tests
-      run: python ssh_test.py --host localhost --prefix "${PWD}/remote"
+      run: python ssh_test.py localhost "${PWD}/remote"
