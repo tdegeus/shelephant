@@ -50,12 +50,12 @@ jobs:
       run: python -m pip install .
 
     - name: Run tests
-      working-directory: test
+      working-directory: tests
       run: python -m unittest discover . -v
 
     - name: Prepare SSH test
       if: runner.os == 'Linux'
-      working-directory: test
+      working-directory: tests
       run: |
         python ssh_generate.py
         mkdir remote
@@ -64,5 +64,5 @@ jobs:
 
     - name: Run SSH tests
       if: runner.os == 'Linux'
-      working-directory: test
+      working-directory: tests
       run: python ssh_test.py --host localhost --prefix "${PWD}/remote"
