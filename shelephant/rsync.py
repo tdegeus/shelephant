@@ -164,9 +164,9 @@ def diff(
 
         if len(lines) == 0:
             return {
-                "skip": np.ones((len(files)), dtype=np.bool),
-                "create": np.zeros((len(files)), dtype=np.bool),
-                "overwrite": np.zeros((len(files)), dtype=np.bool),
+                "skip": np.ones((len(files)), dtype=bool),
+                "create": np.zeros((len(files)), dtype=bool),
+                "overwrite": np.zeros((len(files)), dtype=bool),
             }
 
         check_paths = [line.split(" ", 1)[1] for line in lines]
