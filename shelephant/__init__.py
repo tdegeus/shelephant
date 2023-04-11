@@ -76,7 +76,6 @@ def shelephant_diff(args: list[str]):
         remote = {"files": remote, "prefix": os.path.dirname(args.remote), "list": True}
 
     for field in [local, remote]:
-
         if "host" in field:
             field["dirname"] = field["host"] + ":" + field["prefix"]
         else:
@@ -119,9 +118,7 @@ def shelephant_diff(args: list[str]):
     for filename, value in zip(
         [args.get_new, args.get_diff, args.get_all], [ret["<-"], ret["!="], ret["<-"] + ret["!="]]
     ):
-
         if filename is not None:
-
             stop = True
             tmp = {"files": value}
             for key in ["host", "prefix"]:
@@ -133,9 +130,7 @@ def shelephant_diff(args: list[str]):
         [args.send_new, args.send_diff, args.send_all],
         [ret["->"], ret["!="], ret["->"] + ret["!="]],
     ):
-
         if filename is not None:
-
             assert "host" not in local, "Not supported by shelephant_send."
             assert len(os.path.dirname(args.local)) == 0, "Not supported by shelephant_send."
             stop = True

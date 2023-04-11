@@ -109,7 +109,6 @@ def main_impl():
     data = yaml.read(source)
 
     if "host" not in data:
-
         detail.copy(
             copy_function=shutil.copy2,
             files=data["files"],
@@ -129,7 +128,6 @@ def main_impl():
         )
 
     elif args.scp:
-
         detail.copy_ssh(
             copy_function=scp.from_remote,
             use_rsync=False,
@@ -153,7 +151,6 @@ def main_impl():
         )
 
     else:
-
         detail.copy_ssh(
             copy_function=rsync.from_remote,
             use_rsync=True,
@@ -182,5 +179,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

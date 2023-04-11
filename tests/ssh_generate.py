@@ -8,7 +8,6 @@ def run(cmd):
 
 
 for dirname in ["myssh_send", "myssh_get"]:
-
     if os.path.isdir(dirname):
         shutil.rmtree(dirname)
 

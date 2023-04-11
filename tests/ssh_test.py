@@ -23,7 +23,6 @@ def run(cmd):
 
 class Test_ssh(unittest.TestCase):
     def test_all(self):
-
         operations = [
             "bar.txt -> bar.txt",
             "foo.txt == foo.txt",
@@ -105,7 +104,6 @@ class Test_ssh(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     Test_ssh.PREFIX = sys.argv.pop()
     Test_ssh.HOST = sys.argv.pop()
 

@@ -58,7 +58,6 @@ def get(filepaths, yaml_hostinfo=None, hybrid=False, progress=False):
     # Compute
 
     if not yaml_hostinfo:
-
         for i in tqdm.trange(n, disable=not progress, desc="Processing"):
             if os.path.isfile(filepaths[i]):
                 ret[i] = sha256(filepaths[i])

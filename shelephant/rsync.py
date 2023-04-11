@@ -26,7 +26,6 @@ def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
     """
 
     with tempfile.TemporaryDirectory() as temp_dir:
-
         temp_file = os.path.join(temp_dir, "rsync.txt")
 
         with open(temp_file, "w") as file:
@@ -35,7 +34,6 @@ def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
         # Run without printing output
 
         if not progress:
-
             cmd = 'rsync -a --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
                 source_dir=source_dir, dest_dir=dest_dir, files=temp_file
             )
@@ -141,7 +139,6 @@ def diff(
     """
 
     with tempfile.TemporaryDirectory() as temp_dir:
-
         temp_file = os.path.join(temp_dir, "rsync.txt")
         files = [os.path.normpath(file) for file in files]
 

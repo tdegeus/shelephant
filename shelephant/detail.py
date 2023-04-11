@@ -94,11 +94,9 @@ def copy(
             raise OSError(f'Input file "{file:s}" does not exists')
 
     if not os.path.isdir(dest_dir):
-
         create = [True for i in range(n)]
 
     elif check_rsync:
-
         tmp = diff(
             source_dir=src_dir,
             dest_dir=dest_dir,
@@ -111,7 +109,6 @@ def copy(
         overwrite = tmp["overwrite"]
 
     else:
-
         if checksum:
             src_checksums = get(src, yaml_hostinfo_src, progress=not quiet)
             dest_checksums = get(dest, yaml_hostinfo_dest, progress=not quiet)
@@ -292,11 +289,9 @@ def copy_ssh(
     color = theme(theme_name.lower())
 
     if not os.path.isdir(dest_dir) and not to_remote:
-
         create = [True for i in range(n)]
 
     elif check_rsync:
-
         tmp = diff(
             source_dir=src_dir if to_remote else host + ":" + src_dir,
             dest_dir=host + ":" + dest_dir if to_remote else dest_dir,
@@ -310,7 +305,6 @@ def copy_ssh(
         overwrite = tmp["overwrite"]
 
     else:
-
         if checksum is True:
             src_checksums = get(src, yaml_hostinfo_src, progress=not quiet)
             dest_checksums = get(dest, yaml_hostinfo_dest, progress=not quiet)
