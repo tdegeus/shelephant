@@ -58,7 +58,7 @@ def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
 
         for line in iter(process.stdout.readline, b""):
             line = line.decode("utf-8")
-            if re.match(r"(.*)(xf)([e]?)(r\#)([0-9])(.*)(to\-ch)([e]?[c]?)(k\=)([0-9])(.*)", line):
+            if re.match(r"(.*)(xfe?r\#[0-9])(.*)(to\-che?c?k\=[0-9])(.*)", line):
                 e = int(list(filter(None, line.splitlines()[-1].split(" ")))[-6].replace(",", ""))
                 pbar.update()
                 sbar.update(e)
