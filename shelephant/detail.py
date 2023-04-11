@@ -90,7 +90,7 @@ def copy(
     color = theme(theme_name.lower())
 
     for file in src:
-        if not os.path.isfile(file):
+        if not os.path.exists(file):
             raise OSError(f'Input file "{file:s}" does not exists')
 
     if not os.path.isdir(dest_dir):
