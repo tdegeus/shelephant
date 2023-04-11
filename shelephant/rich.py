@@ -71,7 +71,6 @@ class String:
     """
 
     def __init__(self, data, width=None, align="<", color=None, dummy=0):
-
         self.data = data
         self.width = width
         self.color = color

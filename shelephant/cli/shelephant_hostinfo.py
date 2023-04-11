@@ -67,7 +67,6 @@ from .defaults import f_hostinfo
 
 
 def remove(data, rm):
-
     files = np.array(data["files"])
     sorter = np.argsort(files)
     files = files[sorter]
@@ -88,7 +87,6 @@ def remove(data, rm):
 
 
 def main_impl():
-
     # Parse command-line arguments
 
     class Parser(argparse.ArgumentParser):
@@ -161,9 +159,7 @@ def main_impl():
     args_dict = vars(args)
 
     for item in ["files", "checksum"]:
-
         if args_dict[item]:
-
             key = list(filter(None, args_dict[item + "_key"].split("/")))
             filename = args_dict[item]
 
@@ -206,5 +202,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

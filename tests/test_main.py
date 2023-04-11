@@ -15,21 +15,18 @@ def run(cmd, verbose=False):
 
 class Test_tools(unittest.TestCase):
     def test_flatten(self):
-
         arg = [1, [2, 2, 2], 4]
         ret = [1, 2, 2, 2, 4]
 
         self.assertEqual(ret, shelephant.convert.flatten(arg))
 
     def test_squash(self):
-
         arg = {"foo": [1, 2], "bar": {"foo": [3, 4], "bar": 5}}
         ret = [1, 2, 3, 4, 5]
 
         self.assertEqual(ret, shelephant.convert.squash(arg))
 
     def test_deepest_dirs(self):
-
         dirnames = [
             "foo/bar",
             "foo/bar/mydir",
@@ -57,7 +54,6 @@ class Test_tools(unittest.TestCase):
 
 class Test_checksum(unittest.TestCase):
     def test_basic(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -81,7 +77,6 @@ class Test_checksum(unittest.TestCase):
         os.remove("shelephant_checksum.yaml")
 
     def test_hybrid(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -110,7 +105,6 @@ class Test_checksum(unittest.TestCase):
         os.remove("shelephant_hostinfo.yaml")
 
     def test_recursive(self):
-
         letters = ["a", "b", "c", "d", "e", "f", "g"]
 
         for letter in letters:
@@ -166,7 +160,6 @@ class Test_checksum(unittest.TestCase):
 
 class Test_dump(unittest.TestCase):
     def test_basic(self):
-
         with open("myfile_foo.txt", "w") as file:
             file.write("foo")
 
@@ -214,7 +207,6 @@ class Test_dump(unittest.TestCase):
         shutil.rmtree("mydir")
 
     def test_append(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -242,7 +234,6 @@ class Test_dump(unittest.TestCase):
         os.remove("shelephant_dump.yaml")
 
     def test_exclude(self):
-
         shelephant_dump(["a.txt", "b.bak", "c.h5", "-E", ".bak", "-o", "dump.yaml"])
 
         self.assertEqual(
@@ -255,7 +246,6 @@ class Test_dump(unittest.TestCase):
 
 class Test_extract(unittest.TestCase):
     def test_single_path(self):
-
         data = {
             "foo": ["foo.txt", "bar.txt"],
             "bar": ["foo.pdf", "bar.pdf"],
@@ -271,7 +261,6 @@ class Test_extract(unittest.TestCase):
         os.remove("dump.yaml")
 
     def test_multiple_paths(self):
-
         data = {
             "foo": ["foo.txt", "bar.txt"],
             "bar": ["foo.pdf", "bar.pdf"],
@@ -295,7 +284,6 @@ class Test_extract(unittest.TestCase):
         os.remove("dump.yaml")
 
     def test_multiple_paths_squash(self):
-
         data = {
             "foo": ["foo.txt", "bar.txt"],
             "bar": ["foo.pdf", "bar.pdf"],
@@ -321,7 +309,6 @@ class Test_extract(unittest.TestCase):
 
 class Test_merge(unittest.TestCase):
     def test_basic(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -369,7 +356,6 @@ class Test_merge(unittest.TestCase):
 
 class Test_hostinfo(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -405,7 +391,6 @@ class Test_hostinfo(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_remove(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -435,7 +420,6 @@ class Test_hostinfo(unittest.TestCase):
 
 class Test_get(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -479,7 +463,6 @@ class Test_get(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_partial(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -525,7 +508,6 @@ class Test_get(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_partial_localchecksum(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -587,7 +569,6 @@ class Test_get(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_partial_rsync(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -633,7 +614,6 @@ class Test_get(unittest.TestCase):
 
 class Test_send(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -685,7 +665,6 @@ class Test_send(unittest.TestCase):
         os.remove("shelephant_hostinfo.yaml")
 
     def test_empty_remote(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -728,7 +707,6 @@ class Test_send(unittest.TestCase):
         os.remove("hostinfo.yaml")
 
     def test_partial(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -777,7 +755,6 @@ class Test_send(unittest.TestCase):
         os.remove("shelephant_hostinfo.yaml")
 
     def test_partial_localchecksum(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -850,7 +827,6 @@ class Test_send(unittest.TestCase):
         os.remove("local.yaml")
 
     def test_partial_rsync(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -897,7 +873,6 @@ class Test_send(unittest.TestCase):
 
 class Test_mv(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -932,7 +907,6 @@ class Test_mv(unittest.TestCase):
 
 class Test_cp(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -967,7 +941,6 @@ class Test_cp(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_rsync(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -1012,7 +985,6 @@ class Test_cp(unittest.TestCase):
         shutil.rmtree("mydest")
 
     def test_nested(self):
-
         for dirname in ["mysrc", "mybak"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -1054,7 +1026,6 @@ class Test_cp(unittest.TestCase):
 
 class Test_rm(unittest.TestCase):
     def test_basic(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -1072,7 +1043,6 @@ class Test_rm(unittest.TestCase):
 
 class Test_diff(unittest.TestCase):
     def test_basic(self):
-
         for dirname in ["mysrc", "mydest"]:
             if os.path.isdir(dirname):
                 shutil.rmtree(dirname)
@@ -1112,7 +1082,6 @@ class Test_diff(unittest.TestCase):
 
 class Test_parse(unittest.TestCase):
     def test_basic(self):
-
         with open("foo.txt", "w") as file:
             file.write("foo")
 
@@ -1130,5 +1099,4 @@ class Test_parse(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

@@ -81,7 +81,6 @@ def main_impl():
     output_dir = os.path.dirname(output)
 
     if not args.no_path:
-
         paths = [os.path.dirname(args.main), os.path.dirname(args.branch)]
 
         for var, path in zip([main, branch], paths):
@@ -94,7 +93,6 @@ def main_impl():
                 raise OSError("Files have an incompatible structure")
 
     if type(main) == list and type(branch) == list:
-
         if args.skip:
             pass
         elif args.replace:
@@ -103,7 +101,6 @@ def main_impl():
             main += branch
 
     elif type(main) == dict and type(branch) == dict:
-
         if args.skip:
             mergedeep.merge(branch, main, strategy=mergedeep.Strategy.REPLACE)
             main = branch
@@ -113,7 +110,6 @@ def main_impl():
             mergedeep.merge(main, branch, strategy=mergedeep.Strategy.ADDITIVE)
 
     else:
-
         raise OSError("Files have an incompatible structure")
 
     yaml.dump(output, main, args.force)
@@ -124,5 +120,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

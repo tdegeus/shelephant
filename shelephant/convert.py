@@ -41,7 +41,6 @@ def _squash_detail(data, parent_key="", sep="_"):
     items = []
 
     for k, v in data.items():
-
         new_key = parent_key + sep + k if parent_key else k
 
         if isinstance(v, collections.abc.MutableMapping):
