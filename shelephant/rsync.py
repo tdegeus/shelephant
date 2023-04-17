@@ -157,7 +157,7 @@ def diff(
         )
 
         lines = list(filter(None, exec_cmd(cmd, verbose).split("\n")))
-        lines = [line for line in lines if line[1] == "f"]
+        lines = [line for line in lines if line[1] in ["f", "L"]]
 
         if len(lines) == 0:
             return {
@@ -166,17 +166,25 @@ def diff(
                 "overwrite": np.zeros((len(files)), dtype=bool),
             }
 
-        check_paths = [line.split(" ", 1)[1] for line in lines]
+        check_paths = []
+        for line in lines:
+            if line[1] == "f":
+                check_paths.append(line.split(" ", 1)[1])
+            elif line[:2] == "cL":
+                check_paths.append(line.split(" ", 1)[1].split(" -> ", 1)[0])
+
         mode = np.zeros((len(check_paths)), dtype=np.int16)
 
         for i, line in enumerate(lines):
-            # todo: split send `<` and recieve `>`?
+            # todo: split send `<` and receive `>`?
             # ref: https://stackoverflow.com/a/12037164/2646505
             if line[0] == ">" or line[0] == "<":
                 if line[2] == "+":
                     mode[i] = 1  # create
                 else:
                     mode[i] = 2  # overwrite
+            elif line[0] == "c" or line[1] == "L":
+                mode[i] = 1  # create
             elif line[0] == ".":
                 pass
             else:
