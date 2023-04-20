@@ -1079,6 +1079,55 @@ class Test_diff(unittest.TestCase):
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
 
+    def test_exists_filter(self):
+        for dirname in ["mysrc", "mydest"]:
+            if os.path.isdir(dirname):
+                shutil.rmtree(dirname)
+
+        os.mkdir("mysrc")
+        os.mkdir("mydest")
+
+        with open("mysrc/foo.txt", "w") as file:
+            file.write("foo")
+
+        with open("mysrc/bar.txt", "w") as file:
+            file.write("bar")
+
+        with open("mydest/bar.txt", "w") as file:
+            file.write("foobar")
+
+        with open("mydest/foobar.txt", "w") as file:
+            file.write("foobar")
+
+        run("shelephant_dump --sort -o mysrc/files.yaml mysrc/*.txt")
+        run("shelephant_dump --sort -o mydest/files.yaml mydest/*.txt")
+        base = "shelephant_diff mysrc/files.yaml mydest/files.yaml"
+        run(f"{base} --exists --yaml mysrc/diff.yaml")
+        run(rf'{base} --exists --filter ".*\.txt" --yaml mysrc/diff2.yaml')
+
+        for filename in ["mysrc/diff.yaml", "mysrc/diff2.yaml"]:
+            data = shelephant.yaml.read(filename)
+            expect = {
+                "==": ["bar.txt"],
+                "!=": [],
+                "->": ["foo.txt"],
+                "<-": ["foobar.txt"],
+            }
+            self.assertDictEqual(data, expect)
+
+        run(rf'{base} --exists --filter "(?!foo)(.*\.txt)" --yaml mysrc/diff3.yaml')
+        data = shelephant.yaml.read("mysrc/diff3.yaml")
+        expect = {
+            "==": ["bar.txt"],
+            "!=": [],
+            "->": [],
+            "<-": [],
+        }
+        self.assertDictEqual(data, expect)
+
+        shutil.rmtree("mysrc")
+        shutil.rmtree("mydest")
+
 
 class Test_parse(unittest.TestCase):
     def test_basic(self):
