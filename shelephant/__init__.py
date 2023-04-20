@@ -5,6 +5,7 @@ Copy with a memory.
 """
 import argparse
 import os
+import re
 import sys
 
 import numpy as np
@@ -39,12 +40,15 @@ def _shelephant_diff_parser():
     parser.add_argument("--sort", type=str, help="Sort printed table by column.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
     parser.add_argument("--checksum", action="store_true", help="Check sums.")
-    parser.add_argument("--get-new", type=str, help="Save to get '<-' files.")
-    parser.add_argument("--get-diff", type=str, help="Save to get ''!=' files.")
-    parser.add_argument("--get-all", type=str, help="Save to get '<-' and '!=' files.")
-    parser.add_argument("--send-new", type=str, nargs=2, help="Save to send '<-' files.")
-    parser.add_argument("--send-diff", type=str, nargs=2, help="Save to send ''!=' files.")
-    parser.add_argument("--send-all", type=str, nargs=2, help="Save to send '<-' and '!=' files.")
+    parser.add_argument("--exists", action="store_true", help="Check only if files exist.")
+    parser.add_argument("--filter", type=str, help="Limit output to regex.")
+    pre = "Write YAML-file to"
+    parser.add_argument("--get-new", type=str, help=f"{pre} get '<-' files.")
+    parser.add_argument("--get-diff", type=str, help=f"{pre} get '!=' files.")
+    parser.add_argument("--get-all", type=str, help=f"{pre} get '<-' and '!=' files.")
+    parser.add_argument("--send-new", type=str, nargs=2, help=f"{pre} send '<-' files.")
+    parser.add_argument("--send-diff", type=str, nargs=2, help=f"{pre} send ''!=' files.")
+    parser.add_argument("--send-all", type=str, nargs=2, help=f"{pre} send '<-' and '!=' files.")
     parser.add_argument(
         "local", type=str, nargs="?", default=f_dump, help="Local files, see shelephant_dump."
     )
@@ -70,48 +74,65 @@ def shelephant_diff(args: list[str]):
     local = yaml.read(args.local)
     remote = yaml.read(args.remote)
 
-    if type(local) is list:
-        local = {"files": local, "prefix": os.path.dirname(args.local), "list": True}
-    if type(remote) is list:
-        remote = {"files": remote, "prefix": os.path.dirname(args.remote), "list": True}
+    if args.exists:
+        ret = {}
+        if "files" in local:
+            local = local["files"]
+        if "files" in remote:
+            remote = remote["files"]
+        local = sorted(local)
+        remote = sorted(remote)
+        right = np.in1d(local, remote)
+        ret["!="] = []
+        ret["=="] = list(np.array(local)[right])
+        ret["->"] = list(np.array(local)[~right])
+        ret["<-"] = list(np.array(remote)[~np.in1d(remote, local)])
+    else:
+        if type(local) is list:
+            local = {"files": local, "prefix": os.path.dirname(args.local), "list": True}
+        if type(remote) is list:
+            remote = {"files": remote, "prefix": os.path.dirname(args.remote), "list": True}
 
-    for field in [local, remote]:
-        if "host" in field:
-            field["dirname"] = field["host"] + ":" + field["prefix"]
-        else:
-            field["dirname"] = field["prefix"]
+        for field in [local, remote]:
+            if "host" in field:
+                field["dirname"] = field["host"] + ":" + field["prefix"]
+            else:
+                field["dirname"] = field["prefix"]
 
-        if len(field["dirname"]) == 0:
-            field["dirname"] = "."
+            if len(field["dirname"]) == 0:
+                field["dirname"] = "."
 
-        field["files"] = np.array(field["files"])
+            field["files"] = np.array(field["files"])
 
-    ret = {}
+        ret = {}
+        to_remote = rsync.diff(
+            source_dir=local["dirname"],
+            dest_dir=remote["dirname"],
+            files=local["files"],
+            checksum=args.checksum,
+        )
+        ret["=="] = list(local["files"][to_remote["skip"]])
+        ret["!="] = list(local["files"][to_remote["overwrite"]])
+        ret["->"] = list(local["files"][to_remote["create"]])
 
-    to_remote = rsync.diff(
-        source_dir=local["dirname"],
-        dest_dir=remote["dirname"],
-        files=local["files"],
-        checksum=args.checksum,
-    )
-    ret["=="] = list(local["files"][to_remote["skip"]])
-    ret["!="] = list(local["files"][to_remote["overwrite"]])
-    ret["->"] = list(local["files"][to_remote["create"]])
-
-    from_remote = rsync.diff(
-        source_dir=remote["dirname"],
-        dest_dir=local["dirname"],
-        files=remote["files"],
-        checksum=args.checksum,
-    )
-    ret["=="] += list(remote["files"][from_remote["skip"]])
-    ret["!="] += list(remote["files"][from_remote["overwrite"]])
-    ret["<-"] = list(remote["files"][from_remote["create"]])
+        from_remote = rsync.diff(
+            source_dir=remote["dirname"],
+            dest_dir=local["dirname"],
+            files=remote["files"],
+            checksum=args.checksum,
+        )
+        ret["=="] += list(remote["files"][from_remote["skip"]])
+        ret["!="] += list(remote["files"][from_remote["overwrite"]])
+        ret["<-"] = list(remote["files"][from_remote["create"]])
 
     for key in ["==", "!="]:
         ret[key] = [str(i) for i in np.unique(ret[key])]
     for key in ["->", "<-"]:
         ret[key] = [str(i) for i in ret[key]]
+
+    if args.filter:
+        for key in ["==", "!=", "->", "<-"]:
+            ret[key] = [i for i in ret[key] if re.match(args.filter, i)]
 
     stop = False
 
