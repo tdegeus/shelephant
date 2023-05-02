@@ -158,6 +158,9 @@ def main_impl():
 
     args_dict = vars(args)
 
+    if args_dict["files"] == f_dump:
+        args_dict["files"] = os.path.join(data["prefix"], args_dict["files"])
+
     for item in ["files", "checksum"]:
         if args_dict[item]:
             key = list(filter(None, args_dict[item + "_key"].split("/")))
@@ -171,8 +174,6 @@ def main_impl():
                     args.verbose,
                 )
                 filename = temp_file
-            elif "prefix" in data:
-                filename = os.path.join(data["prefix"], filename)
 
             data[item] = yaml.read_item(filename, key)
 
