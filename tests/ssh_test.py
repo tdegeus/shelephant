@@ -7,7 +7,6 @@ import os
 import subprocess
 import sys
 import unittest
-import pathlib
 from functools import partialmethod
 
 from tqdm import tqdm
@@ -56,12 +55,6 @@ class Test_ssh(unittest.TestCase):
                 '--host "{:s}" --prefix "{:s}" -f'
             ).format(self.HOST, os.path.join(self.PREFIX, "myssh_get"))
         )
-
-        print("------")
-        print(pathlib.Path("myssh_send/shelephant_dump.yaml").read_text())
-        print("--")
-        print(pathlib.Path("myssh_send/shelephant_hostinfo.yaml").read_text())
-        print("------")
 
         output = run(
             "shelephant_send --detail --colors none --force "
