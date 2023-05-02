@@ -171,6 +171,8 @@ def main_impl():
                     args.verbose,
                 )
                 filename = temp_file
+            elif "prefix" in data:
+                filename = os.path.join(data["prefix"], filename)
 
             data[item] = yaml.read_item(filename, key)
 
