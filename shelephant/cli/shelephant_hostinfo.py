@@ -158,7 +158,7 @@ def main_impl():
 
     args_dict = vars(args)
 
-    if args_dict["files"] == f_dump:
+    if args_dict["files"] == f_dump and "host" not in data:
         args_dict["files"] = os.path.join(data["prefix"], args_dict["files"])
 
     for item in ["files", "checksum"]:
