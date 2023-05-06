@@ -7,6 +7,7 @@ shelephant
    :maxdepth: 1
 
    getting.rst
+   dataset.rst
 
 .. toctree::
    :caption: API
