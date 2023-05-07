@@ -26,8 +26,8 @@ setup(
         "console_scripts": [
             f"shelephant_checksum = {project_name}.cli.shelephant_checksum:main",
             f"shelephant_cp = {project_name}.cli.shelephant_cp:main",
-            f"shelephant_diff = {project_name}:_shelephant_diff_catch",
-            f"shelephant_dump = {project_name}.cli.shelephant_dump:main",
+            f"shelephant_diff = {project_name}:_shelephant_diff_main",
+            f"shelephant_dump = {project_name}:_shelephant_dump_main",
             f"shelephant_extract = {project_name}.cli.shelephant_extract:main",
             f"shelephant_get = {project_name}.cli.shelephant_get:main",
             f"shelephant_hostinfo = {project_name}.cli.shelephant_hostinfo:main",
