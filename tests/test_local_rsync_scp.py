@@ -1,0 +1,117 @@
+import pathlib
+import unittest
+
+import shelephant
+from shelephant.detail import create_dummy_files
+from shelephant.path import cwd
+from shelephant.path import info
+from shelephant.path import tempdir
+
+
+class Test_local(unittest.TestCase):
+    def test_diff(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                data = shelephant.local.diff(".", "../dest", files)
+
+            check = {
+                "?=": ["foo.txt", "bar.txt"],
+                "->": ["more.txt", "even_more.txt"],
+                "<-": [],
+            }
+            self.assertEqual(data, check)
+
+    def test_copy(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant.local.copy(".", "../dest", files, progress=False)
+
+            with cwd("dest"):
+                data = {file: info(file) for file in files}
+
+            self.assertEqual(data, check)
+
+
+class Test_scp(unittest.TestCase):
+    def test_copy(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant.scp.copy(".", "../dest", files, progress=False)
+
+            with cwd("dest"):
+                data = {file: info(file) for file in files}
+
+            self.assertEqual(data, check)
+
+
+class Test_rsync(unittest.TestCase):
+    def test_diff(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                data = shelephant.rsync.diff(".", "../dest", files)
+
+            check = {
+                "==": ["foo.txt"],
+                "!=": ["bar.txt"],
+                "->": ["more.txt", "even_more.txt"],
+            }
+            self.assertEqual(data, check)
+
+    def test_copy(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant.rsync.copy(".", "../dest", files, progress=False)
+
+            with cwd("dest"):
+                data = {file: info(file) for file in files}
+
+            self.assertEqual(data, check)
+
+
+if __name__ == "__main__":
+    unittest.main()

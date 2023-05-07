@@ -1,18 +1,18 @@
-r"""
-Query using ssh.
-
-(c) Tom de Geus, 2021, MIT
-"""
 from .external import exec_cmd
 
 
-def file_exists(host, source, verbose=False):
+def file_exists(hostname: str, path: str, verbose: bool = False) -> bool:
     r"""
     Check if a file exists on a remote system. Uses ``ssh``.
+
+    :param hostname: Hostname.
+    :param path: Filename (path on hostname).
+    :param verbose: Verbose commands.
+    :return: ``True`` if the file exists, ``False`` otherwise.
     """
 
-    cmd = 'ssh {host:s} test -f "{source:s}" && echo found || echo not found'.format(
-        host=host, source=source
+    cmd = 'ssh {hostname:s} test -f "{path:s}" && echo found || echo not found'.format(
+        hostname=hostname, path=path
     )
 
     ret = exec_cmd(cmd, verbose)

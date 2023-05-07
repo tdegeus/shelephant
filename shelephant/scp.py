@@ -1,26 +1,29 @@
-r"""
-Copy using scp.
+import os
 
-(c) Tom de Geus, 2021, MIT
-"""
+import tqdm
+
 from .external import exec_cmd
 
 
-def from_remote(host, source, dest, verbose=False):
-    r"""
-    Copy a file from a remote system. Uses ``scp -p``.
+def copy(
+    source_dir: str,
+    dest_dir: str,
+    files: list[str],
+    options: str = "-p",
+    verbose: bool = False,
+    progress: bool = True,
+):
+    """
+    Copy files using scp.
+
+    :param source_dir: Source directory. If remote: ``[user@]host:path``.
+    :param dest_dir: Source directory. If remote: ``[user@]host:path``.
+    :param files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+    :param options: Options passed to ``scp``.
+    :param verbose: Verbose commands.
+    :param progress: Show progress bar.
     """
 
-    cmd = f"scp -p {host:s}:{source:s} {dest:s}"
-
-    exec_cmd(cmd, verbose)
-
-
-def to_remote(host, source, dest, verbose=False):
-    r"""
-    Copy a file to a remote system. Uses ``scp -p``.
-    """
-
-    cmd = f"scp -p {source:s} {host:s}:{dest:s}"
-
-    exec_cmd(cmd, verbose)
+    for file in tqdm.tqdm(files, disable=not progress):
+        cmd = f"scp {options:s} {os.path.join(source_dir, file):s} {os.path.join(dest_dir, file):s}"
+        exec_cmd(cmd, verbose)
