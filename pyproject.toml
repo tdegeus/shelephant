@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+
+[project]
+authors = [{name = "Tom de Geus", email = "tom@geus.me"}]
+classifiers = ["License :: OSI Approved :: MIT License"]
+dependencies = ["numpy", "click", "pyyaml", "mergedeep", "numpy", "prettytable", "termcolor"]
+description = "Simple dataset management"
+dynamic = ["version"]
+name = "shelephant"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[project.scripts]
+shelephant_cp = "shelephant.cli.shelephant_cp:main"
+shelephant_diff = "shelephant:_shelephant_diff_main"
+shelephant_dump = "shelephant:_shelephant_dump_main"
+shelephant_extract = "shelephant.cli.shelephant_extract:main"
+shelephant_get = "shelephant.cli.shelephant_get:main"
+shelephant_hostinfo = "shelephant.cli.shelephant_hostinfo:main"
+shelephant_merge = "shelephant.cli.shelephant_merge:main"
+shelephant_mv = "shelephant.cli.shelephant_mv:main"
+shelephant_parse = "shelephant.cli.shelephant_parse:main"
+shelephant_rm = "shelephant.cli.shelephant_rm:main"
+shelephant_send = "shelephant.cli.shelephant_send:main"
+
+[project.urls]
+Source = "https://github.com/tdegeus/shelephant"
+
+[tool.setuptools_scm]
+write_to = "shelephant/_version.py"
