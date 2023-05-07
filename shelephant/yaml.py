@@ -1,9 +1,5 @@
-r"""
-Yaml IO.
-
-(c) Tom de Geus, 2021, MIT
-"""
 import os
+import pathlib
 
 import click
 import yaml
@@ -11,9 +7,12 @@ import yaml
 from . import convert
 
 
-def read(filename):
+def read(filename: str | pathlib.Path) -> list | dict:
     r"""
     Read YAML file and return its content.
+
+    :param filename: The YAML file to read.
+    :return: The content of the YAML file.
     """
 
     if not os.path.isfile(filename):
@@ -23,11 +22,10 @@ def read(filename):
         return yaml.load(file.read(), Loader=yaml.FullLoader)
 
 
-def read_item(filename, key=[]):
+def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list | dict:
     r"""
     Get an item from a YAML file.
 
-    :type key: str or list
     :param key:
         The item to read. E.g.
         *   ``[]`` for a YAML file containing only a list.
@@ -36,8 +34,7 @@ def read_item(filename, key=[]):
 
         An item specified as ``str`` separated by "/" is also accepted.
 
-    :return:
-        The read item.
+    :return: The content of the item.
     """
 
     data = read(filename)
@@ -53,17 +50,12 @@ def read_item(filename, key=[]):
     raise OSError(f'"{"/".join(key)}" not in "{filename}"')
 
 
-def dump(filename, data, force=False):
+def dump(filename: str | pathlib.Path, data: list | dict, force: bool = False):
     r"""
     Dump data to YAML file.
 
-    :type filename: str
     :param filename: The output filename.
-
-    :type data: list, dict
     :param data: The data to dump.
-
-    :type force: bool, optional
     :param force: Do not prompt to overwrite file.
     """
 
@@ -87,5 +79,7 @@ def dump(filename, data, force=False):
 def preview(data: list | dict):
     r"""
     Print data formatted as YAML.
+
+    :param data: The data to dump.
     """
     print(yaml.dump(data, default_flow_style=False, default_style=""))

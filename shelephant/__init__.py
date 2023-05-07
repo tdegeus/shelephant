@@ -1,44 +1,49 @@
-r"""
-Copy with a memory.
-
-(c) Tom de Geus, 2021, MIT
-"""
 import argparse
-import hashlib
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
+import textwrap
 
+import click
 import numpy as np
 import prettytable
 
-from . import checksum
 from . import convert
-from . import detail
+from . import dataset
+from . import local
+from . import output
 from . import path
-from . import relpath
-from . import rich
 from . import rsync
 from . import scp
 from . import ssh
 from . import yaml
 from ._version import version
-from ._version import version_tuple
-from .cli.defaults import f_dump
-from .cli.defaults import f_hostinfo
+
+# set filename defaults
+f_hostinfo = "shelephant_hostinfo.yaml"
+f_dump = "shelephant_dump.yaml"
 
 
-def sha256(filename: str | pathlib.Path) -> str:
+def _shelephant_parse_parser():
     """
-    Get sha256 of a file.
-
-    :param str filename: File-path.
-    :return: SHA256 hash.
+    Return parser for :py:func:`shelephant_parse`.
     """
-    with open(filename, "rb", buffering=0) as f:
-        return hashlib.file_digest(f, "sha256").hexdigest()
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = "Parse a YAML-file, and print to screen."
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("file", type=pathlib.Path, help="File path.")
+    return parser
 
 
 def _shelephant_dump_parser():
@@ -46,8 +51,34 @@ def _shelephant_dump_parser():
     Return parser for :py:func:`shelephant_dump`.
     """
 
-    desc = "Dump filenames to a YAML-file."
-    parser = argparse.ArgumentParser(description=desc)
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = textwrap.dedent(
+        """\
+    Dump filenames ((relative) paths) to a YAML-file.
+
+    .. note::
+
+        If you have too many arguments you can hit the pipe-limit. In that case, use ``xargs``:
+
+        .. code-block:: bash
+
+            find . -name "*.py" | xargs shelephant_dump -o dump.yaml
+
+        or you can use ``--command`` such that *shelephant* executes the command for you:
+
+        .. code-block:: bash
+
+            shelephant_dump -o dump.yaml --command find . -name '*.py'
+    """
+    )
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument(
         "-o", "--output", type=pathlib.Path, default=f_dump, help="Output YAML-file."
@@ -57,10 +88,10 @@ def _shelephant_dump_parser():
         "-i",
         "--info",
         action="store_true",
-        help="Add information (sha256, size, modified date).",
+        help="Add information (sha256, size).",
     )
     parser.add_argument(
-        "-e", "--exclude", type=str, action="append", help="Exclude files matching this pattern."
+        "-e", "--exclude", type=str, action="append", help="Exclude input matching this pattern."
     )
     parser.add_argument(
         "-E",
@@ -68,29 +99,29 @@ def _shelephant_dump_parser():
         type=str,
         action="append",
         default=[],
-        help='Exclude files based on extension (e.g. ".bak").',
+        help='Exclude input with this extension (e.g. ".bak").',
     )
     parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
     parser.add_argument(
         "-c",
         "--command",
         action="store_true",
-        help="Interpret arguments as command (instead of as filenames).",
+        help="Interpret arguments as a command (instead of as filenames) an run it.",
     )
-    parser.add_argument("-k", "--keep", type=str, action="append", help="Select files using regex.")
+    parser.add_argument(
+        "-k", "--keep", type=str, action="append", help="Keep only input matching this regex."
+    )
     parser.add_argument("--cwd", type=str, help="Directory to run the command in.")
     parser.add_argument(
         "--root", type=str, help="Root for relative paths (default: directory of output file)."
     )
-    parser.add_argument(
-        "--abspath", action="store_true", help="Store absolute paths (default: relative)."
-    )
+    parser.add_argument("--abspath", action="store_true", help="Store as absolute paths.")
     parser.add_argument("-s", "--sort", action="store_true", help="Sort filenames.")
     parser.add_argument(
         "-f", "--force", action="store_true", help="Overwrite output file without prompt."
     )
     parser.add_argument("-v", "--version", action="version", version=version, help="")
-    parser.add_argument("files", nargs="+", help="Filenames.")
+    parser.add_argument("files", type=str, nargs="+", help="Filenames.")
 
     return parser
 
@@ -144,15 +175,7 @@ def shelephant_dump(args: list[str]):
         files = [args.fmt.format(file) for file in files]
 
     if args.info:
-        files = [
-            {
-                "path": file,
-                "sha256": sha256(file),
-                "size": os.path.getsize(file),
-                "modified": os.path.getmtime(file),
-            }
-            for file in files
-        ]
+        files = [{"path": file, **path.info(file)} for file in files]
 
     if args.append:
         main = yaml.read(args.output)
@@ -163,13 +186,291 @@ def shelephant_dump(args: list[str]):
     yaml.dump(args.output, files, args.force)
 
 
+def _shelephant_cp_parser_common(parser: argparse.ArgumentParser):
+    """
+    Set common parser arguments for :py:func:`shelephant_cp` and :py:func:`shelephant_mv`.
+    """
+
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("path", type=pathlib.Path, nargs="+", help="Source/destination.")
+    return parser
+
+
+def _shelephant_cp_parser():
+    """
+    Return parser for :py:func:`shelephant_cp`.
+    """
+
+    desc = textwrap.dedent(
+        """\
+    Copy files listed in a (field of a) YAML-file.
+    These filenames are assumed either relative to the YAML-file or absolute.
+
+    Usage::
+
+        shelephant_cp [source.yaml] <dest_dirname>
+        shelephant_cp [source.yaml] <dest_dirname_on_host> --ssh <user@host>
+        shelephant_cp [source.yaml] <hostinfo.yaml>
+        shelephant_cp <source_hostinfo.yaml> <dest_hostinfo.yaml>
+
+    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+    """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser = _shelephant_cp_parser_common(parser)
+    return parser
+
+
+def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
+    """
+    Parse / interpret common arguments for :py:func:`shelephant_cp` and :py:func:`shelephant_mv`.
+
+    :param args: Parsed arguments.
+    :param has_rsync: Whether ``rsync`` is available.
+    :return: ``(files, source, dest, status)`` as follows:
+        -   ``files``: List of files to copy.
+        -   ``source``: Source directory (including SSH host if needed).
+        -   ``dest``: Destination directory (including SSH host if needed).
+        -   ``status``: Status of files::
+
+            {
+                "==": [],  # files are identical
+                "->": [],  # files not on destination
+                ...
+            }
+    """
+
+    # interpret CL arguments
+
+    if len(args.path) == 1:
+        source = f_dump
+        dest = args.path[0]
+    elif len(args.path) == 2:
+        source = args.path[0]
+        dest = args.path[1]
+    else:
+        raise OSError("Too many arguments specified")
+
+    # convert CL arguments to information
+
+    files, sinfo = dataset.interpret_file(source)
+
+    if dest.is_file():
+        check, dinfo = dataset.interpret_file(dest)
+    elif dest.is_dir() or args.ssh is not None:
+        check = []
+        dinfo = {"root": dest}
+    else:
+        raise OSError("Destination must be a YAML-file or directory")
+
+    if args.ssh is not None:
+        dinfo["ssh"] = args.ssh
+
+    if "ssh" in sinfo or "ssh" in dinfo:
+        assert has_rsync, "rsync not found, cannot copy over SSH"
+
+    # check status based on specified sha256
+
+    if len(check) > 0:
+        equal = dataset.diff(files, check)["=="]
+        for file in equal:
+            files.pop(file)
+    else:
+        equal = []
+
+    # check status of remaining files
+
+    source = sinfo["root"] if "ssh" not in sinfo else sinfo["ssh"] + ":" + str(sinfo["root"])
+    dest = dinfo["root"] if "ssh" not in dinfo else dinfo["ssh"] + ":" + str(dinfo["root"])
+    if has_rsync:
+        status = rsync.diff(source, dest, list(files.keys()))
+        status["=="] += equal
+    else:
+        status = local.diff(source, dest, list(files.keys()))
+        status["=="] = equal
+
+    assert status.pop("<-", []) == [], "Cannot copy from destination to source"
+    return files, source, dest, status
+
+
+def shelephant_cp(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    has_rsync = shutil.which("rsync") is not None
+    parser = _shelephant_cp_parser()
+    args = parser.parse_args(args)
+    files, source, dest, status = _interpret_common_cp(args, has_rsync)
+
+    if not args.force:
+        output.copyplan(status, colors=args.colors)
+        if not click.confirm("Proceed?"):
+            raise OSError("Cancelled")
+
+    if has_rsync:
+        rsync.copy(source, dest, files, progress=not args.quiet)
+    else:
+        local.copy(source, dest, files, progress=not args.quiet)
+
+
+def _shelephant_mv_parser():
+    """
+    Return parser for :py:func:`shelephant_mv`.
+    """
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = textwrap.dedent(
+        """\
+    Move files listed in a (field of a) YAML-file.
+    These filenames are assumed either relative to the YAML-file or absolute.
+
+    Usage::
+
+        shelephant_mv [source.yaml] <dest_dirname>
+
+    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+    """
+    )
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser = _shelephant_cp_parser_common(parser)
+    parser.add_argument("--temp", action="store_true", help="Fully copy file before removing.")
+    parser.add_argument(
+        "--verify", action="store_true", help="Use --copy but check sha256 before removing."
+    )
+    return parser
+
+
+def _shelephant_rm_parser():
+    """
+    Return parser for :py:func:`shelephant_rm`.
+    """
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = textwrap.dedent(
+        """\
+    Remove files listed in a (field of a) YAML-file.
+    These filenames are assumed either relative to the YAML-file or absolute.
+
+    Usage::
+
+        shelephant_rm [source.yaml]
+
+    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+    """
+    )
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    return parser
+
+
+def _shelephant_get_parser():
+    """
+    Return parser for :py:func:`shelephant_get`.
+    """
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = textwrap.dedent(
+        """\
+    Copy files from a remote directory (on a remote host) to the current directory.
+
+    Usage::
+
+        shelephant_get <source>
+        shelephant_get <source> --ssh <user@host>
+        shelephant_get [hostinfo.yaml]
+
+    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+    """
+    )
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    return parser
+
+
+def _shelephant_hostinfo_parser():
+    """
+    Return parser for :py:func:`shelephant_hostinfo`.
+    """
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    desc = textwrap.dedent(
+        """\
+    Collect information about a remote directory (on a remote host).
+    This information is stored in a YAML-file (default: ``shelephant_hostinfo.yaml``) as follows::
+
+        root: <path>      # relative to the YAML-file, or absolute
+        ssh: <user@host>  # optional
+        files:  # if ``--files`` is specified, read from ``[list.yaml]``
+            - ...
+
+    Usage::
+
+        shelephant_hostinfo <path>
+        shelephant_hostinfo <path> --files [list.yaml]
+        shelephant_hostinfo <path> --ssh <user@host> --files [list.yaml]
+
+    whereby ``[list.yaml]`` defaults to ``shelephant_dump.yaml``.
+    """
+    )
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    return parser
+
+
 def _shelephant_diff_parser():
     """
     Return parser for :py:func:`shelephant_diff`.
     """
 
     desc = "Compare local and remote files and list differences."
-    parser = argparse.ArgumentParser(description=desc)
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
     parser.add_argument("--yaml", type=str, help="Dump as YAML file.")
@@ -310,6 +611,10 @@ def shelephant_diff(args: list[str]):
         print(out.get_string())
     else:
         print(out.get_string(sortby=args.sort))
+
+
+def _shelephant_cp_main():
+    shelephant_cp(sys.argv[1:])
 
 
 def _shelephant_dump_main():

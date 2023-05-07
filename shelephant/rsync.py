@@ -14,15 +14,24 @@ import tqdm
 from .external import exec_cmd
 
 
-def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
-    r"""
-    Copy files to a destination using ``rsync -a --files-from``.
+def copy(
+    source_dir: str,
+    dest_dir: str,
+    files: list[str],
+    options: str = "-a",
+    verbose: bool = False,
+    progress: bool = True,
+):
+    """
+    Copy files using rsync.
+    This a wrapper around ``rsync {options:s} --files-from``.
 
-    :param str source_dir: Source directory.
-    :param str dest_dir: Source directory.
-    :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool verbose: Verbose commands.
-    :param bool progress: Show progress bar.
+    :param source_dir: Source directory. If remote: ``[user@]host:path``.
+    :param dest_dir: Source directory. If remote: ``[user@]host:path``.
+    :param files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+    :param options: Options passed to ``rsync``.
+    :param verbose: Verbose commands.
+    :param progress: Show progress bar.
     """
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -34,16 +43,16 @@ def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
         # Run without printing output
 
         if not progress:
-            cmd = 'rsync -a --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
-                source_dir=source_dir, dest_dir=dest_dir, files=temp_file
+            cmd = 'rsync {options:s} --files-from="{files:s}" "{src:s}" "{dest:s}"'.format(
+                options=options, src=str(source_dir), dest=str(dest_dir), files=temp_file
             )
 
             return exec_cmd(cmd, verbose)
 
         # Run while printing output
 
-        cmd = 'rsync -aP --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
-            source_dir=source_dir, dest_dir=dest_dir, files=temp_file
+        cmd = 'rsync {options:s} -P --files-from="{files:s}" "{src:s}" "{dest:s}"'.format(
+            options=options, src=str(source_dir), dest=str(dest_dir), files=temp_file
         )
 
         if verbose:
@@ -62,80 +71,34 @@ def _rsync(source_dir, dest_dir, files, verbose=False, progress=True):
                 sbar.update(e)
 
 
-def from_remote(
-    hostname,
-    source_dir,
-    dest_dir,
-    files,
-    verbose=False,
-    progress=True,
-):
-    r"""
-    Copy files from a remote system. Uses: ``rsync -a --files-from``.
-
-    :param str hostname: Hostname.
-    :param str source_dir: Source directory.
-    :param str dest_dir: Source directory.
-    :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool verbose: Verbose commands.
-    :param bool progress: Show progress bar.
-    """
-
-    return _rsync(
-        source_dir=hostname + ":" + source_dir,
-        dest_dir=dest_dir,
-        files=files,
-        verbose=verbose,
-        progress=progress,
-    )
-
-
-def to_remote(
-    hostname,
-    source_dir,
-    dest_dir,
-    files,
-    verbose=False,
-    progress=True,
-):
-    r"""
-    Copy files to a remote system. Uses: ``rsync -a --files-from``.
-
-    :param str hostname: Hostname.
-    :param str source_dir: Source directory.
-    :param str dest_dir: Source directory.
-    :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param bool verbose: Verbose commands.
-    :param bool progress: Show progress bar.
-    """
-
-    return _rsync(
-        source_dir=source_dir,
-        dest_dir=hostname + ":" + dest_dir,
-        files=files,
-        verbose=verbose,
-        progress=progress,
-    )
-
-
 def diff(
     source_dir: str,
     dest_dir: str,
     files: list[str],
-    checksum: bool = False,
+    options: str = "-nai",
     verbose: bool = False,
-) -> np.array:
-    r"""
+) -> dict[list[str]]:
+    """
     Check if files are different using *rsync*.
-    *rsync* uses basic criteria such as file size and creation and modification date.
-    This is much faster than using checksums but is only approximate.
-    See `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
 
-    :param str source_dir: Source directory.
-    :param str dest_dir: Source directory.
+    .. note::
+
+        *rsync* uses basic criteria such as file size and creation and modification date.
+        This is much faster than using checksums but is only approximate.
+        See `rsync manual <https://www.samba.org/ftp/rsync/rsync.html>`_.
+
+    :param str source_dir: Source directory (optionally with hostname).
+    :param str dest_dir: Source directory (optionally with hostname).
     :param list files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
-    :param checksum: Use checksum to test file difference.
     :param verbose: Verbose commands.
+    :return:
+        Dictionary with differences::
+
+            {
+                "==" : [ ... ], # equal
+                "!=" : [ ... ], # not equal
+                "->" : [ ... ], # in source_dir not in dest_dir
+            }
     """
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -147,13 +110,8 @@ def diff(
 
         # Run without printing output
 
-        opt = "-nai"
-
-        if checksum:
-            opt += "c"
-
-        cmd = 'rsync {opt:s} --files-from="{files:s}" "{source_dir:s}" "{dest_dir:s}"'.format(
-            source_dir=source_dir, dest_dir=dest_dir, files=temp_file, opt=opt
+        cmd = 'rsync {options:s} --files-from="{files:s}" "{src:s}" "{dest:s}"'.format(
+            src=str(source_dir), dest=str(dest_dir), files=temp_file, options=options
         )
 
         lines = list(filter(None, exec_cmd(cmd, verbose).split("\n")))
@@ -161,9 +119,9 @@ def diff(
 
         if len(lines) == 0:
             return {
-                "skip": np.ones((len(files)), dtype=bool),
-                "create": np.zeros((len(files)), dtype=bool),
-                "overwrite": np.zeros((len(files)), dtype=bool),
+                "==": files,
+                "!=": [],
+                "->": [],
             }
 
         check_paths = []
@@ -174,17 +132,16 @@ def diff(
                 check_paths.append(line.split(" ", 1)[1].split(" -> ", 1)[0])
 
         mode = np.zeros((len(check_paths)), dtype=np.int16)
+        modes = {"==": 0, "!=": 1, "->": 2, "<-": 3}
 
         for i, line in enumerate(lines):
-            # todo: split send `<` and receive `>`?
-            # ref: https://stackoverflow.com/a/12037164/2646505
             if line[0] == ">" or line[0] == "<":
                 if line[2] == "+":
-                    mode[i] = 1  # create
+                    mode[i] = modes["->"]  # create
                 else:
-                    mode[i] = 2  # overwrite
+                    mode[i] = modes["!="]  # overwrite
             elif line[0] == "c" or line[1] == "L":
-                mode[i] = 1  # create
+                mode[i] = modes["->"]  # create
             elif line[0] == ".":
                 pass
             else:
@@ -206,8 +163,10 @@ def diff(
         out = np.empty_like(ret)
         out[sorter] = ret
 
+        files = np.array(files)
+
         return {
-            "skip": out == 0,
-            "create": out == 1,
-            "overwrite": out == 2,
+            "==": files[out == modes["=="]].tolist(),
+            "->": files[out == modes["->"]].tolist(),
+            "!=": files[out == modes["!="]].tolist(),
         }

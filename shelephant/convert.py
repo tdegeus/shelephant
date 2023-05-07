@@ -1,8 +1,3 @@
-r"""
-Convert nested ``list`` or ``dict``.
-
-(c) Tom de Geus, 2021, MIT
-"""
 import collections.abc
 import functools
 import operator
@@ -11,8 +6,6 @@ import operator
 def _flatten_detail(data):
     r"""
     Detail of :py:fun:`Flatten`.
-    Not part of public API.
-
     See https://stackoverflow.com/a/17485785/2646505
     """
 
@@ -23,9 +16,12 @@ def _flatten_detail(data):
             yield item
 
 
-def flatten(data):
-    r"""
+def flatten(data: list[list]) -> list:
+    """
     Flatten a nested list to a one dimensional list.
+
+    :param data: A nested list.
+    :return: A one dimensional list.
     """
     return list(_flatten_detail(data))
 
@@ -33,8 +29,6 @@ def flatten(data):
 def _squash_detail(data, parent_key="", sep="_"):
     r"""
     Detail of :py:fun:`squash`.
-    Not part of public API.
-
     See https://stackoverflow.com/a/6027615/2646505
     """
 
@@ -51,17 +45,27 @@ def _squash_detail(data, parent_key="", sep="_"):
     return dict(items)
 
 
-def squash(data):
-    r"""
+def squash(data: dict[list]) -> list:
+    """
     Squash a dictionary to a single list.
+    For example::
+
+        >>> squash({"foo": [1, 2], "bar": {"foo": [3, 4], "bar": 5}})
+        [1, 2, 3, 4, 5]
+
+    :param data: A nested dictionary.
+    :return: A one dimensional list.
     """
 
     return flatten(list(_squash_detail(data).values()))
 
 
-def split_key(key):
-    r"""
+def split_key(key: str) -> list[str]:
+    """
     Split a key separated by "/" in a list.
+
+    :param key: A key.
+    :return: A list of key components.
     """
 
     if type(key) == list:
@@ -73,14 +77,11 @@ def split_key(key):
     raise OSError(f"'{key}' cannot be split")
 
 
-def get(data, key):
+def get(data: dict[dict], key: str | list[str]) -> dict | list | str | int | float:
     r"""
     Get an item from a nested dictionary.
 
-    :param dict data:
-        A nested dictionary.
-
-    :type key: str or list
+    :param data: A nested dictionary.
     :param key:
         The item to read. E.g.
         *   ``[]`` for a YAML file containing only a list.

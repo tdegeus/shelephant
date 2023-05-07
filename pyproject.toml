@@ -12,7 +12,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 
 [project.scripts]
-shelephant_cp = "shelephant.cli.shelephant_cp:main"
+shelephant_cp = "shelephant:_shelephant_cp_main"
 shelephant_diff = "shelephant:_shelephant_diff_main"
 shelephant_dump = "shelephant:_shelephant_dump_main"
 shelephant_extract = "shelephant.cli.shelephant_extract:main"
