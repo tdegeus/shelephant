@@ -48,6 +48,7 @@ def _shelephant_dump_parser():
 
     desc = "Dump filenames to a YAML-file."
     parser = argparse.ArgumentParser(description=desc)
+
     parser.add_argument(
         "-o", "--output", type=pathlib.Path, default=f_dump, help="Output YAML-file."
     )
@@ -56,7 +57,7 @@ def _shelephant_dump_parser():
         "-i",
         "--info",
         action="store_true",
-        help="Add file information (sha256, size, created/modified date).",
+        help="Add information (sha256, size, modified date).",
     )
     parser.add_argument(
         "-e", "--exclude", type=str, action="append", help="Exclude files matching this pattern."
@@ -67,14 +68,14 @@ def _shelephant_dump_parser():
         type=str,
         action="append",
         default=[],
-        help='Exclude files based on their extension (e.g. ".bak").',
+        help='Exclude files based on extension (e.g. ".bak").',
     )
     parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
     parser.add_argument(
         "-c",
         "--command",
         action="store_true",
-        help="Interpret the input as a command (instead of as filenames).",
+        help="Interpret arguments as command (instead of as filenames).",
     )
     parser.add_argument("-k", "--keep", type=str, action="append", help="Select files using regex.")
     parser.add_argument("--cwd", type=str, help="Directory to run the command in.")
@@ -82,16 +83,15 @@ def _shelephant_dump_parser():
         "--root", type=str, help="Root for relative paths (default: directory of output file)."
     )
     parser.add_argument(
-        "--abspath",
-        action="store_true",
-        help="Store absolute paths (default: relative to the output file).",
+        "--abspath", action="store_true", help="Store absolute paths (default: relative)."
     )
     parser.add_argument("-s", "--sort", action="store_true", help="Sort filenames.")
     parser.add_argument(
         "-f", "--force", action="store_true", help="Overwrite output file without prompt."
     )
     parser.add_argument("-v", "--version", action="version", version=version, help="")
-    parser.add_argument("files", nargs="+", help="Files to list.")
+    parser.add_argument("files", nargs="+", help="Filenames.")
+
     return parser
 
 
