@@ -1,6 +1,9 @@
 import os
+import pathlib
 import shutil
 import subprocess
+
+import shelephant
 
 
 def run(cmd):
@@ -13,16 +16,14 @@ for dirname in ["myssh_send", "myssh_get"]:
 
     os.mkdir(dirname)
 
-with open("myssh_send/bar.txt", "w") as file:
-    file.write("bar")
+pathlib.Path("myssh_send/bar.txt").write_text("bar")
+pathlib.Path("myssh_send/foo.txt").write_text("foo")
+pathlib.Path("myssh_get/foo.txt").write_text("foo")
 
-with open("myssh_send/foo.txt", "w") as file:
-    file.write("foo")
+shelephant.shelephant_dump(
+    ["-o", "myssh_send/shelephant_dump.yaml", "myssh_send/bar.txt", "myssh_send/foo.txt"]
+)
+shelephant.shelephant_dump(["-o", "myssh_get/shelephant_dump.yaml", "myssh_get/foo.txt"])
 
-with open("myssh_get/foo.txt", "w") as file:
-    file.write("foo")
-
-run("shelephant_dump -o myssh_send/shelephant_dump.yaml myssh_send/bar.txt myssh_send/foo.txt")
-run("shelephant_dump -o myssh_get/shelephant_dump.yaml myssh_get/foo.txt")
 run("shelephant_checksum -o myssh_send/shelephant_checksum.yaml myssh_send/shelephant_dump.yaml")
 run("shelephant_checksum -o myssh_get/shelephant_checksum.yaml myssh_get/shelephant_dump.yaml")
