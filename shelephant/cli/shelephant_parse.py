@@ -35,7 +35,7 @@ def main_impl():
     args = parser.parse_args()
 
     data = yaml.read(args.file)
-    yaml.view(data)
+    yaml.preview(data)
 
 
 def main():

@@ -84,7 +84,7 @@ def dump(filename, data, force=False):
         yaml.dump(data, file)
 
 
-def view(data):
+def preview(data: list | dict):
     r"""
     Print data formatted as YAML.
     """
