@@ -24,7 +24,6 @@ setup(
     install_requires=["click", "pyyaml", "mergedeep", "numpy", "prettytable", "termcolor"],
     entry_points={
         "console_scripts": [
-            f"shelephant_checksum = {project_name}.cli.shelephant_checksum:main",
             f"shelephant_cp = {project_name}.cli.shelephant_cp:main",
             f"shelephant_diff = {project_name}:_shelephant_diff_main",
             f"shelephant_dump = {project_name}:_shelephant_dump_main",
