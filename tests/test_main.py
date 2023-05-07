@@ -27,6 +27,36 @@ def tempdir():
             os.chdir(origin)
 
 
+def create_dummy_files(filenames: list[str]) -> dict[str]:
+    """
+    Create dummy files in the current directory.
+
+    :param list filenames: List of filenames.
+    :return: sha256 checksums of the created files.
+    """
+
+    content = {
+        "foo": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+        "bar": "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9",
+        "a": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+        "b": "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d",
+        "c": "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6",
+        "d": "18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4",
+        "e": "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea",
+        "f": "252f10c83610ebca1a059c0bae8255eba2f95be4d1d7bcfa89d7248a82d9f111",
+        "g": "cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29",
+    }
+
+    assert len(filenames) <= len(content)
+
+    ret = {}
+    for filename, (content, sha) in zip(filenames, content.items()):
+        pathlib.Path(filename).write_text(content)
+        ret[filename] = sha
+
+    return ret
+
+
 def run(cmd, verbose=False):
     return subprocess.check_output(cmd, shell=True).decode("utf-8")
 
@@ -73,141 +103,61 @@ class Test_tools(unittest.TestCase):
 class Test_shelephant_dump(unittest.TestCase):
     def test_checksum(self):
         with tempdir():
-            pathlib.Path("foo.txt").write_text("foo")
-            pathlib.Path("bar.txt").write_text("bar")
+            files = ["foo.txt", "bar.txt"]
+            check = create_dummy_files(files)
 
-            shelephant_dump(["-f", "-d", "foo.txt", "bar.txt"])
+            shelephant_dump(["-i"] + files)
+
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            sha = {item["path"]: item["sha256"] for item in data}
+            data = {item["path"]: item["sha256"] for item in data}
 
-            self.assertEqual(
-                sha["foo.txt"], "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
-            )
-            self.assertEqual(
-                sha["bar.txt"], "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
-            )
+            for filename in files:
+                self.assertEqual(check[filename], data[filename])
 
     def test_find(self):
         with tempdir():
-            pathlib.Path("foo.txt").write_text("foo")
-            pathlib.Path("bar.txt").write_text("bar")
-            pathlib.Path("a.txt").write_text("a")
-            pathlib.Path("b.txt").write_text("b")
-            pathlib.Path("c.txt").write_text("c")
-            pathlib.Path("d.txt").write_text("d")
-            pathlib.Path("e.txt").write_text("e")
-            pathlib.Path("f.txt").write_text("f")
-            pathlib.Path("g.txt").write_text("g")
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
 
-            shelephant_dump(["-f", "--details", "-c", "find . -name '*.txt'"])
+            shelephant_dump(["-i", "-c", "find . -name '*.txt'"])
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            sha = {item["path"]: item["sha256"] for item in data}
+            data = {item["path"]: item["sha256"] for item in data}
 
-            self.assertEqual(
-                sha["foo.txt"], "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
-            )
-            self.assertEqual(
-                sha["bar.txt"], "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
-            )
-            self.assertEqual(
-                sha["a.txt"], "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
-            )
-            self.assertEqual(
-                sha["b.txt"], "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d"
-            )
-            self.assertEqual(
-                sha["c.txt"], "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6"
-            )
-            self.assertEqual(
-                sha["d.txt"], "18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4"
-            )
-            self.assertEqual(
-                sha["e.txt"], "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea"
-            )
-            self.assertEqual(
-                sha["f.txt"], "252f10c83610ebca1a059c0bae8255eba2f95be4d1d7bcfa89d7248a82d9f111"
-            )
-            self.assertEqual(
-                sha["g.txt"], "cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29"
-            )
+            for filename in files:
+                self.assertEqual(check[filename], data[filename])
 
     def test_append(self):
         with tempdir():
-            pathlib.Path("foo.pdf").write_text("foo")
-            pathlib.Path("bar.pdf").write_text("bar")
-            pathlib.Path("a.txt").write_text("a")
-            pathlib.Path("b.txt").write_text("b")
-            pathlib.Path("c.txt").write_text("c")
-            pathlib.Path("d.txt").write_text("d")
-            pathlib.Path("e.txt").write_text("e")
-            pathlib.Path("f.txt").write_text("f")
-            pathlib.Path("g.txt").write_text("g")
+            files = ["foo.pdf", "bar.pdf", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
+            pdf = [i for i in files if i.endswith(".pdf")]
+            [i for i in files if i.endswith(".txt")]
 
-            shelephant_dump(["-f", "foo.pdf", "bar.pdf"])
+            # plain
+
+            shelephant_dump(pdf)
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            self.assertEqual(data, ["foo.pdf", "bar.pdf"])
+            self.assertEqual(data, pdf)
 
             shelephant_dump(["-a", "-c", "find . -name '*.txt'"])
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            self.assertEqual(
-                sorted(data),
-                sorted(
-                    [
-                        "foo.pdf",
-                        "bar.pdf",
-                        "a.txt",
-                        "b.txt",
-                        "c.txt",
-                        "d.txt",
-                        "e.txt",
-                        "f.txt",
-                        "g.txt",
-                    ]
-                ),
-            )
+            self.assertEqual(sorted(data), sorted(files))
 
-            shelephant_dump(["-f", "-d", "foo.pdf", "bar.pdf"])
+            # with details
+
+            shelephant_dump(["-f", "-i"] + pdf)
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            sha = {item["path"]: item["sha256"] for item in data}
+            data = {item["path"]: item["sha256"] for item in data}
 
-            self.assertEqual(
-                sha["foo.pdf"], "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
-            )
-            self.assertEqual(
-                sha["bar.pdf"], "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
-            )
+            for filename in pdf:
+                self.assertEqual(check[filename], data[filename])
 
-            shelephant_dump(["-a", "-d", "-c", "find . -name '*.txt'"])
+            shelephant_dump(["-a", "-i", "-c", "find . -name '*.txt'"])
             data = shelephant.yaml.read("shelephant_dump.yaml")
-            sha = {item["path"]: item["sha256"] for item in data}
+            data = {item["path"]: item["sha256"] for item in data}
 
-            self.assertEqual(
-                sha["foo.pdf"], "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
-            )
-            self.assertEqual(
-                sha["bar.pdf"], "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
-            )
-            self.assertEqual(
-                sha["a.txt"], "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
-            )
-            self.assertEqual(
-                sha["b.txt"], "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d"
-            )
-            self.assertEqual(
-                sha["c.txt"], "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6"
-            )
-            self.assertEqual(
-                sha["d.txt"], "18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4"
-            )
-            self.assertEqual(
-                sha["e.txt"], "3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea"
-            )
-            self.assertEqual(
-                sha["f.txt"], "252f10c83610ebca1a059c0bae8255eba2f95be4d1d7bcfa89d7248a82d9f111"
-            )
-            self.assertEqual(
-                sha["g.txt"], "cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29"
-            )
+            for filename in files:
+                self.assertEqual(check[filename], data[filename])
 
     def test_exclude(self):
         with tempdir():
