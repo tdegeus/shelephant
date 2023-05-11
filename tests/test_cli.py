@@ -17,47 +17,46 @@ class Test_shelephant_dump(unittest.TestCase):
         with tempdir():
             files = ["foo.txt", "bar.txt"]
             check = create_dummy_files(files)
+            check = shelephant.dataset.Location(root=".", files=check)
             shelephant_dump(["-i"] + files)
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(check, data)
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertTrue(check == data)
 
     def test_find(self):
         with tempdir():
             files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
             check = create_dummy_files(files)
+            check = shelephant.dataset.Location(root=".", files=check)
             shelephant_dump(["-i", "-c", "find . -name '*.txt'"])
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(check, data)
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertTrue(check == data)
 
     def test_append(self):
         with tempdir():
             files = ["foo.pdf", "bar.pdf", "a.txt", "b.txt", "c.txt", "d.txt"]
             check = create_dummy_files(files)
+            check = shelephant.dataset.Location(root=".", files=check)
             pdf = [i for i in files if i.endswith(".pdf")]
 
             # plain
 
             shelephant_dump(pdf)
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(list(data.keys()), pdf)
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertEqual(data.files(info=False), pdf)
 
             shelephant_dump(["-a", "-c", "find . -name '*.txt'"])
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(sorted(data.keys()), sorted(files))
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertEqual(sorted(data.files(info=False)), sorted(files))
 
             # with details
 
             shelephant_dump(["-f", "-i"] + pdf)
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(sorted(pdf), sorted(data.keys()))
-            for filename in data:
-                self.assertEqual(check[filename], data[filename])
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertEqual(data.files(info=False), pdf)
 
             shelephant_dump(["-a", "-i", "-c", "find . -name '*.txt'"])
-            data, _ = shelephant.dataset.interpret_file("shelephant_dump.yaml")
-            self.assertEqual(sorted(files), sorted(data.keys()))
-            for filename in data:
-                self.assertEqual(check[filename], data[filename])
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertTrue(check == data)
 
 
 class Test_shelephant_cp(unittest.TestCase):

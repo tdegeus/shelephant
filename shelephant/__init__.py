@@ -265,44 +265,39 @@ def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
 
     # convert CL arguments to information
 
-    files, sinfo = dataset.interpret_file(source)
+    source = dataset.Location.from_yaml(source)
 
     if dest.is_file():
-        check, dinfo = dataset.interpret_file(dest)
+        dest = dataset.Location.from_yaml(dest)
     elif dest.is_dir() or args.ssh is not None:
-        check = []
-        dinfo = {"root": dest}
+        dest = dataset.Location(root=dest)
     else:
         raise OSError("Destination must be a YAML-file or directory")
 
     if args.ssh is not None:
-        dinfo["ssh"] = args.ssh
+        dest.ssh = args.ssh
 
-    if "ssh" in sinfo or "ssh" in dinfo:
+    if source.ssh or dest.ssh:
         assert has_rsync, "rsync not found, cannot copy over SSH"
 
     # check status based on specified sha256
 
-    if len(check) > 0:
-        equal = dataset.diff(files, check)["=="]
-        for file in equal:
-            files.pop(file)
-    else:
-        equal = []
+    equal = source.diff(dest)["=="]
+    files = source.files(info=False)
+    for file in equal:
+        files.pop(file)
 
     # check status of remaining files
 
-    source = sinfo["root"] if "ssh" not in sinfo else sinfo["ssh"] + ":" + str(sinfo["root"])
-    dest = dinfo["root"] if "ssh" not in dinfo else dinfo["ssh"] + ":" + str(dinfo["root"])
     if has_rsync:
-        status = rsync.diff(source, dest, list(files.keys()))
+        status = rsync.diff(source.hostname, dest.hostname, files)
         status["=="] += equal
     else:
-        status = local.diff(source, dest, list(files.keys()))
+        status = local.diff(source.hostname, dest.hostname, files)
         status["=="] = equal
 
     assert status.pop("<-", []) == [], "Cannot copy from destination to source"
-    return files, source, dest, status
+    return files, source.hostname, dest.hostname, status
 
 
 def shelephant_cp(args: list[str]):
@@ -438,22 +433,74 @@ def _shelephant_hostinfo_parser():
     This information is stored in a YAML-file (default: ``shelephant_hostinfo.yaml``) as follows::
 
         root: <path>      # relative to the YAML-file, or absolute
-        ssh: <user@host>  # optional
-        files:  # if ``--files`` is specified, read from ``[list.yaml]``
+        ssh: <user@host>  # (optional) remote SSH host
+        dump: <dump>      # (optional, excludes "search") path from which a list of files is read
+        search:           # (optional, excludes "dump") search information, must be set by hand
+            - ...
+        files:            # (optional) list of files (from "search" / "dump", or set by hand)
             - ...
 
-    Usage::
+    Usage:
 
-        shelephant_hostinfo <path>
-        shelephant_hostinfo <path> --files [list.yaml]
-        shelephant_hostinfo <path> --ssh <user@host> --files [list.yaml]
+    1.  Create *hostinfo*::
 
-    whereby ``[list.yaml]`` defaults to ``shelephant_dump.yaml``.
+            shelephant_hostinfo <path>
+            shelephant_hostinfo <path> --ssh <user@host>
+            shelephant_hostinfo <path> --dump [shelephant_dump.yaml]
+            shelephant_hostinfo <path> --dump [shelephant_dump.yaml] --ssh <user@host>
+
+    2.  Update *hostinfo*::
+
+            shelephant_hostinfo --update [shelephant_hostinfo.yaml]
     """
     )
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument(
+        "-o", "--output", type=pathlib.Path, default=f_hostinfo, help="Output YAML-file."
+    )
+    parser.add_argument(
+        "-d",
+        "--dump",
+        type=pathlib.Path,
+        default=None,
+        nargs="?",
+        const=f_dump,
+        help="YAML-file containing a list of files.",
+    )
+    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument(
+        "--update", action="store_true", help='Update "files" based on "dump" or "search".'
+    )
+    parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("path", type=pathlib.Path, help="Path to remote directory.")
     return parser
+
+
+def shelephant_hostinfo(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _shelephant_hostinfo_parser()
+    args = parser.parse_args(args)
+
+    if args.update:
+        assert args.output == f_hostinfo, "No customisation allowed in --update mode."
+        assert args.dump is None, "No customisation allowed in --update mode."
+        assert args.ssh is None, "No customisation allowed in --update mode."
+        loc = dataset.Location.from_yaml(args.path)
+        args.output = args.path
+        args.force = True
+    else:
+        loc = dataset.Location(root=args.path, ssh=args.ssh)
+        if args.dump:
+            loc.dump = args.dump
+
+    loc.read()
+    loc.to_yaml(args.output, force=args.force)
 
 
 def _shelephant_diff_parser():
@@ -619,6 +666,10 @@ def _shelephant_cp_main():
 
 def _shelephant_dump_main():
     shelephant_dump(sys.argv[1:])
+
+
+def _shelephant_hostinfo_main():
+    shelephant_hostinfo(sys.argv[1:])
 
 
 def _shelephant_diff_main():
