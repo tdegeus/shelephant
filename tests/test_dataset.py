@@ -4,8 +4,6 @@ import unittest
 import shelephant
 from shelephant import shelephant_dump
 from shelephant.detail import create_dummy_files
-from shelephant.path import cwd
-from shelephant.path import info
 from shelephant.path import tempdir
 
 
@@ -35,22 +33,18 @@ class Test_Location(unittest.TestCase):
         with tempdir():
             files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
             check = create_dummy_files(files)
-            check = shelephant.dataset.Location(root=".", files=check)
-            loc = shelephant.dataset.Location(root=".", files=files)
-            loc.getinfo(progress=False)
+            loc = shelephant.dataset.Location(root=".", files=files).getinfo()
             self.assertTrue(check == loc)
 
     def test_read_dump(self):
         with tempdir():
             files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
             check = create_dummy_files(files)
-            check = shelephant.dataset.Location(root=".", files=check)
             shelephant_dump(files)
 
             loc = shelephant.dataset.Location(root=".")
             loc.dump = shelephant.f_dump
-            loc.read()
-            loc.getinfo(progress=False)
+            loc.read().getinfo()
             self.assertTrue(check == loc)
 
     def test_diff(self):

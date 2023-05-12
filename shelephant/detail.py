@@ -6,8 +6,10 @@ import pathlib
 
 import numpy as np
 
+from . import dataset
 
-def create_dummy_files(filenames: list[str], keep: list = None) -> dict[str]:
+
+def create_dummy_files(filenames: list[str], keep: list = None) -> dataset.Location:
     """
     Create dummy files in the current directory.
 
@@ -15,7 +17,7 @@ def create_dummy_files(filenames: list[str], keep: list = None) -> dict[str]:
     :param keep: Select a subset of available dummy files.
         For example ``keep=[0, -1]`` or ``keep=slice(0, None, 2)``.
 
-    :return: size, modified date, and sha256 checksums of the created files.
+    :return: dataset.Location
     """
 
     content = {
@@ -45,4 +47,4 @@ def create_dummy_files(filenames: list[str], keep: list = None) -> dict[str]:
             "size": os.path.getsize(file),
         }
 
-    return ret
+    return dataset.Location(root=".", files=ret)
