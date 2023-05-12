@@ -118,7 +118,7 @@ class Test_shelephant_cp(unittest.TestCase):
 
     def test_ssh_send(self):
         if not has_ssh:
-            return
+            raise unittest.SkipTest("'ssh localhost' does not work")
 
         with tempdir(), shelephant.ssh.tempdir("localhost") as remote:
             files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
@@ -132,7 +132,7 @@ class Test_shelephant_cp(unittest.TestCase):
 
     def test_ssh_get(self):
         if not has_ssh:
-            return
+            raise unittest.SkipTest("'ssh localhost' does not work")
 
         with tempdir(), shelephant.ssh.tempdir("localhost") as remote:
             with cwd(remote):
