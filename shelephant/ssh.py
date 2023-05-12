@@ -1,3 +1,4 @@
+import subprocess
 from contextlib import contextmanager
 
 from .external import exec_cmd
@@ -12,7 +13,11 @@ def has_keys_set(hostname: str) -> bool:
     """
 
     cmd = f"ssh -o BatchMode=yes -o ConnectTimeout=5 {hostname:s} echo ok"
-    ret = exec_cmd(cmd, verbose=False)
+
+    try:
+        ret = exec_cmd(cmd, verbose=False)
+    except subprocess.CalledProcessError:
+        return False
 
     if ret.strip() == "ok":
         return True
