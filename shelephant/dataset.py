@@ -100,6 +100,8 @@ class Location:
                 self._sha256.append(item.get("sha256", None))
                 self._size.append(item.get("size", None))
 
+        return self
+
     def __eq__(self, other):
         """
         Check if all files and information are equal.
@@ -214,6 +216,30 @@ class Location:
 
         return f'{self.ssh:s}:"{str(self.root):s}"'
 
+    def sort(self, key: str = "files"):
+        """
+        Sort files.
+
+        :param key: Key to sort by (files, size, sha256).
+        """
+
+        if key == "files":
+            sorter = np.argsort(self._files)
+        elif key == "size":
+            sorter = np.argsort(self._size)
+        elif key == "sha256":
+            sorter = np.argsort(self._sha256)
+        else:
+            raise ValueError(f"Unknown key: {key}")
+
+        self._files = np.array(self._files)[sorter].tolist()
+        self._has_sha256 = np.array(self._has_sha256)[sorter].tolist()
+        self._has_size = np.array(self._has_size)[sorter].tolist()
+        self._sha256 = np.array(self._sha256)[sorter].tolist()
+        self._size = np.array(self._size)[sorter].tolist()
+
+        return self
+
     def read(self):
         """
         Read files from location.
@@ -227,7 +253,7 @@ class Location:
 
         if self.dump is not None:
             if self.ssh is None:
-                return self._read_files(yaml.read(self.dump))
+                return self._read_files(yaml.read(self.root / self.dump))
 
             with path.tempdir():
                 scp.copy(self.hostname, ".", [self.dump], progress=False)
@@ -235,7 +261,7 @@ class Location:
 
         raise NotImplementedError
 
-    def getinfo(self, sha256: bool = True, size: bool = True, progress: bool = True):
+    def getinfo(self, sha256: bool = True, size: bool = True, progress: bool = False):
         """
         Compute sha256 and size for files.
 
@@ -249,12 +275,12 @@ class Location:
         if self.ssh is None:
             for i, file in enumerate(tqdm.tqdm(self._files, disable=not progress)):
                 if sha256:
-                    self._sha256[i] = _sha256(file)
+                    self._sha256[i] = _sha256(self.root / file)
                     self._has_sha256[i] = True
                 if size:
-                    self._size[i] = os.path.getsize(file)
+                    self._size[i] = os.path.getsize(self.root / file)
                     self._has_size[i] = True
-            return
+            return self
 
         raise NotImplementedError
 

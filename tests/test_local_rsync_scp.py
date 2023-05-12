@@ -4,7 +4,6 @@ import unittest
 import shelephant
 from shelephant.detail import create_dummy_files
 from shelephant.path import cwd
-from shelephant.path import info
 from shelephant.path import tempdir
 
 
@@ -45,9 +44,9 @@ class Test_local(unittest.TestCase):
                 shelephant.local.copy(".", "../dest", files, progress=False)
 
             with cwd("dest"):
-                data = {file: info(file) for file in files}
+                data = shelephant.dataset.Location(root=".", files=files).getinfo()
 
-            self.assertEqual(data, check)
+            self.assertTrue(check == data)
 
 
 class Test_scp(unittest.TestCase):
@@ -66,9 +65,9 @@ class Test_scp(unittest.TestCase):
                 shelephant.scp.copy(".", "../dest", files, progress=False)
 
             with cwd("dest"):
-                data = {file: info(file) for file in files}
+                data = shelephant.dataset.Location(root=".", files=files).getinfo()
 
-            self.assertEqual(data, check)
+            self.assertTrue(check == data)
 
 
 class Test_rsync(unittest.TestCase):
@@ -108,9 +107,9 @@ class Test_rsync(unittest.TestCase):
                 shelephant.rsync.copy(".", "../dest", files, progress=False)
 
             with cwd("dest"):
-                data = {file: info(file) for file in files}
+                data = shelephant.dataset.Location(root=".", files=files).getinfo()
 
-            self.assertEqual(data, check)
+            self.assertTrue(check == data)
 
 
 if __name__ == "__main__":

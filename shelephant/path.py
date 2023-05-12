@@ -1,4 +1,3 @@
-import hashlib
 import os
 import pathlib
 import tempfile
@@ -99,31 +98,6 @@ def makedirs(dirnames: list[str], force: bool = False):
 
     for dirname in dirnames:
         os.makedirs(dirname)
-
-
-def _sha256(filename: str | pathlib.Path) -> str:
-    """
-    Get sha256 of a file.
-
-    :param str filename: File-path.
-    :return: SHA256 hash.
-    """
-    with open(filename, "rb", buffering=0) as f:
-        return hashlib.file_digest(f, "sha256").hexdigest()
-
-
-def info(filename: str | pathlib.Path) -> dict:
-    """
-    Get file info: sha256 and size.
-
-    :param filename: File-path.
-    :return: Dictionary with sha256 and size.
-    """
-
-    return {
-        "sha256": _sha256(filename),
-        "size": os.path.getsize(filename),
-    }
 
 
 @contextmanager

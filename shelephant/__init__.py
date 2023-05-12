@@ -175,7 +175,7 @@ def shelephant_dump(args: list[str]):
         files = [args.fmt.format(file) for file in files]
 
     if args.info:
-        files = [{"path": file, **path.info(file)} for file in files]
+        files = dataset.Location(root=".", files=files).getinfo().files(info=True)
 
     if args.append:
         main = yaml.read(args.output)
