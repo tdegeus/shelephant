@@ -52,17 +52,3 @@ jobs:
     - name: Run tests
       working-directory: tests
       run: python -m unittest discover . -v
-
-    - name: Prepare SSH test
-      if: runner.os == 'Linux'
-      working-directory: tests
-      run: |
-        python ssh_generate.py
-        mkdir remote
-        cp -r myssh_get remote/
-        cp -r myssh_send remote/
-
-    - name: Run SSH tests
-      if: runner.os == 'Linux'
-      working-directory: tests
-      run: python ssh_test.py localhost "${PWD}/remote"

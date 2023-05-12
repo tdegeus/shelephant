@@ -1,8 +1,5 @@
 import os
-import pathlib
-import tempfile
 from collections import defaultdict
-from contextlib import contextmanager
 
 import click
 
@@ -98,38 +95,3 @@ def makedirs(dirnames: list[str], force: bool = False):
 
     for dirname in dirnames:
         os.makedirs(dirname)
-
-
-@contextmanager
-def cwd(dirname: pathlib.Path):
-    """
-    Set the cwd to a specified directory::
-
-        with cwd("foo"):
-            # Do something in foo
-    """
-
-    origin = pathlib.Path().absolute()
-    try:
-        os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(origin)
-
-
-@contextmanager
-def tempdir():
-    """
-    Set the cwd to a temporary directory::
-
-        with tempdir("foo"):
-            # Do something in foo
-    """
-
-    origin = pathlib.Path().absolute()
-    with tempfile.TemporaryDirectory() as dirname:
-        try:
-            os.chdir(dirname)
-            yield
-        finally:
-            os.chdir(origin)

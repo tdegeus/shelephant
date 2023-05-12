@@ -5,7 +5,7 @@ import pathlib
 import numpy as np
 import tqdm
 
-from . import path
+from . import local
 from . import scp
 from . import yaml
 
@@ -255,7 +255,7 @@ class Location:
             if self.ssh is None:
                 return self._read_files(yaml.read(self.root / self.dump))
 
-            with path.tempdir():
+            with local.tempdir():
                 scp.copy(self.hostname, ".", [self.dump], progress=False)
                 return self._read_files(yaml.read(self.dump))
 
