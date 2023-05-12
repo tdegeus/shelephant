@@ -284,20 +284,22 @@ def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
 
     equal = source.diff(dest)["=="]
     files = source.files(info=False)
+    source = source.hostname
+    dest = dest.hostname
     for file in equal:
         files.pop(file)
 
     # check status of remaining files
 
     if has_rsync:
-        status = rsync.diff(source.hostname, dest.hostname, files)
+        status = rsync.diff(source, dest, files)
         status["=="] += equal
     else:
-        status = local.diff(source.hostname, dest.hostname, files)
+        status = local.diff(source, dest, files)
         status["=="] = equal
 
     assert status.pop("<-", []) == [], "Cannot copy from destination to source"
-    return files, source.hostname, dest.hostname, status
+    return files, source, dest, status
 
 
 def shelephant_cp(args: list[str]):

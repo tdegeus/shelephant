@@ -6,8 +6,10 @@ from shelephant import shelephant_cp
 from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
 from shelephant.detail import create_dummy_files
-from shelephant.path import cwd
-from shelephant.path import tempdir
+from shelephant.local import cwd
+from shelephant.local import tempdir
+
+has_ssh = shelephant.ssh.has_keys_set("localhost")
 
 
 class Test_shelephant_dump(unittest.TestCase):
@@ -113,6 +115,36 @@ class Test_shelephant_cp(unittest.TestCase):
                 data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
 
             self.assertTrue(check == data)
+
+    def test_ssh_send(self):
+        if not has_ssh:
+            return
+
+        with tempdir(), shelephant.ssh.tempdir("localhost") as remote:
+            files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+            check = create_dummy_files(files)
+            shelephant_dump(files)
+
+            shelephant_cp(["-f", "--quiet", shelephant.f_dump, remote, "--ssh", "localhost"])
+            data = shelephant.dataset.Location(root=remote, files=files).getinfo()
+
+        self.assertTrue(check == data)
+
+    def test_ssh_get(self):
+        if not has_ssh:
+            return
+
+        with tempdir(), shelephant.ssh.tempdir("localhost") as remote:
+            with cwd(remote):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant_dump(files)
+
+            shelephant_hostinfo([remote, "-d", "--ssh", "localhost"])
+            shelephant_cp(["-f", "--quiet", shelephant.f_hostinfo, "."])
+            data = shelephant.dataset.Location(root=".", files=files).getinfo()
+
+        self.assertTrue(check == data)
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ import unittest
 
 import shelephant
 from shelephant.detail import create_dummy_files
-from shelephant.path import cwd
-from shelephant.path import tempdir
+from shelephant.local import cwd
+from shelephant.local import tempdir
 
 
 class Test_local(unittest.TestCase):

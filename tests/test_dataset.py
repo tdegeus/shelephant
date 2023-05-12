@@ -4,7 +4,7 @@ import unittest
 import shelephant
 from shelephant import shelephant_dump
 from shelephant.detail import create_dummy_files
-from shelephant.path import tempdir
+from shelephant.local import tempdir
 
 
 class Test_Location(unittest.TestCase):

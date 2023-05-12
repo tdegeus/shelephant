@@ -1,24 +1,4 @@
 
-#     def test_hostinfo(self):
-#         with tempdir():
-#             pathlib.Path("src").mkdir()
-#             pathlib.Path("dest").mkdir()
-
-#             with cwd("src"):
-#                 files = ["foo.txt", "bar.txt"]
-#                 check = create_dummy_files(files)
-#                 shelephant_dump(files, "-o", "foo.yaml")
-#                 shelephant_cp(["foo.yaml", "../dest"])
-
-#             with cwd("dest"):
-#                 shelephant_dump(["-i", "-c", "find . -name '*.txt'"])
-#                 data = shelephant.yaml.read("shelephant_dump.yaml")
-#                 data = {item["path"]: item["sha256"] for item in data}
-
-#             self.assertEqual(sorted(files), sorted(data.keys()))
-#             for filename in data:
-#                 self.assertEqual(check[filename], data[filename])
-
 
 # # class Test_extract(unittest.TestCase):
 # #     def test_single_path(self):
@@ -125,67 +105,6 @@
 
 # #         shutil.rmtree("dira")
 # #         shutil.rmtree("dirb")
-
-
-# # class Test_hostinfo(unittest.TestCase):
-# #     def test_basic(self):
-# #         for dirname in ["mysrc", "mydest"]:
-# #             if os.path.isdir(dirname):
-# #                 shutil.rmtree(dirname)
-
-# #         os.mkdir("mysrc")
-# #         os.mkdir("mydest")
-
-# #         with open("mysrc/foo.txt", "w") as file:
-# #             file.write("foo")
-
-# #         with open("mysrc/bar.txt", "w") as file:
-# #             file.write("bar")
-
-# #         shelephant_dump(["-f", "-s", "-o", "mysrc/files.yaml", "mysrc/foo.txt", "mysrc/bar.txt"])
-# #         run("shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml")
-# #         run(
-# #             "shelephant_hostinfo -o mydest/hostinfo.yaml -f mysrc/files.yaml -c mysrc/checksum.yaml"
-# #         )
-# #         run("shelephant_get -f -q mydest/hostinfo.yaml")
-# #         shelephant_dump(["-f", "-s", "-o", "mydest/files.yaml", "mydest/foo.txt", "mydest/bar.txt"])
-# #         run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
-
-# #         self.assertEqual(
-# #             shelephant.yaml.read("mysrc/files.yaml"),
-# #             shelephant.yaml.read("mydest/files.yaml"),
-# #         )
-# #         self.assertEqual(
-# #             shelephant.yaml.read("mysrc/checksum.yaml"),
-# #             shelephant.yaml.read("mydest/checksum.yaml"),
-# #         )
-
-# #         shutil.rmtree("mysrc")
-# #         shutil.rmtree("mydest")
-
-# #     def test_remove(self):
-# #         pathlib.Path("foo.txt").write_text("foo")
-# #         pathlib.Path("bar.txt").write_text("bar")
-
-# #         keys = [
-# #             "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
-# #             "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9",
-# #         ]
-
-# #         shelephant_dump(["-f", "foo.txt", "bar.txt"])
-# #         run("shelephant_checksum -f -q")
-# #         run("shelephant_hostinfo --force -f -c")
-# #         run("shelephant_hostinfo --force --remove bar.txt")
-# #         data = shelephant.yaml.read("shelephant_hostinfo.yaml")
-
-# #         self.assertEqual(data["files"], ["foo.txt"])
-# #         self.assertEqual(data["checksum"], [keys[0]])
-
-# #         os.remove("foo.txt")
-# #         os.remove("bar.txt")
-# #         os.remove("shelephant_dump.yaml")
-# #         os.remove("shelephant_checksum.yaml")
-# #         os.remove("shelephant_hostinfo.yaml")
 
 
 # # class Test_get(unittest.TestCase):
@@ -676,84 +595,6 @@
 
 
 # # # class Test_cp(unittest.TestCase):
-# # #     def test_basic(self):
-# # #         for dirname in ["mysrc", "mydest"]:
-# # #             if os.path.isdir(dirname):
-# # #                 shutil.rmtree(dirname)
-
-# # #         os.mkdir("mysrc")
-# # #         os.mkdir("mydest")
-
-# # #         with open("mysrc/foo.txt", "w") as file:
-# # #             file.write("foo")
-
-# # #         with open("mysrc/bar.txt", "w") as file:
-# # #             file.write("bar")
-
-# # #         shelephant_dump(["-o", "mysrc/files.yaml", "mysrc/*.txt"])
-# # #         run("shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml")
-# # #         run("shelephant_cp -f -q mysrc/files.yaml mydest")
-# # #         shelephant_dump(["--sort", "-o" ,"mydest/files.yaml", "mydest/*.txt"])
-# # #         run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
-
-# # #         self.assertEqual(
-# # #             shelephant.yaml.read("mysrc/files.yaml"),
-# # #             shelephant.yaml.read("mydest/files.yaml"),
-# # #         )
-# # #         self.assertEqual(
-# # #             shelephant.yaml.read("mysrc/checksum.yaml"),
-# # #             shelephant.yaml.read("mydest/checksum.yaml"),
-# # #         )
-# # #         self.assertTrue(os.path.isfile("mysrc/foo.txt"))
-# # #         self.assertTrue(os.path.isfile("mysrc/bar.txt"))
-
-# # #         shutil.rmtree("mysrc")
-# # #         shutil.rmtree("mydest")
-
-# # #     def test_rsync(self):
-# # #         for dirname in ["mysrc", "mydest"]:
-# # #             if os.path.isdir(dirname):
-# # #                 shutil.rmtree(dirname)
-
-# # #         os.mkdir("mysrc")
-# # #         os.mkdir("mydest")
-
-# # #         with open("mysrc/foo.log", "w") as file:
-# # #             file.write("foo")
-
-# # #         with open("mysrc/bar.log", "w") as file:
-# # #             file.write("bar")
-
-# # #         shutil.copy2("mysrc/foo.log", "mydest/foo.log")
-
-# # #         operations = [
-# # #             "bar.log -> bar.log",
-# # #             "foo.log == foo.log",
-# # #         ]
-
-# # #         output = shelephant_dump(["shelephant_dump", "-o", "mysrc/files.yaml", "mysrc/*.log"])
-# # #         output = run("shelephant_cp -f -d -q --colors none mysrc/files.yaml mydest")
-
-# # #         self.assertEqual(list(filter(None, output.split("\n"))), operations)
-
-# # #         output = shelephant_dump(["shelephant_dump", "--sort", "-o", "mydest/files.yaml", "mydest/*.log"])
-# # #         output = run("shelephant_checksum -q -o mydest/checksum.yaml mydest/files.yaml")
-# # #         output = run("shelephant_checksum -q -o mysrc/checksum.yaml mysrc/files.yaml")
-
-# # #         self.assertEqual(
-# # #             shelephant.yaml.read("mysrc/files.yaml"),
-# # #             shelephant.yaml.read("mydest/files.yaml"),
-# # #         )
-# # #         self.assertEqual(
-# # #             shelephant.yaml.read("mysrc/checksum.yaml"),
-# # #             shelephant.yaml.read("mydest/checksum.yaml"),
-# # #         )
-# # #         self.assertTrue(os.path.isfile("mysrc/foo.log"))
-# # #         self.assertTrue(os.path.isfile("mysrc/bar.log"))
-
-# # #         shutil.rmtree("mysrc")
-# # #         shutil.rmtree("mydest")
-
 # # #     def test_nested(self):
 # # #         for dirname in ["mysrc", "mybak"]:
 # # #             if os.path.isdir(dirname):
@@ -866,7 +707,3 @@
 # # #         os.remove("shelephant_dump.yaml")
 # # #         os.remove("foo.txt")
 # # #         os.remove("bar.txt")
-
-
-if __name__ == "__main__":
-    unittest.main()
