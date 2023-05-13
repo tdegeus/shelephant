@@ -108,6 +108,9 @@ def copyplan(
     for key in list(status.keys()):
         overwrite += status.pop(key, [])
 
+    if len(overwrite) + len(right) + len(skip) == 0:
+        return
+
     width = max(len(file) for file in overwrite + right + skip)
     width = min(width, max_align)
 
