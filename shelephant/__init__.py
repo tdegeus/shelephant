@@ -299,7 +299,7 @@ def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
         status["=="] = equal
 
     assert status.pop("<-", []) == [], "Cannot copy from destination to source"
-    return files, source, dest, status
+    return files, source, dest, status, sum(len(status[key]) for key in status) - len(status["=="])
 
 
 def shelephant_cp(args: list[str]):
@@ -311,7 +311,15 @@ def shelephant_cp(args: list[str]):
     has_rsync = shutil.which("rsync") is not None
     parser = _shelephant_cp_parser()
     args = parser.parse_args(args)
-    files, source, dest, status = _interpret_common_cp(args, has_rsync)
+    files, source, dest, status, ncp = _interpret_common_cp(args, has_rsync)
+
+    if len(files) == 0:
+        print("Nothing to copy")
+        return
+
+    if ncp == 0:
+        print("All files are identical")
+        return
 
     if not args.force:
         output.copyplan(status, colors=args.colors)
