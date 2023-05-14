@@ -1,10 +1,13 @@
+import os
 import pathlib
 import unittest
 
 import shelephant
 from shelephant import shelephant_dump
-from shelephant.detail import create_dummy_files
+from shelephant._tests import create_dummy_files
 from shelephant.local import tempdir
+
+has_ssh = shelephant.ssh.has_keys_set("localhost")
 
 
 class Test_Location(unittest.TestCase):
@@ -34,6 +37,20 @@ class Test_Location(unittest.TestCase):
             files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
             check = create_dummy_files(files)
             loc = shelephant.dataset.Location(root=".", files=files).getinfo()
+            self.assertTrue(check == loc)
+
+    def test_info_ssh(self):
+        if not has_ssh:
+            raise unittest.SkipTest("'ssh localhost' does not work")
+
+        with shelephant.ssh.tempdir("localhost") as remote, tempdir():
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
+            shelephant.scp.copy(".", f'localhost:"{str(remote)}"', files, progress=False)
+            [os.remove(f) for f in files]
+            loc = shelephant.dataset.Location(root=remote, ssh="localhost", files=files)
+            loc.python = "python3"
+            loc.getinfo()
             self.assertTrue(check == loc)
 
     def test_read_dump(self):

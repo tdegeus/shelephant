@@ -93,4 +93,3 @@ def tempdir():
             yield
         finally:
             os.chdir(origin)
-
