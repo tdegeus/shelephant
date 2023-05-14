@@ -1,3 +1,4 @@
+import pathlib
 import subprocess
 from contextlib import contextmanager
 
@@ -59,7 +60,7 @@ def tempdir(hostname: str):
     try:
         cmd = f"ssh {hostname:s} mktemp -d"
         tempdir = exec_cmd(cmd, verbose=False)
-        yield tempdir.strip()
+        yield pathlib.Path(tempdir.strip())
     finally:
         cmd = f"ssh {hostname:s} rm -rf {tempdir:s}"
         exec_cmd(cmd, verbose=False)

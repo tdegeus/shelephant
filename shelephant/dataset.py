@@ -1,13 +1,16 @@
 import hashlib
 import os
 import pathlib
+import shutil
 
 import numpy as np
 import tqdm
 
 from . import local
 from . import scp
+from . import ssh
 from . import yaml
+from .external import exec_cmd
 
 
 def _sha256(filename: str | pathlib.Path) -> str:
@@ -27,6 +30,7 @@ class Location:
 
     *   :py:attr:`Location.root`: The root directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
+    *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
     *   :py:attr:`Location.dump` (optional): Location of "dump" file -- file with list of files.
     *   :py:attr:`Location.search` (optional): Command to search for files.
     *   :py:func:`Location.files`: List of files.
@@ -45,8 +49,12 @@ class Location:
     def __init__(self, root: str | pathlib.Path, ssh: str = None, files: list[str] = []) -> None:
         self.root = pathlib.Path(root)
         self.ssh = ssh
+        self.python = "python3"
         self.dump = None
         self.search = None
+
+        if ssh is not None:
+            assert self.root.is_absolute(), "root must be absolute path when using ssh"
 
         if type(files) == list:
             self._files = files
@@ -69,10 +77,10 @@ class Location:
         """
         Clear file info.
         """
-        self._has_sha256 = [False for _ in self._files]
-        self._has_size = [False for _ in self._files]
-        self._sha256 = [None for _ in self._files]
-        self._size = [None for _ in self._files]
+        self._has_sha256 = [False] * len(self._files)
+        self._has_size = [False] * len(self._files)
+        self._sha256 = [None] * len(self._files)
+        self._size = [None] * len(self._files)
 
     def _read_files(self, files: list):
         """
@@ -261,13 +269,16 @@ class Location:
 
         raise NotImplementedError
 
-    def getinfo(self, sha256: bool = True, size: bool = True, progress: bool = False):
+    def getinfo(
+        self, sha256: bool = True, size: bool = True, progress: bool = False, verbose: bool = False
+    ):
         """
         Compute sha256 and size for files.
 
         :param sha256: Get sha256.
         :param size: Get size.
-        :param progress: Show progress bar.
+        :param progress: Show progress bar (only relevant if ``ssh`` is not set).
+        :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
 
         self._clear_info()
@@ -282,7 +293,26 @@ class Location:
                     self._has_size[i] = True
             return self
 
-        raise NotImplementedError
+        with ssh.tempdir(self.ssh) as remote, local.tempdir():
+            shutil.copy(pathlib.Path(__file__).parent / "_compute_info.py", "script.py")
+            pathlib.Path("files.txt").write_text(
+                "\n".join([str(self.root / i) for i in self._files])
+            )
+
+            host = f'{self.ssh:s}:"{str(remote):s}"'
+            scp.copy(".", host, ["script.py", "files.txt"], progress=False, verbose=verbose)
+            exec_cmd(
+                f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"', verbose=verbose
+            )
+            scp.copy(host, ".", ["sha256.txt", "size.txt"], progress=False, verbose=verbose)
+
+            self._sha256 = pathlib.Path("sha256.txt").read_text().splitlines()
+            self._has_sha256 = [True] * len(self._sha256)
+
+            self._size = list(map(int, pathlib.Path("size.txt").read_text().splitlines()))
+            self._has_size = [True] * len(self._size)
+
+        return self
 
     def diff(self, other) -> dict:
         """

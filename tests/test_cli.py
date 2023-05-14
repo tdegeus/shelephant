@@ -5,7 +5,7 @@ import shelephant
 from shelephant import shelephant_cp
 from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
-from shelephant.detail import create_dummy_files
+from shelephant._tests import create_dummy_files
 from shelephant.local import cwd
 from shelephant.local import tempdir
 
@@ -125,7 +125,7 @@ class Test_shelephant_cp(unittest.TestCase):
             check = create_dummy_files(files)
             shelephant_dump(files)
 
-            shelephant_cp(["-f", "--quiet", shelephant.f_dump, remote, "--ssh", "localhost"])
+            shelephant_cp(["-f", "--quiet", shelephant.f_dump, str(remote), "--ssh", "localhost"])
             data = shelephant.dataset.Location(root=remote, files=files).getinfo()
 
         self.assertTrue(check == data)
@@ -140,7 +140,7 @@ class Test_shelephant_cp(unittest.TestCase):
                 check = create_dummy_files(files)
                 shelephant_dump(files)
 
-            shelephant_hostinfo([remote, "-d", "--ssh", "localhost"])
+            shelephant_hostinfo([str(remote), "-d", "--ssh", "localhost"])
             shelephant_cp(["-f", "--quiet", shelephant.f_hostinfo, "."])
             data = shelephant.dataset.Location(root=".", files=files).getinfo()
 

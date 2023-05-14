@@ -2,7 +2,7 @@ import pathlib
 import unittest
 
 import shelephant
-from shelephant.detail import create_dummy_files
+from shelephant._tests import create_dummy_files
 from shelephant.local import cwd
 from shelephant.local import tempdir
 
