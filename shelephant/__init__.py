@@ -48,6 +48,18 @@ def _shelephant_parse_parser():
     return parser
 
 
+def shelephant_parse(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _shelephant_parse_parser()
+    args = parser.parse_args(args)
+    data = yaml.read(args.file)
+    yaml.preview(data)
+
+
 def _shelephant_dump_parser():
     """
     Return parser for :py:func:`shelephant_dump`.
@@ -631,6 +643,10 @@ def shelephant_diff(args: list[str]):
         print(out.get_string())
     else:
         print(out.get_string(sortby=args.sort))
+
+
+def _shelephant_parse_main():
+    shelephant_parse(sys.argv[1:])
 
 
 def _shelephant_cp_main():
