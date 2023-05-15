@@ -27,7 +27,7 @@ def has_keys_set(hostname: str) -> bool:
 
 
 def file_exists(hostname: str, path: str, verbose: bool = False) -> bool:
-    r"""
+    """
     Check if a file exists on a remote system. Uses ``ssh``.
 
     :param hostname: Hostname.

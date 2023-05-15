@@ -1,38 +1,29 @@
-import hashlib
-import os
+import json
 import pathlib
 import shutil
 
 import numpy as np
-import tqdm
 
-from . import local
+from . import info
 from . import scp
+from . import search
 from . import ssh
 from . import yaml
 from .external import exec_cmd
 
 
-def _sha256(filename: str | pathlib.Path) -> str:
-    """
-    Get sha256 of a file.
-
-    :param str filename: File-path.
-    :return: SHA256 hash.
-    """
-    with open(filename, "rb", buffering=0) as f:
-        return hashlib.file_digest(f, "sha256").hexdigest()
-
-
 class Location:
     """
-    Location information:
+    Location information.
+
+    Attributes:
 
     *   :py:attr:`Location.root`: The root directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
     *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
     *   :py:attr:`Location.dump` (optional): Location of "dump" file -- file with list of files.
-    *   :py:attr:`Location.search` (optional): Command to search for files.
+    *   :py:attr:`Location.search` (optional):
+        Commands to search for files, see :py:func:`shelephant.search.search`.
     *   :py:func:`Location.files`: List of files.
 
     Initialize:
@@ -81,6 +72,7 @@ class Location:
         self._has_size = [False] * len(self._files)
         self._sha256 = [None] * len(self._files)
         self._size = [None] * len(self._files)
+        return self
 
     def _read_files(self, files: list):
         """
@@ -173,7 +165,7 @@ class Location:
             ret["dump"] = str(self.dump)
 
         if self.search is not None:
-            raise NotImplementedError
+            ret["search"] = self.search
 
         if len(self._files) > 0:
             ret["files"] = self.files(info=True)
@@ -211,7 +203,7 @@ class Location:
         return ret
 
     @property
-    def hostname(self) -> str:
+    def hostpath(self) -> str:
         """
         Return:
 
@@ -248,63 +240,81 @@ class Location:
 
         return self
 
-    def read(self):
+    def read(self, verbose: bool = False):
         """
         Read files from location.
             -   If ``dump`` is set, read from dump file.
             -   If ``search`` is set, search for files.
+
+        :param verbose: Print progress (only relevant if ``ssh`` is set).
         """
         if self.dump is None and self.search is None:
             return
 
         assert not (self.dump is not None and self.search is not None)
 
+        # read from YAML dump file
         if self.dump is not None:
             if self.ssh is None:
                 return self._read_files(yaml.read(self.root / self.dump))
 
-            with local.tempdir():
-                scp.copy(self.hostname, ".", [self.dump], progress=False)
+            with search.tempdir():
+                scp.copy(self.hostpath, ".", [self.dump], progress=False)
                 return self._read_files(yaml.read(self.dump))
 
-        raise NotImplementedError
+        # search for files (locally)
+        if self.ssh is None:
+            self._files = list(map(str, search.search(*self.search, root=self.root)))
+            return self._clear_info()
 
-    def getinfo(
-        self, sha256: bool = True, size: bool = True, progress: bool = False, verbose: bool = False
-    ):
+        # search for files (on SSH remote host)
+        with ssh.tempdir(self.ssh) as remote, search.tempdir():
+            shutil.copy(pathlib.Path(__file__).parent / "search.py", "script.py")
+            with open("settings.json", "w") as f:
+                json.dump(self.search, f)
+
+            host = f'{self.ssh:s}:"{str(remote):s}"'
+            scp.copy(".", host, ["script.py", "settings.json"], progress=False, verbose=verbose)
+            exec_cmd(
+                f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py {str(self.root)}"',
+                verbose=verbose,
+            )
+            scp.copy(host, ".", ["files.txt"], progress=False, verbose=verbose)
+            self._files = pathlib.Path("files.txt").read_text().splitlines()
+            return self._clear_info()
+
+    def getinfo(self, progress: bool = False, verbose: bool = False):
         """
         Compute sha256 and size for files.
 
-        :param sha256: Get sha256.
-        :param size: Get size.
         :param progress: Show progress bar (only relevant if ``ssh`` is not set).
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
 
         self._clear_info()
 
+        # locally
         if self.ssh is None:
-            for i, file in enumerate(tqdm.tqdm(self._files, disable=not progress)):
-                if sha256:
-                    self._sha256[i] = _sha256(self.root / file)
-                    self._has_sha256[i] = True
-                if size:
-                    self._size[i] = os.path.getsize(self.root / file)
-                    self._has_size[i] = True
+            hash, size = info.getinfo([self.root / f for f in self._files], progress=progress)
+            self._sha256 = hash
+            self._size = size
+            self._has_sha256 = [True] * len(self._files)
+            self._has_size = [True] * len(self._files)
             return self
 
-        with ssh.tempdir(self.ssh) as remote, local.tempdir():
-            shutil.copy(pathlib.Path(__file__).parent / "_compute_info.py", "script.py")
+        # on SSH remote host
+        with ssh.tempdir(self.ssh) as remote, search.tempdir():
+            shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
             pathlib.Path("files.txt").write_text(
                 "\n".join([str(self.root / i) for i in self._files])
             )
 
-            host = f'{self.ssh:s}:"{str(remote):s}"'
-            scp.copy(".", host, ["script.py", "files.txt"], progress=False, verbose=verbose)
+            hostpath = f'{self.ssh:s}:"{str(remote):s}"'
+            scp.copy(".", hostpath, ["script.py", "files.txt"], progress=False, verbose=verbose)
             exec_cmd(
                 f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"', verbose=verbose
             )
-            scp.copy(host, ".", ["sha256.txt", "size.txt"], progress=False, verbose=verbose)
+            scp.copy(hostpath, ".", ["sha256.txt", "size.txt"], progress=False, verbose=verbose)
 
             self._sha256 = pathlib.Path("sha256.txt").read_text().splitlines()
             self._has_sha256 = [True] * len(self._sha256)

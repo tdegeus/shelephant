@@ -108,11 +108,9 @@ This will:
         - path: a.h5
           sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
           size: 11559
-          modified: 2023-01-01 12:34:56 Europe/Zurich
         - path: mydir/b.h5
           sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
           size: 1757
-          modified: 2023-01-03 23:53:34 Europe/Zurich
 
     .. note::
 
@@ -153,7 +151,7 @@ Then:
 
 .. code-block:: bash
 
-    shelephant storage "usb" "/media/myusb/mydata" --iname ".*h5" --ignore "bak.*"
+    shelephant storage "usb" "/media/myusb/mydata" --rglob ".*h5" --ignore "bak.*"
 
 This will:
 
@@ -169,10 +167,10 @@ This will:
 
         root: /media/myusb/mydata
         search:
-            - iname:
-                - '.*h5'
-            - ignore:
-                - bak.*
+            - rglob: '*h5'              # pathlib.Path(root).rglob(PATTERN)
+              skip: ['\..*']            # ignore path(s) (Python regex)
+            - exec: find . -name '*py'  # command to execute from root
+              skip: ['\..*']            # ignore path(s) (Python regex)
 
 2.  Update the available storage locations in
 
@@ -206,11 +204,9 @@ This will:
         - path: a.h5
           sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
           size: 11559
-          modified: 2023-01-05 10:00:00 Europe/Zurich
         - path: mydir/c.h5
           sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
           size: 4584
-          modified: 2023-01-06 14:53:34 Europe/Zurich
 
 5.  Update the dataset directory.
 

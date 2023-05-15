@@ -5,7 +5,7 @@ import unittest
 import shelephant
 from shelephant import shelephant_dump
 from shelephant._tests import create_dummy_files
-from shelephant.local import tempdir
+from shelephant.search import tempdir
 
 has_ssh = shelephant.ssh.has_keys_set("localhost")
 
@@ -61,6 +61,31 @@ class Test_Location(unittest.TestCase):
 
             loc = shelephant.dataset.Location(root=".")
             loc.dump = shelephant.f_dump
+            loc.read().getinfo()
+            self.assertTrue(check == loc)
+
+    def test_search(self):
+        with tempdir():
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
+
+            loc = shelephant.dataset.Location(root=".")
+            loc.search = [{"rglob": "*.txt"}]
+            loc.read().getinfo()
+            self.assertTrue(check == loc)
+
+    def test_search_ssh(self):
+        if not has_ssh:
+            raise unittest.SkipTest("'ssh localhost' does not work")
+
+        with shelephant.ssh.tempdir("localhost") as remote, tempdir():
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
+            shelephant.scp.copy(".", f'localhost:"{str(remote)}"', files, progress=False)
+
+            loc = shelephant.dataset.Location(root=remote, ssh="localhost")
+            loc.python = "python3"
+            loc.search = [{"rglob": "*.txt"}]
             loc.read().getinfo()
             self.assertTrue(check == loc)
 
