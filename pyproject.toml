@@ -18,7 +18,7 @@ shelephant_dump = "shelephant:_shelephant_dump_main"
 shelephant_extract = "shelephant.cli.shelephant_extract:main"
 shelephant_hostinfo = "shelephant:_shelephant_hostinfo_main"
 shelephant_merge = "shelephant.cli.shelephant_merge:main"
-shelephant_mv = "shelephant.cli.shelephant_mv:main"
+shelephant_mv = "shelephant:_shelephant_mv_main"
 shelephant_parse = "shelephant:_shelephant_parse_main"
 shelephant_rm = "shelephant.cli.shelephant_rm:main"
 
