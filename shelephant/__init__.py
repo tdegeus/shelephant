@@ -228,8 +228,10 @@ def _shelephant_cp_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
     parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("--sha256", action="store_true", help="Only use sha256 to check equality.")
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
     parser.add_argument("-v", "--version", action="version", version=version)
     parser.add_argument("source", type=pathlib.Path, help="Source information.")
     parser.add_argument("dest", type=pathlib.Path, help="Destination directory/information.")
@@ -244,6 +246,8 @@ def shelephant_cp(args: list[str]):
 
     parser = _shelephant_cp_parser()
     args = parser.parse_args(args)
+    assert args.source.is_file(), "Source must be a file"
+    assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run"
 
     source = dataset.Location.from_yaml(args.source)
 
@@ -252,33 +256,33 @@ def shelephant_cp(args: list[str]):
     else:
         dest = dataset.Location(root=args.dest, ssh=args.ssh)
 
-    equal = source.diff(dest)["=="]
     files = source.files(info=False)
-    for file in equal:
-        files.pop(file)
+    equal = source.diff(dest)["=="]
+    [files.remove(file) for file in equal]  # based on sha256
+
     source = source.hostpath
     dest = dest.hostpath
     has_rsync = shutil.which("rsync") is not None
 
-    if has_rsync:
+    if has_rsync and not args.sha256:
         status = rsync.diff(source, dest, files)
+        eq = status.pop("==", [])
+        [files.remove(file) for file in eq]  # based on rsync criteria
+        equal += eq
     else:
         status = local.diff(source, dest, files)
 
     assert status.pop("<-", []) == [], "Cannot copy from destination to source"
-    status["=="] = status.pop("==", []) + equal
-    ncp = sum(len(status[key]) for key in status) - len(status["=="])
 
     if len(files) == 0:
-        print("Nothing to copy")
-        return
-
-    if ncp == 0:
-        print("All files are identical")
+        print("Nothing to copy" if len(equal) == 0 else "All files equal")
         return
 
     if not args.force:
+        status["=="] = equal
         output.copyplan(status, colors=args.colors)
+        if args.dry_run:
+            return
         if not click.confirm("Proceed?"):
             raise OSError("Cancelled")
 
@@ -301,25 +305,59 @@ def _shelephant_mv_parser():
         pass
 
     desc = textwrap.dedent(
-        """\
-    Move files listed in a (field of a) YAML-file.
-    These filenames are assumed either relative to the YAML-file or absolute.
+        """
+        Move files listed in a (field of a) YAML-file.
+        These filenames are assumed either relative to the YAML-file or absolute.
 
-    Usage::
+        Usage::
 
-        shelephant_mv [source.yaml] <dest_dirname>
-
-    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
-    """
+            shelephant_mv <sourceinfo.yaml> <dest_dirname>
+        """
     )
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    # parser = _shelephant_cp_parser_common(parser)
-    parser.add_argument("--temp", action="store_true", help="Fully copy file before removing.")
-    parser.add_argument(
-        "--verify", action="store_true", help="Use --copy but check sha256 before removing."
-    )
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("source", type=pathlib.Path, help="Source information.")
+    parser.add_argument("dest", type=pathlib.Path, help="Destination directory.")
     return parser
+
+
+def shelephant_mv(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _shelephant_mv_parser()
+    args = parser.parse_args(args)
+    assert args.source.is_file(), "Source must be a file"
+    assert args.dest.is_dir(), "Destination must be a directory"
+    assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run"
+
+    source = dataset.Location.from_yaml(args.source)
+    assert source.ssh is None, "Cannot move from remote"
+    files = source.files(info=False)
+    source = source.root
+    dest = args.dest
+    status = local.diff(source, dest, files)
+    assert status.pop("<-", []) == [], "Cannot move from destination to source"
+
+    if len(files) == 0:
+        print("Nothing to move")
+        return
+
+    if not args.force:
+        output.copyplan(status, colors=args.colors)
+        if args.dry_run:
+            return
+        if not click.confirm("Proceed?"):
+            raise OSError("Cancelled")
+
+    local.move(source, dest, files, progress=not args.quiet)
 
 
 def _shelephant_rm_parser():

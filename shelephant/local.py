@@ -5,6 +5,25 @@ import numpy as np
 import tqdm
 
 
+def move(
+    source_dir: str,
+    dest_dir: str,
+    files: list[str],
+    progress: bool = True,
+):
+    """
+    Move files using os.rename.
+
+    :param source_dir: Source directory
+    :param dest_dir: Source directory
+    :param files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+    :param progress: Show progress bar.
+    """
+
+    for file in tqdm.tqdm(files, disable=not progress):
+        os.rename(os.path.join(source_dir, file), os.path.join(dest_dir, file))
+
+
 def copy(
     source_dir: str,
     dest_dir: str,
