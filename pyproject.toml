@@ -16,13 +16,11 @@ shelephant_cp = "shelephant:_shelephant_cp_main"
 shelephant_diff = "shelephant:_shelephant_diff_main"
 shelephant_dump = "shelephant:_shelephant_dump_main"
 shelephant_extract = "shelephant.cli.shelephant_extract:main"
-shelephant_get = "shelephant.cli.shelephant_get:main"
 shelephant_hostinfo = "shelephant:_shelephant_hostinfo_main"
 shelephant_merge = "shelephant.cli.shelephant_merge:main"
 shelephant_mv = "shelephant.cli.shelephant_mv:main"
 shelephant_parse = "shelephant.cli.shelephant_parse:main"
 shelephant_rm = "shelephant.cli.shelephant_rm:main"
-shelephant_send = "shelephant.cli.shelephant_send:main"
 
 [project.urls]
 Source = "https://github.com/tdegeus/shelephant"
