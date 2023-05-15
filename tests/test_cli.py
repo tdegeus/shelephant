@@ -7,6 +7,7 @@ import unittest
 
 import shelephant
 from shelephant import shelephant_cp
+from shelephant import shelephant_diff
 from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
 from shelephant import shelephant_mv
@@ -375,6 +376,164 @@ class Test_shelephant_rm(unittest.TestCase):
         ]
         ret = sio.getvalue()
         ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
+        self.assertEqual(ret, expect)
+
+
+class Test_shelephant_diff(unittest.TestCase):
+    def test_output_sha256(self):
+        """
+        shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+                shelephant_dump(["-i", "foo.txt", "bar.txt", "receive.txt"])
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(["-i"] + files)
+                shelephant_hostinfo(["../dest", "-d"])
+                shelephant_diff([shelephant.f_dump, shelephant.f_hostinfo, "-o", "foo.yaml"])
+                data = shelephant.yaml.read("foo.yaml")
+
+        expect = {
+            "!=": ["bar.txt"],
+            "->": ["more.txt", "even_more.txt"],
+            "<-": ["receive.txt"],
+            "==": ["foo.txt"],
+        }
+
+        for key in expect:
+            expect[key] = sorted(expect[key])
+
+        self.assertEqual(data, expect)
+
+    def test_output(self):
+        """
+        shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(files)
+                shelephant_diff([shelephant.f_dump, "../dest", "-o", "foo.yaml"])
+                data = shelephant.yaml.read("foo.yaml")
+
+        expect = {
+            "!=": ["bar.txt"],
+            "->": ["more.txt", "even_more.txt"],
+            "==": ["foo.txt"],
+        }
+
+        for key in expect:
+            expect[key] = expect[key]
+
+        self.assertEqual(data, expect)
+
+    def test_output_filter(self):
+        """
+        shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(files)
+                shelephant_diff(
+                    [shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "!=, ->"]
+                )
+                data = shelephant.yaml.read("foo.yaml")
+
+        expect = {
+            "!=": ["bar.txt"],
+            "->": ["more.txt", "even_more.txt"],
+        }
+
+        for key in expect:
+            expect[key] = expect[key]
+
+        self.assertEqual(data, expect)
+
+    def test_output_filter2(self):
+        """
+        shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(files)
+                shelephant_diff([shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "!="])
+                data = shelephant.yaml.read("foo.yaml")
+
+        self.assertEqual(data, ["bar.txt"])
+
+    def test_table(self):
+        """
+        shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir(), contextlib.redirect_stdout(io.StringIO()) as sio:
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+                shelephant_dump(["-i", "foo.txt", "bar.txt", "receive.txt"])
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(["-i"] + files)
+                shelephant_hostinfo(["../dest", "-d"])
+                shelephant_diff(
+                    [shelephant.f_dump, shelephant.f_hostinfo, "--table", "PLAIN_COLUMNS"]
+                )
+
+        expect = [
+            "bar.txt != bar.txt",
+            "even_more.txt ->",
+            "more.txt ->",
+            "<- receive.txt",
+            "foo.txt == foo.txt",
+        ]
+
+        ret = sio.getvalue()
+        ret = list(
+            filter(None, [re.sub(r"\s+", " ", line).strip() for line in ret.splitlines()[1:]])
+        )
         self.assertEqual(ret, expect)
 
 
