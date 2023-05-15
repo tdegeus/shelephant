@@ -13,11 +13,13 @@ import prettytable
 
 from . import convert
 from . import dataset
+from . import info
 from . import local
 from . import output
 from . import path
 from . import rsync
 from . import scp
+from . import search
 from . import ssh
 from . import yaml
 from ._version import version
@@ -284,8 +286,8 @@ def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
 
     equal = source.diff(dest)["=="]
     files = source.files(info=False)
-    source = source.hostname
-    dest = dest.hostname
+    source = source.hostpath
+    dest = dest.hostpath
     for file in equal:
         files.pop(file)
 
@@ -439,7 +441,7 @@ def _shelephant_hostinfo_parser():
 
     desc = textwrap.dedent(
         """\
-    Collect information about a remote directory (on a remote host).
+    Collect information about a remote directory (on a remote SSH host).
     This information is stored in a YAML-file (default: ``shelephant_hostinfo.yaml``) as follows::
 
         root: <path>      # relative to the YAML-file, or absolute

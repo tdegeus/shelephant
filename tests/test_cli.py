@@ -6,8 +6,8 @@ from shelephant import shelephant_cp
 from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
 from shelephant._tests import create_dummy_files
-from shelephant.local import cwd
-from shelephant.local import tempdir
+from shelephant.search import cwd
+from shelephant.search import tempdir
 
 has_ssh = shelephant.ssh.has_keys_set("localhost")
 

@@ -1,10 +1,14 @@
+import shutil
 import pathlib
+import shutil
 import unittest
 
 import shelephant
 from shelephant._tests import create_dummy_files
-from shelephant.local import cwd
-from shelephant.local import tempdir
+from shelephant.search import cwd
+from shelephant.search import tempdir
+
+has_rsync = shutil.which("rsync") is not None
 
 
 class Test_local(unittest.TestCase):
@@ -72,6 +76,9 @@ class Test_scp(unittest.TestCase):
 
 class Test_rsync(unittest.TestCase):
     def test_diff(self):
+        if not has_rsync:
+            self.skipTest("rsync not found")
+
         with tempdir():
             pathlib.Path("src").mkdir()
             pathlib.Path("dest").mkdir()
@@ -93,6 +100,9 @@ class Test_rsync(unittest.TestCase):
             self.assertEqual(data, check)
 
     def test_copy(self):
+        if not has_rsync:
+            self.skipTest("rsync not found")
+
         with tempdir():
             pathlib.Path("src").mkdir()
             pathlib.Path("dest").mkdir()

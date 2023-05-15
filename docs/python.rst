@@ -3,6 +3,13 @@
 Python module
 *************
 
+Dataset
+-------
+
+.. autosummary::
+
+    shelephant.dataset.Location
+
 Type conversion
 ---------------
 
@@ -87,4 +94,16 @@ Details
 -------
 
 .. automodule:: shelephant
-  :members:
+    :members:
+
+search
+::::::
+
+.. automodule:: shelephant.search
+    :members:
+
+dataset
+::::::
+
+.. autoclass:: shelephant.dataset.Location
+    :members:

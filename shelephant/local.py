@@ -1,8 +1,5 @@
 import os
-import pathlib
 import shutil
-import tempfile
-from contextlib import contextmanager
 
 import numpy as np
 import tqdm
@@ -58,38 +55,3 @@ def diff(
         "->": files[np.logical_and(insource, ~indest)].tolist(),
         "<-": files[np.logical_and(~insource, indest)].tolist(),
     }
-
-
-@contextmanager
-def cwd(dirname: pathlib.Path):
-    """
-    Set the cwd to a specified directory::
-
-        with cwd("foo"):
-            # Do something in foo
-    """
-
-    origin = pathlib.Path().absolute()
-    try:
-        os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(origin)
-
-
-@contextmanager
-def tempdir():
-    """
-    Set the cwd to a temporary directory::
-
-        with tempdir("foo"):
-            # Do something in foo
-    """
-
-    origin = pathlib.Path().absolute()
-    with tempfile.TemporaryDirectory() as dirname:
-        try:
-            os.chdir(dirname)
-            yield
-        finally:
-            os.chdir(origin)
