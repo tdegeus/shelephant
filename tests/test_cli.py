@@ -463,12 +463,12 @@ class Test_shelephant_diff(unittest.TestCase):
                 create_dummy_files(files)
                 shelephant_dump(files)
                 shelephant_diff(
-                    [shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "!=, ->"]
+                    [shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "<-, ->"]
                 )
                 data = shelephant.yaml.read("foo.yaml")
 
         expect = {
-            "!=": ["bar.txt"],
+            "<-": ["receive.txt"],
             "->": ["more.txt", "even_more.txt"],
         }
 
