@@ -587,13 +587,14 @@ def shelephant_diff(args: list[str]):
             assert dest.ssh is None, "Specify destinfo, or install rsync"
             status = local.diff(source.hostpath, dest.hostpath, files)
 
+    if args.filter:
+        keys = [key.strip() for key in args.filter.split(",")]
+        keys = [key for key in keys if key in status]
+        status = {key: status[key] for key in keys}
+
     for key in list(status.keys()):
         if len(status[key]) == 0:
             del status[key]
-
-    if args.filter:
-        keys = [key.strip() for key in args.filter.split(",")]
-        status = {key: status[key] for key in keys}
 
     if args.output:
         if len(status) == 1:

@@ -9,15 +9,13 @@ description = "Simple dataset management"
 dynamic = ["version"]
 name = "shelephant"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.6"
 
 [project.scripts]
 shelephant_cp = "shelephant:_shelephant_cp_main"
 shelephant_diff = "shelephant:_shelephant_diff_main"
 shelephant_dump = "shelephant:_shelephant_dump_main"
-shelephant_extract = "shelephant.cli.shelephant_extract:main"
 shelephant_hostinfo = "shelephant:_shelephant_hostinfo_main"
-shelephant_merge = "shelephant.cli.shelephant_merge:main"
 shelephant_mv = "shelephant:_shelephant_mv_main"
 shelephant_parse = "shelephant:_shelephant_parse_main"
 shelephant_rm = "shelephant:_shelephant_rm_main"
