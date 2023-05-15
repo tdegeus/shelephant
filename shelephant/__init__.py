@@ -188,20 +188,6 @@ def shelephant_dump(args: list[str]):
     yaml.dump(args.output, files, args.force)
 
 
-def _shelephant_cp_parser_common(parser: argparse.ArgumentParser):
-    """
-    Set common parser arguments for :py:func:`shelephant_cp` and :py:func:`shelephant_mv`.
-    """
-
-    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
-    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
-    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
-    parser.add_argument("-v", "--version", action="version", version=version)
-    parser.add_argument("path", type=pathlib.Path, nargs="+", help="Source/destination.")
-    return parser
-
-
 def _shelephant_cp_parser():
     """
     Return parser for :py:func:`shelephant_cp`.
@@ -214,12 +200,9 @@ def _shelephant_cp_parser():
 
     Usage::
 
-        shelephant_cp [source.yaml] <dest_dirname>
-        shelephant_cp [source.yaml] <dest_dirname_on_host> --ssh <user@host>
-        shelephant_cp [source.yaml] <hostinfo.yaml>
-        shelephant_cp <source_hostinfo.yaml> <dest_hostinfo.yaml>
-
-    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+        shelephant_cp <sourceinfo.yaml> <dest_dirname>
+        shelephant_cp <sourceinfo.yaml> <dest_dirname_on_host> --ssh <user@host>
+        shelephant_cp <sourceinfo.yaml> <destinfo.yaml>
     """
     )
 
@@ -231,77 +214,14 @@ def _shelephant_cp_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser = _shelephant_cp_parser_common(parser)
+    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("source", type=pathlib.Path, help="Source information.")
+    parser.add_argument("dest", type=pathlib.Path, help="Destination directory/information.")
     return parser
-
-
-def _interpret_common_cp(args: argparse.ArgumentParser, has_rsync: bool):
-    """
-    Parse / interpret common arguments for :py:func:`shelephant_cp` and :py:func:`shelephant_mv`.
-
-    :param args: Parsed arguments.
-    :param has_rsync: Whether ``rsync`` is available.
-    :return: ``(files, source, dest, status)`` as follows:
-        -   ``files``: List of files to copy.
-        -   ``source``: Source directory (including SSH host if needed).
-        -   ``dest``: Destination directory (including SSH host if needed).
-        -   ``status``: Status of files::
-
-            {
-                "==": [],  # files are identical
-                "->": [],  # files not on destination
-                ...
-            }
-    """
-
-    # interpret CL arguments
-
-    if len(args.path) == 1:
-        source = f_dump
-        dest = args.path[0]
-    elif len(args.path) == 2:
-        source = args.path[0]
-        dest = args.path[1]
-    else:
-        raise OSError("Too many arguments specified")
-
-    # convert CL arguments to information
-
-    source = dataset.Location.from_yaml(source)
-
-    if dest.is_file():
-        dest = dataset.Location.from_yaml(dest)
-    elif dest.is_dir() or args.ssh is not None:
-        dest = dataset.Location(root=dest)
-    else:
-        raise OSError("Destination must be a YAML-file or directory")
-
-    if args.ssh is not None:
-        dest.ssh = args.ssh
-
-    if source.ssh or dest.ssh:
-        assert has_rsync, "rsync not found, cannot copy over SSH"
-
-    # check status based on specified sha256
-
-    equal = source.diff(dest)["=="]
-    files = source.files(info=False)
-    source = source.hostpath
-    dest = dest.hostpath
-    for file in equal:
-        files.pop(file)
-
-    # check status of remaining files
-
-    if has_rsync:
-        status = rsync.diff(source, dest, files)
-        status["=="] += equal
-    else:
-        status = local.diff(source, dest, files)
-        status["=="] = equal
-
-    assert status.pop("<-", []) == [], "Cannot copy from destination to source"
-    return files, source, dest, status, sum(len(status[key]) for key in status) - len(status["=="])
 
 
 def shelephant_cp(args: list[str]):
@@ -310,10 +230,32 @@ def shelephant_cp(args: list[str]):
     :param args: Command-line arguments (should be all strings).
     """
 
-    has_rsync = shutil.which("rsync") is not None
     parser = _shelephant_cp_parser()
     args = parser.parse_args(args)
-    files, source, dest, status, ncp = _interpret_common_cp(args, has_rsync)
+
+    source = dataset.Location.from_yaml(args.source)
+
+    if args.dest.is_file():
+        dest = dataset.Location.from_yaml(args.dest)
+    else:
+        dest = dataset.Location(root=args.dest, ssh=args.ssh)
+
+    equal = source.diff(dest)["=="]
+    files = source.files(info=False)
+    for file in equal:
+        files.pop(file)
+    source = source.hostpath
+    dest = dest.hostpath
+    has_rsync = shutil.which("rsync") is not None
+
+    if has_rsync:
+        status = rsync.diff(source, dest, files)
+    else:
+        status = local.diff(source, dest, files)
+
+    assert status.pop("<-", []) == [], "Cannot copy from destination to source"
+    status["=="] = status.pop("==", []) + equal
+    ncp = sum(len(status[key]) for key in status) - len(status["=="])
 
     if len(files) == 0:
         print("Nothing to copy")
@@ -360,7 +302,7 @@ def _shelephant_mv_parser():
     )
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser = _shelephant_cp_parser_common(parser)
+    # parser = _shelephant_cp_parser_common(parser)
     parser.add_argument("--temp", action="store_true", help="Fully copy file before removing.")
     parser.add_argument(
         "--verify", action="store_true", help="Use --copy but check sha256 before removing."
@@ -397,34 +339,53 @@ def _shelephant_rm_parser():
     return parser
 
 
-def _shelephant_get_parser():
-    """
-    Return parser for :py:func:`shelephant_get`.
-    """
+# def _shelephant_get_parser():
+#     """
+#     Return parser for :py:func:`shelephant_get`.
+#     """
 
-    class MyFmt(
-        argparse.RawDescriptionHelpFormatter,
-        argparse.ArgumentDefaultsHelpFormatter,
-        argparse.MetavarTypeHelpFormatter,
-    ):
-        pass
+#     class MyFmt(
+#         argparse.RawDescriptionHelpFormatter,
+#         argparse.ArgumentDefaultsHelpFormatter,
+#         argparse.MetavarTypeHelpFormatter,
+#     ):
+#         pass
 
-    desc = textwrap.dedent(
-        """\
-    Copy files from a remote directory (on a remote host) to the current directory.
+#     desc = textwrap.dedent(
+#         """\
+#     Copy files from a remote directory (on a remote host) to the current directory.
 
-    Usage::
+#     Usage::
 
-        shelephant_get <source>
-        shelephant_get <source> --ssh <user@host>
-        shelephant_get [hostinfo.yaml]
+#         shelephant_get [shelephant_hostinfo.yaml]
+#     """
+#     )
 
-    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
-    """
-    )
+#     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+#     parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+#     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+#     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+#     parser.add_argument("-v", "--version", action="version", version=version)
+#     parser.add_argument("hostinfo", nargs="?", default=f_hostinfo)
+#     return parser
 
-    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    return parser
+
+# def shelephant_get(args: list[str]):
+#     """
+#     Command-line tool, see ``--help``.
+#     :param args: Command-line arguments (should be all strings).
+#     """
+
+#     parser = _shelephant_get_parser()
+#     args = parser.parse_args(args)
+#     loc = dataset.Location.from_yaml(args.hostinfo)
+#     _copy(
+#         source=loc.hostpath,
+#         dest=".",
+#         files=loc.files(info=False),
+#         has_rsync=shutil.which("rsync") is not None,
+#         args=args,
+#     )
 
 
 def _shelephant_hostinfo_parser():

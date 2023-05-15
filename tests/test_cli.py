@@ -58,6 +58,9 @@ class Test_shelephant_dump(unittest.TestCase):
 
 class Test_shelephant_cp(unittest.TestCase):
     def test_basic(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <dest_dirname>
+        """
         with tempdir():
             pathlib.Path("src").mkdir()
             pathlib.Path("dest").mkdir()
@@ -70,12 +73,15 @@ class Test_shelephant_cp(unittest.TestCase):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 check = create_dummy_files(files)
                 shelephant_dump(files)
-                shelephant_cp(["-f", "--quiet", "../dest"])
+                shelephant_cp(["-f", "--quiet", shelephant.f_dump, "../dest"])
 
             data = shelephant.dataset.Location(root="dest", files=files).getinfo()
             self.assertTrue(check == data)
 
     def test_destinfo(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <destinfo.yaml>
+        """
         with tempdir():
             pathlib.Path("src").mkdir()
             pathlib.Path("dest").mkdir()
@@ -89,12 +95,15 @@ class Test_shelephant_cp(unittest.TestCase):
                 check = create_dummy_files(files)
                 shelephant_dump(files)
                 shelephant_hostinfo(["../dest"])
-                shelephant_cp(["-f", "--quiet", shelephant.f_hostinfo])
+                shelephant_cp(["-f", "--quiet", shelephant.f_dump, shelephant.f_hostinfo])
 
             data = shelephant.dataset.Location(root="dest", files=files).getinfo()
             self.assertTrue(check == data)
 
     def test_sourceinfo(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <dest_dirname>
+        """
         with tempdir():
             pathlib.Path("src").mkdir()
             pathlib.Path("dest").mkdir()
@@ -117,6 +126,9 @@ class Test_shelephant_cp(unittest.TestCase):
             self.assertTrue(check == data)
 
     def test_ssh_send(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <dest_dirname_on_host> --ssh <user@host>
+        """
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
@@ -130,7 +142,28 @@ class Test_shelephant_cp(unittest.TestCase):
 
         self.assertTrue(check == data)
 
+    def test_ssh_send2(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <remote_destinfo.yaml>
+        """
+        if not has_ssh:
+            raise unittest.SkipTest("'ssh localhost' does not work")
+
+        with tempdir(), shelephant.ssh.tempdir("localhost") as remote:
+            files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+            check = create_dummy_files(files)
+            shelephant_dump(files)
+            shelephant_hostinfo([str(remote), "--ssh", "localhost"])
+
+            shelephant_cp(["-f", "--quiet", shelephant.f_dump, shelephant.f_hostinfo])
+            data = shelephant.dataset.Location(root=remote, files=files).getinfo()
+
+        self.assertTrue(check == data)
+
     def test_ssh_get(self):
+        """
+        shelephant_cp <remote_sourceinfo.yaml> <dest_dirname>
+        """
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
@@ -140,7 +173,7 @@ class Test_shelephant_cp(unittest.TestCase):
                 check = create_dummy_files(files)
                 shelephant_dump(files)
 
-            shelephant_hostinfo([str(remote), "-d", "--ssh", "localhost"])
+            shelephant_hostinfo([str(remote), "--ssh", "localhost", "-d"])
             shelephant_cp(["-f", "--quiet", shelephant.f_hostinfo, "."])
             data = shelephant.dataset.Location(root=".", files=files).getinfo()
 

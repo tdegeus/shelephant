@@ -1,4 +1,3 @@
-import shutil
 import pathlib
 import shutil
 import unittest
