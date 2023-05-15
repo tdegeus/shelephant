@@ -379,63 +379,49 @@ def _shelephant_rm_parser():
 
     Usage::
 
-        shelephant_rm [source.yaml]
-
-    whereby ``[source.yaml]`` defaults to ``shelephant_dump.yaml``.
+        shelephant_rm <sourceinfo.yaml>
     """
     )
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Remove without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("source", type=pathlib.Path, help="Source information.")
     return parser
 
 
-# def _shelephant_get_parser():
-#     """
-#     Return parser for :py:func:`shelephant_get`.
-#     """
+def shelephant_rm(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+    :param args: Command-line arguments (should be all strings).
+    """
 
-#     class MyFmt(
-#         argparse.RawDescriptionHelpFormatter,
-#         argparse.ArgumentDefaultsHelpFormatter,
-#         argparse.MetavarTypeHelpFormatter,
-#     ):
-#         pass
+    parser = _shelephant_rm_parser()
+    args = parser.parse_args(args)
+    assert args.source.is_file(), "Source must be a file"
+    assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run"
 
-#     desc = textwrap.dedent(
-#         """\
-#     Copy files from a remote directory (on a remote host) to the current directory.
+    source = dataset.Location.from_yaml(args.source)
+    assert source.ssh is None, "Cannot move from remote"
+    files = source.files(info=False)
+    source = source.root
 
-#     Usage::
+    if len(files) == 0:
+        print("Nothing to remove")
+        return
 
-#         shelephant_get [shelephant_hostinfo.yaml]
-#     """
-#     )
+    if not args.force:
+        for file in files:
+            print(f"rm {file:s}")
+        if args.dry_run:
+            return
+        if not click.confirm("Proceed?"):
+            raise OSError("Cancelled")
 
-#     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-#     parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
-#     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
-#     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
-#     parser.add_argument("-v", "--version", action="version", version=version)
-#     parser.add_argument("hostinfo", nargs="?", default=f_hostinfo)
-#     return parser
-
-
-# def shelephant_get(args: list[str]):
-#     """
-#     Command-line tool, see ``--help``.
-#     :param args: Command-line arguments (should be all strings).
-#     """
-
-#     parser = _shelephant_get_parser()
-#     args = parser.parse_args(args)
-#     loc = dataset.Location.from_yaml(args.hostinfo)
-#     _copy(
-#         source=loc.hostpath,
-#         dest=".",
-#         files=loc.files(info=False),
-#         has_rsync=shutil.which("rsync") is not None,
-#         args=args,
-#     )
+    local.remove(source, files, progress=not args.quiet)
 
 
 def _shelephant_hostinfo_parser():
@@ -689,6 +675,14 @@ def _shelephant_parse_main():
 
 def _shelephant_cp_main():
     shelephant_cp(sys.argv[1:])
+
+
+def _shelephant_mv_main():
+    shelephant_mv(sys.argv[1:])
+
+
+def _shelephant_rm_main():
+    shelephant_rm(sys.argv[1:])
 
 
 def _shelephant_dump_main():

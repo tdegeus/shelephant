@@ -11,6 +11,7 @@ from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
 from shelephant import shelephant_mv
 from shelephant import shelephant_parse
+from shelephant import shelephant_rm
 from shelephant._tests import create_dummy_files
 from shelephant.search import cwd
 from shelephant.search import tempdir
@@ -331,8 +332,9 @@ class Test_shelephant_mv(unittest.TestCase):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 check = create_dummy_files(files)
                 shelephant_dump(files)
-                shelephant_mv(["-n", "--colors", "none", shelephant.f_dump, "../dest"])
-                shelephant_mv(["-f", "--quiet", shelephant.f_dump, "../dest"])
+                args = [shelephant.f_dump, "../dest"]
+                shelephant_mv(["-n", "--colors", "none"] + args)
+                shelephant_mv(["-f", "--quiet"] + args)
                 self.assertFalse(any([os.path.exists(f) for f in files]))
 
             data = shelephant.dataset.Location(root="dest", files=files).getinfo()
@@ -343,6 +345,33 @@ class Test_shelephant_mv(unittest.TestCase):
             "bar.txt => bar.txt",
             "more.txt -> more.txt",
             "even_more.txt -> even_more.txt",
+        ]
+        ret = sio.getvalue()
+        ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
+        self.assertEqual(ret, expect)
+
+
+class Test_shelephant_rm(unittest.TestCase):
+    def test_basic(self):
+        """
+        shelephant_rm <sourceinfo.yaml>
+        """
+        with tempdir(), contextlib.redirect_stdout(io.StringIO()) as sio:
+            pathlib.Path("src").mkdir()
+
+            files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+            create_dummy_files(files)
+            shelephant_dump(files)
+            args = [shelephant.f_dump]
+            shelephant_rm(["-n", "--colors", "none"] + args)
+            shelephant_rm(["-f", "--quiet"] + args)
+            self.assertFalse(any([os.path.exists(f) for f in files]))
+
+        expect = [
+            "rm foo.txt",
+            "rm bar.txt",
+            "rm more.txt",
+            "rm even_more.txt",
         ]
         ret = sio.getvalue()
         ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
