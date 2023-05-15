@@ -206,16 +206,16 @@ def _shelephant_cp_parser():
     """
 
     desc = textwrap.dedent(
-        """\
-    Copy files listed in a (field of a) YAML-file.
-    These filenames are assumed either relative to the YAML-file or absolute.
+        """
+        Copy files listed in a (field of a) YAML-file.
+        These filenames are assumed either relative to the YAML-file or absolute.
 
-    Usage::
+        Usage::
 
-        shelephant_cp <sourceinfo.yaml> <dest_dirname>
-        shelephant_cp <sourceinfo.yaml> <dest_dirname_on_host> --ssh <user@host>
-        shelephant_cp <sourceinfo.yaml> <destinfo.yaml>
-    """
+            shelephant_cp <sourceinfo.yaml> <dest_dirname>
+            shelephant_cp <sourceinfo.yaml> <dest_dirname_on_host> --ssh <user@host>
+            shelephant_cp <sourceinfo.yaml> <destinfo.yaml>
+        """
     )
 
     class MyFmt(
@@ -250,7 +250,6 @@ def shelephant_cp(args: list[str]):
     assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run"
 
     source = dataset.Location.from_yaml(args.source)
-
     if args.dest.is_file():
         dest = dataset.Location.from_yaml(args.dest)
     else:
@@ -517,7 +516,30 @@ def _shelephant_diff_parser():
     Return parser for :py:func:`shelephant_diff`.
     """
 
-    desc = "Compare local and remote files and list differences."
+    desc = textwrap.dedent(
+        """
+        Compare local and remote files and list differences.
+
+        Usage::
+
+            # compare file existence (and equality if rsync is available)
+            # requires source and dest to be available
+            shelephant_diff <sourceinfo.yaml> <dest_dirname>
+
+            # compare files based on precomputed information
+            # no live check is performed
+            shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
+
+            # different output
+            shelephant_diff <sourceinfo.yaml> <destinfo.yaml> --filter "->"
+            shelephant_diff <sourceinfo.yaml> <destinfo.yaml> --filter "?=, !="
+            shelephant_diff <sourceinfo.yaml> <destinfo.yaml> -o <diff.yaml>
+
+        Note that if filter contains only one operation the output YAML-file will be a list.
+        """
+    )
+
+    desc = ""
 
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
@@ -527,28 +549,16 @@ def _shelephant_diff_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser.add_argument("--version", action="version", version=version)
-    parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
-    parser.add_argument("--yaml", type=str, help="Dump as YAML file.")
+    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-o", "--output", type=pathlib.Path, help="Dump as YAML file.")
     parser.add_argument("--sort", type=str, help="Sort printed table by column.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
-    parser.add_argument("--checksum", action="store_true", help="Check sums.")
-    parser.add_argument("--get-new", type=str, help="Save to get '<-' files.")
-    parser.add_argument("--get-diff", type=str, help="Save to get ''!=' files.")
-    parser.add_argument("--get-all", type=str, help="Save to get '<-' and '!=' files.")
-    parser.add_argument("--send-new", type=str, nargs=2, help="Save to send '<-' files.")
-    parser.add_argument("--send-diff", type=str, nargs=2, help="Save to send ''!=' files.")
-    parser.add_argument("--send-all", type=str, nargs=2, help="Save to send '<-' and '!=' files.")
-    parser.add_argument(
-        "local", type=str, nargs="?", default=f_dump, help="Local files, see shelephant_dump."
-    )
-    parser.add_argument(
-        "remote",
-        type=str,
-        nargs="?",
-        default=f_hostinfo,
-        help="Remote files, see shelephant_hostinfo.",
-    )
+    parser.add_argument("--filter", type=str, help="Filter to direction (separated by ',').")
+    parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("source", type=pathlib.Path, help="Source information.")
+    parser.add_argument("dest", type=pathlib.Path, help="Destination directory/information.")
     return parser
 
 
@@ -558,110 +568,65 @@ def shelephant_diff(args: list[str]):
     :param args: Command-line arguments (should be all strings).
     """
 
+    has_rsync = shutil.which("rsync") is not None
     parser = _shelephant_diff_parser()
     args = parser.parse_args(args)
+    assert args.source.is_file(), "Source must be a file"
 
-    local = yaml.read(args.local)
-    remote = yaml.read(args.remote)
-
-    if type(local) is list:
-        local = {"files": local, "prefix": os.path.dirname(args.local), "list": True}
-    if type(remote) is list:
-        remote = {"files": remote, "prefix": os.path.dirname(args.remote), "list": True}
-
-    for field in [local, remote]:
-        if "host" in field:
-            field["dirname"] = field["host"] + ":" + field["prefix"]
+    source = dataset.Location.from_yaml(args.source)
+    if args.dest.is_file():
+        dest = dataset.Location.from_yaml(args.dest)
+        status = source.diff(dest)
+    else:
+        dest = dataset.Location(root=args.dest, ssh=args.ssh)
+        files = source.files(info=False)
+        if has_rsync:
+            status = rsync.diff(source.hostpath, dest.hostpath, files)
         else:
-            field["dirname"] = field["prefix"]
+            assert source.ssh is None, "Specify sourceinfo, or install rsync"
+            assert dest.ssh is None, "Specify destinfo, or install rsync"
+            status = local.diff(source.hostpath, dest.hostpath, files)
 
-        if len(field["dirname"]) == 0:
-            field["dirname"] = "."
+    for key in list(status.keys()):
+        if len(status[key]) == 0:
+            del status[key]
 
-        field["files"] = np.array(field["files"])
+    if args.filter:
+        keys = [key.strip() for key in args.filter.split(",")]
+        status = {key: status[key] for key in keys}
 
-    ret = {}
-
-    to_remote = rsync.diff(
-        source_dir=local["dirname"],
-        dest_dir=remote["dirname"],
-        files=local["files"],
-        checksum=args.checksum,
-    )
-    ret["=="] = list(local["files"][to_remote["skip"]])
-    ret["!="] = list(local["files"][to_remote["overwrite"]])
-    ret["->"] = list(local["files"][to_remote["create"]])
-
-    from_remote = rsync.diff(
-        source_dir=remote["dirname"],
-        dest_dir=local["dirname"],
-        files=remote["files"],
-        checksum=args.checksum,
-    )
-    ret["=="] += list(remote["files"][from_remote["skip"]])
-    ret["!="] += list(remote["files"][from_remote["overwrite"]])
-    ret["<-"] = list(remote["files"][from_remote["create"]])
-
-    for key in ["==", "!="]:
-        ret[key] = [str(i) for i in np.unique(ret[key])]
-    for key in ["->", "<-"]:
-        ret[key] = [str(i) for i in ret[key]]
-
-    stop = False
-
-    for filename, value in zip(
-        [args.get_new, args.get_diff, args.get_all], [ret["<-"], ret["!="], ret["<-"] + ret["!="]]
-    ):
-        if filename is not None:
-            stop = True
-            tmp = {"files": value}
-            for key in ["host", "prefix"]:
-                if key in remote:
-                    tmp[key] = remote[key]
-            yaml.dump(filename, tmp, force=args.force)
-
-    for filename, value in zip(
-        [args.send_new, args.send_diff, args.send_all],
-        [ret["->"], ret["!="], ret["->"] + ret["!="]],
-    ):
-        if filename is not None:
-            assert "host" not in local, "Not supported by shelephant_send."
-            assert len(os.path.dirname(args.local)) == 0, "Not supported by shelephant_send."
-            stop = True
-
-            yaml.dump(filename[0], value, force=args.force)
-
-            tmp = {}
-            for key in ["host", "prefix"]:
-                if key in remote:
-                    tmp[key] = remote[key]
-            yaml.dump(filename[1], tmp, force=args.force)
-
-    if args.yaml is not None:
-        yaml.dump(args.yaml, ret, force=args.force)
-        stop = True
-
-    if stop:
-        return 0
+    if args.output:
+        if len(status) == 1:
+            status = status[list(status.keys())[0]]
+        yaml.dump(args.output, status, force=args.force)
+        return
 
     out = prettytable.PrettyTable()
     if args.table == "PLAIN_COLUMNS":
         out.set_style(prettytable.PLAIN_COLUMNS)
     elif args.table == "SINGLE_BORDER":
         out.set_style(prettytable.SINGLE_BORDER)
-    out.field_names = ["local", "sync", "remote"]
-    out.align["local"] = "l"
+    out.field_names = ["source", "sync", "dest"]
+    out.align["source"] = "l"
     out.align["sync"] = "c"
-    out.align["remote"] = "l"
+    out.align["dest"] = "l"
 
-    for item in ret["!="]:
-        out.add_row([item, "!=", item])
+    left = status.pop("->", [])
+    right = status.pop("<-", [])
+    equal = status.pop("==", [])
 
-    for item in ret["->"]:
+    for key in status:
+        for item in status[key]:
+            out.add_row([item, key, item])
+
+    for item in left:
         out.add_row([item, "->", ""])
 
-    for item in ret["<-"]:
+    for item in right:
         out.add_row(["", "<-", item])
+
+    for item in equal:
+        out.add_row([item, "==", item])
 
     if args.sort is None:
         print(out.get_string())
