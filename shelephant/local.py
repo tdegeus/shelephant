@@ -5,6 +5,24 @@ import numpy as np
 import tqdm
 
 
+def remove(
+    source_dir: str,
+    files: list[str],
+    progress: bool = True,
+):
+    """
+    Remove files using os.remove.
+
+    :param source_dir: Source directory
+    :param dest_dir: Source directory
+    :param files: List of file-paths (relative to ``source_dir`` and ``dest_dir``).
+    :param progress: Show progress bar.
+    """
+
+    for file in tqdm.tqdm(files, disable=not progress):
+        os.remove(os.path.join(source_dir, file))
+
+
 def move(
     source_dir: str,
     dest_dir: str,

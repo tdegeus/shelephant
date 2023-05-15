@@ -20,7 +20,7 @@ shelephant_hostinfo = "shelephant:_shelephant_hostinfo_main"
 shelephant_merge = "shelephant.cli.shelephant_merge:main"
 shelephant_mv = "shelephant:_shelephant_mv_main"
 shelephant_parse = "shelephant:_shelephant_parse_main"
-shelephant_rm = "shelephant.cli.shelephant_rm:main"
+shelephant_rm = "shelephant:_shelephant_rm_main"
 
 [project.urls]
 Source = "https://github.com/tdegeus/shelephant"
