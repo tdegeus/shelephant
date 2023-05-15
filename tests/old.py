@@ -247,21 +247,3 @@ class Test_diff(unittest.TestCase):
 
         shutil.rmtree("mysrc")
         shutil.rmtree("mydest")
-
-
-class Test_parse(unittest.TestCase):
-    def test_basic(self):
-        with open("foo.txt", "w") as file:
-            file.write("foo")
-
-        with open("bar.txt", "w") as file:
-            file.write("bar")
-
-        shelephant_dump(["-f", "foo.txt", "bar.txt"])
-        output = run("shelephant_parse shelephant_dump.yaml")
-
-        self.assertEqual(list(filter(None, output.split("\n"))), ["- foo.txt", "- bar.txt"])
-
-        os.remove("shelephant_dump.yaml")
-        os.remove("foo.txt")
-        os.remove("bar.txt")

@@ -1,3 +1,5 @@
+import contextlib
+import io
 import pathlib
 import unittest
 
@@ -5,11 +7,27 @@ import shelephant
 from shelephant import shelephant_cp
 from shelephant import shelephant_dump
 from shelephant import shelephant_hostinfo
+from shelephant import shelephant_parse
 from shelephant._tests import create_dummy_files
 from shelephant.search import cwd
 from shelephant.search import tempdir
 
 has_ssh = shelephant.ssh.has_keys_set("localhost")
+
+
+class Test_shelephant_parse(unittest.TestCase):
+    def test_basic(self):
+        """
+        shelephant_parse <file.yaml>
+        """
+        with tempdir(), contextlib.redirect_stdout(io.StringIO()) as file:
+            files = ["foo.txt", "bar.txt"]
+            create_dummy_files(files)
+            shelephant_dump(["-i"] + files)
+            check = pathlib.Path(shelephant.f_dump).read_text()
+            shelephant_parse([shelephant.f_dump])
+
+        self.assertEqual(file.getvalue().strip(), check.strip())
 
 
 class Test_shelephant_dump(unittest.TestCase):
