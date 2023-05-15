@@ -467,15 +467,7 @@ class Test_shelephant_diff(unittest.TestCase):
                 )
                 data = shelephant.yaml.read("foo.yaml")
 
-        expect = {
-            "<-": ["receive.txt"],
-            "->": ["more.txt", "even_more.txt"],
-        }
-
-        for key in expect:
-            expect[key] = expect[key]
-
-        self.assertEqual(data, expect)
+        self.assertEqual(data, ["more.txt", "even_more.txt"])
 
     def test_output_filter2(self):
         """
