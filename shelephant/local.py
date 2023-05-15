@@ -30,7 +30,7 @@ def move(
     progress: bool = True,
 ):
     """
-    Move files using os.rename.
+    Move files using os.replace.
 
     :param source_dir: Source directory
     :param dest_dir: Source directory
@@ -39,7 +39,7 @@ def move(
     """
 
     for file in tqdm.tqdm(files, disable=not progress):
-        os.rename(os.path.join(source_dir, file), os.path.join(dest_dir, file))
+        os.replace(os.path.join(source_dir, file), os.path.join(dest_dir, file))
 
 
 def copy(
