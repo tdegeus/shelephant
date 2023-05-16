@@ -7,7 +7,7 @@ Using conda
 
 The easiest is to use *conda* to install *shelephant*::
 
-    conda install -c conda-forge gooseslurm
+    conda install -c conda-forge shelephant
 
 This will install all the necessary runtime dependencies as well.
 
@@ -31,7 +31,3 @@ Installing GooseSLUM proceeds easily with ``pip``:
     python -m pip install .
 
 This should install all the necessary runtime dependencies as well.
-
-.. tip::
-
-    Add the ``--user`` option to the ``pip``-command to install in the user's home-folder.

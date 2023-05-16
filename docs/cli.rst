@@ -3,60 +3,45 @@
 Command-line tools
 ******************
 
-List files
-==========
-
 shelephant_dump
 ---------------
 
 .. argparse::
-    :module: shelephant.cli.shelephant_dump
+    :module: shelephant
     :func: _shelephant_dump_parser
     :prog: shelephant_dump
-
-shelephant_checksum
--------------------
-
-.. automodule:: shelephant.cli.shelephant_checksum
-
-Basic copying
-=============
-
-shelephant_cp
--------------
-
-.. automodule:: shelephant.cli.shelephant_cp
-
-shelephant_mv
--------------
-
-.. automodule:: shelephant.cli.shelephant_mv
-
-shelephant_rm
--------------
-
-.. automodule:: shelephant.cli.shelephant_rm
-
-Copying over SSH
-================
 
 shelephant_hostinfo
 -------------------
 
-.. automodule:: shelephant.cli.shelephant_hostinfo
+.. argparse::
+    :module: shelephant
+    :func: _shelephant_hostinfo_parser
+    :prog: shelephant_hostinfo
 
-shelephant_get
---------------
+shelephant_cp
+-------------
 
-.. automodule:: shelephant.cli.shelephant_get
+.. argparse::
+    :module: shelephant
+    :func: _shelephant_cp_parser
+    :prog: shelephant_cp
 
-shelephant_send
----------------
+shelephant_mv
+-------------
 
-.. automodule:: shelephant.cli.shelephant_send
+.. argparse::
+    :module: shelephant
+    :func: _shelephant_mv_parser
+    :prog: shelephant_mv
 
-Synchronisation information
-===========================
+shelephant_rm
+-------------
+
+.. argparse::
+    :module: shelephant
+    :func: _shelephant_rm_parser
+    :prog: shelephant_rm
 
 shelephant_diff
 ---------------
@@ -66,20 +51,10 @@ shelephant_diff
     :func: _shelephant_diff_parser
     :prog: shelephant_diff
 
-Modifying YAML-file
-===================
-
-shelephant_merge
-----------------
-
-.. automodule:: shelephant.cli.shelephant_merge
-
 shelephant_parse
 ----------------
 
-.. automodule:: shelephant.cli.shelephant_parse
-
-shelephant_extract
-------------------
-
-.. automodule:: shelephant.cli.shelephant_extract
+.. argparse::
+    :module: shelephant
+    :func: _shelephant_parse_parser
+    :prog: shelephant_parse

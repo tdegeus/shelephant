@@ -7,6 +7,7 @@ shelephant
    :maxdepth: 1
 
    getting.rst
+   copying.rst
    dataset.rst
 
 .. toctree::
@@ -15,13 +16,6 @@ shelephant
 
    cli.rst
    python.rst
-
-.. toctree::
-   :caption: DEVELOP
-   :maxdepth: 1
-
-   changelog.rst
-
 
 Indices and tables
 ==================

@@ -46,6 +46,15 @@ class Test_shelephant_dump(unittest.TestCase):
             data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
             self.assertTrue(check == data)
 
+    def test_search(self):
+        with tempdir():
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            check = create_dummy_files(files)
+            shelephant.yaml.dump("search.yaml", {"root": ".", "search": [{"rglob": "*.txt"}]})
+            shelephant_dump(["-i", "--search", "search.yaml"])
+            data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
+            self.assertTrue(check == data)
+
     def test_find(self):
         with tempdir():
             files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
@@ -79,6 +88,17 @@ class Test_shelephant_dump(unittest.TestCase):
             shelephant_dump(["-a", "-i", "-c", "find . -name '*.txt'"])
             data = shelephant.dataset.Location.from_yaml(shelephant.f_dump)
             self.assertTrue(check == data)
+
+
+class Test_shelephant_hostinfo(unittest.TestCase):
+    def test_search(self):
+        with tempdir():
+            files = ["foo.txt", "bar.txt"]
+            check = create_dummy_files(files)
+            shelephant.yaml.dump("info.yaml", {"root": ".", "search": [{"rglob": "*.txt"}]})
+            shelephant_hostinfo(["-iu", "info.yaml"])
+            loc = shelephant.dataset.Location.from_yaml("info.yaml")
+            self.assertTrue(check == loc)
 
 
 class Test_shelephant_cp(unittest.TestCase):
