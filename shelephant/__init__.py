@@ -51,6 +51,7 @@ def _shelephant_parse_parser():
 def shelephant_parse(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
@@ -74,7 +75,7 @@ def _shelephant_dump_parser():
 
     desc = textwrap.dedent(
         """\
-    Dump filenames ((relative) paths) to a YAML-file.
+    Dump filenames to a YAML-file.
 
     .. note::
 
@@ -97,6 +98,7 @@ def _shelephant_dump_parser():
     parser.add_argument(
         "-o", "--output", type=pathlib.Path, default=f_dump, help="Output YAML-file."
     )
+    parser.add_argument("--search", type=pathlib.Path, help='Run "search" in "root".')
     parser.add_argument("-a", "--append", action="store_true", help="Append existing file.")
     parser.add_argument("-i", "--info", action="store_true", help="Add information (sha256, size).")
     parser.add_argument(
@@ -110,6 +112,9 @@ def _shelephant_dump_parser():
         default=[],
         help='Exclude input with this extension (e.g. ".bak").',
     )
+    parser.add_argument(
+        "-k", "--keep", type=str, action="append", help="Keep only input matching this regex."
+    )
     parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
     parser.add_argument(
         "-c",
@@ -117,10 +122,7 @@ def _shelephant_dump_parser():
         action="store_true",
         help="Interpret arguments as a command (instead of as filenames) an run it.",
     )
-    parser.add_argument(
-        "-k", "--keep", type=str, action="append", help="Keep only input matching this regex."
-    )
-    parser.add_argument("--cwd", type=str, help="Directory to run the command in.")
+    parser.add_argument("--cwd", type=str, help="Directory to run ``--command``.")
     parser.add_argument(
         "--root", type=str, help="Root for relative paths (default: directory of output file)."
     )
@@ -130,7 +132,7 @@ def _shelephant_dump_parser():
         "-f", "--force", action="store_true", help="Overwrite output file without prompt."
     )
     parser.add_argument("-v", "--version", action="version", version=version, help="")
-    parser.add_argument("files", type=str, nargs="+", help="Filenames.")
+    parser.add_argument("files", type=str, nargs="*", help="Filenames.")
 
     return parser
 
@@ -138,28 +140,42 @@ def _shelephant_dump_parser():
 def shelephant_dump(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
     parser = _shelephant_dump_parser()
     args = parser.parse_args(args)
     files = args.files
+    assert not (args.command and args.cwd is not None), "Cannot use --cwd without --command."
 
-    if args.root:
-        root = args.root
+    if args.search:
+        assert len(files) == 0, "Cannot use both --search and filenames."
+        assert args.root is None, "Root inferred from --search."
+        assert not args.command, "Cannot use both --search and --command."
+        loc = dataset.Location.from_yaml(args.search)
+        loc.read()
+        if args.info:
+            loc.getinfo()
+        root = loc.root
+        files = loc.files(info=args.info)
     else:
-        root = args.output.parent
+        assert len(files) > 0, "Nothing to dump."
+        if args.root:
+            root = args.root
+        else:
+            root = args.output.parent
 
-    if args.command:
-        cmd = " ".join(files)
-        files = subprocess.check_output(cmd, shell=True, cwd=args.cwd).decode("utf-8").split("\n")
-        files = list(filter(None, files))
-        if args.cwd is not None:
-            files = [os.path.join(args.cwd, file) for file in files]
+        if args.command:
+            cmd = " ".join(files)
+            files = subprocess.check_output(cmd, shell=True, cwd=args.cwd).decode("utf-8")
+            files = list(filter(None, files.splitlines()))
+            if args.cwd is not None:
+                files = [os.path.join(args.cwd, file) for file in files]
 
     if args.abspath:
         files = [os.path.abspath(file) for file in files]
-    else:
+    elif args.search is None:
         files = [os.path.relpath(file, root) for file in files]
 
     if args.keep:
@@ -183,8 +199,8 @@ def shelephant_dump(args: list[str]):
     if args.fmt:
         files = [args.fmt.format(file) for file in files]
 
-    if args.info:
-        files = dataset.Location(root=".", files=files).getinfo().files(info=True)
+    if args.info and not args.search:
+        files = dataset.Location(root=root, files=files).getinfo().files(info=True)
 
     if args.append:
         main = yaml.read(args.output)
@@ -225,7 +241,7 @@ def _shelephant_cp_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument("--ssh", type=str, help="SSH destination (e.g. user@host).")
     parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
     parser.add_argument(
         "--mode",
@@ -245,6 +261,7 @@ def _shelephant_cp_parser():
 def shelephant_cp(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
@@ -339,6 +356,7 @@ def _shelephant_mv_parser():
 def shelephant_mv(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
@@ -406,6 +424,7 @@ def _shelephant_rm_parser():
 def shelephant_rm(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
@@ -463,13 +482,19 @@ def _shelephant_hostinfo_parser():
 
         1.  Create *hostinfo*::
 
+                # set "root"
                 shelephant_hostinfo <path>
+
+                # set "root" and "ssh"
                 shelephant_hostinfo <path> --ssh <user@host>
+
+                # set "root" (and "ssh") and "dump", and update "files"
                 shelephant_hostinfo <path> --dump [shelephant_dump.yaml]
                 shelephant_hostinfo <path> --dump [shelephant_dump.yaml] --ssh <user@host>
 
         2.  Update *hostinfo* (update "files")::
 
+                # update "files" based on "dump" or "search"
                 shelephant_hostinfo --update [shelephant_hostinfo.yaml]
         """
     )
@@ -489,7 +514,7 @@ def _shelephant_hostinfo_parser():
     )
     parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
     parser.add_argument(
-        "--update", action="store_true", help='Update "files" based on "dump" or "search".'
+        "-u", "--update", action="store_true", help='Update "files" based on "dump" or "search".'
     )
     parser.add_argument("-i", "--info", action="store_true", help="Add information (sha256, size).")
     parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
@@ -501,6 +526,7 @@ def _shelephant_hostinfo_parser():
 def shelephant_hostinfo(args: list[str]):
     """
     Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 
@@ -508,7 +534,7 @@ def shelephant_hostinfo(args: list[str]):
     args = parser.parse_args(args)
 
     if args.update:
-        assert args.output == f_hostinfo, "No customisation allowed in --update mode."
+        assert str(args.output) == f_hostinfo, "No customisation allowed in --update mode."
         assert args.dump is None, "No customisation allowed in --update mode."
         assert args.ssh is None, "No customisation allowed in --update mode."
         loc = dataset.Location.from_yaml(args.path)
@@ -555,7 +581,7 @@ def _shelephant_diff_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser.add_argument("--ssh", type=str, help="Remote SSH host (e.g. user@host).")
+    parser.add_argument("--ssh", type=str, help="SSH destination (e.g. user@host).")
     parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
     parser.add_argument(
         "--mode", type=str, help="Use 'sha256', 'rsync', or 'basic'.", default="sha256"
@@ -573,7 +599,8 @@ def _shelephant_diff_parser():
 
 def shelephant_diff(args: list[str]):
     """
-    Command-line tool to print datasets from a file, see ``--help``.
+    Command-line tool, see ``--help``.
+
     :param args: Command-line arguments (should be all strings).
     """
 

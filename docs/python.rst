@@ -10,6 +10,40 @@ Dataset
 
     shelephant.dataset.Location
 
+SSH interface
+-------------
+
+.. autosummary::
+
+    shelephant.ssh.file_exists
+    shelephant.ssh.has_keys_set
+    shelephant.ssh.tempdir
+
+scp interface
+-------------
+
+.. autosummary::
+
+    shelephant.scp.copy
+
+rsync interface
+---------------
+
+.. autosummary::
+
+    shelephant.rsync.diff
+    shelephant.rsync.copy
+
+local interface
+---------------
+
+.. autosummary::
+
+    shelephant.local.diff
+    shelephant.local.copy
+    shelephant.local.remove
+    shelephant.local.move
+
 Type conversion
 ---------------
 
@@ -20,7 +54,7 @@ Type conversion
     shelephant.convert.get
     shelephant.convert.split_key
 
-yaml handling
+YAML handling
 -------------
 
 .. autosummary::
@@ -28,72 +62,96 @@ yaml handling
     shelephant.yaml.read
     shelephant.yaml.read_item
     shelephant.yaml.dump
-    shelephant.yaml.view
+    shelephant.yaml.preview
+
+File information
+----------------
+
+.. autosummary::
+
+    shelephant.info.getinfo
 
 File operations
 ---------------
 
 .. autosummary::
 
-    shelephant.path.check_allisfile
     shelephant.path.filter_deepest
     shelephant.path.dirnames
     shelephant.path.makedirs
-    shelephant.path.overwrite
-
-File-path operations
---------------------
-
-.. autosummary::
-
-    shelephant.relpath.add_prefix
-    shelephant.relpath.chroot
-
-Checksum
---------
-
-.. autosummary::
-
-    shelephant.checksum.sha256
-    shelephant.checksum.get
-
-ssh queries
------------
-
-.. autosummary::
-
-    shelephant.ssh.file_exists
-
-scp copy
---------
-
-.. autosummary::
-
-    shelephant.scp.from_remote
-    shelephant.scp.to_remote
-
-rsync copy and queries
-----------------------
-
-.. autosummary::
-
-    shelephant.rsync.diff
-    shelephant.rsync.from_remote
-    shelephant.rsync.to_remote
 
 Formatted print
 ---------------
 
 .. autosummary::
 
-    shelephant.rich.theme
-    shelephant.rich.String
+    shelephant.output.copyplan
 
+Command-line interface
+----------------------
+
+.. autosummary::
+
+    shelephant.shelephant_cp
+    shelephant.shelephant_diff
+    shelephant.shelephant_dump
+    shelephant.shelephant_hostinfo
+    shelephant.shelephant_mv
+    shelephant.shelephant_parse
+    shelephant.shelephant_rm
 
 Details
 -------
 
 .. automodule:: shelephant
+    :members:
+
+convert
+:::::::
+
+.. automodule:: shelephant.convert
+    :members:
+
+dataset
+:::::::
+
+.. autoclass:: shelephant.dataset.Location
+    :members:
+
+info
+::::
+
+.. automodule:: shelephant.info
+    :members:
+
+local
+:::::
+
+.. automodule:: shelephant.local
+    :members:
+
+output
+::::::
+
+.. automodule:: shelephant.output
+    :members:
+
+path
+::::
+
+.. automodule:: shelephant.path
+    :members:
+
+rsync
+:::::
+
+.. automodule:: shelephant.rsync
+    :members:
+
+scp
+:::
+
+.. automodule:: shelephant.scp
     :members:
 
 search
@@ -102,8 +160,14 @@ search
 .. automodule:: shelephant.search
     :members:
 
-dataset
-::::::
+ssh
+:::
 
-.. autoclass:: shelephant.dataset.Location
+.. automodule:: shelephant.ssh
+    :members:
+
+yaml
+::::
+
+.. automodule:: shelephant.yaml
     :members:

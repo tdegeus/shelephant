@@ -109,15 +109,18 @@ class Location:
         :param other: Other location.
         :return: True if equal, False otherwise.
         """
+        if len(self._files) != len(other._files):
+            return False
+
         a = np.argsort(self._files)
         b = np.argsort(other._files)
 
         return (
-            np.all(np.array(self._files)[a] == np.array(other._files)[b])
-            and np.all(np.array(self._sha256)[a] == np.array(other._sha256)[b])
-            and np.all(np.array(self._size)[a] == np.array(other._size)[b])
-            and np.all(np.array(self._has_sha256)[a] == np.array(other._has_sha256)[b])
-            and np.all(np.array(self._has_size)[a] == np.array(other._has_size)[b])
+            np.all(np.equal(np.array(self._files)[a], np.array(other._files)[b]))
+            and np.all(np.equal(np.array(self._sha256)[a], np.array(other._sha256)[b]))
+            and np.all(np.equal(np.array(self._size)[a], np.array(other._size)[b]))
+            and np.all(np.equal(np.array(self._has_sha256)[a], np.array(other._has_sha256)[b]))
+            and np.all(np.equal(np.array(self._has_size)[a], np.array(other._has_size)[b]))
         )
 
     @classmethod

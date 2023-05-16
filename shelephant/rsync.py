@@ -23,7 +23,7 @@ def copy(
     progress: bool = True,
 ):
     """
-    Copy files using rsync.
+    Copy files using *rsync*.
     This a wrapper around ``rsync {options:s} --files-from``.
 
     :param source_dir: Source directory. If remote: ``[user@]host:path``.

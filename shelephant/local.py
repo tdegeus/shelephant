@@ -11,7 +11,7 @@ def remove(
     progress: bool = True,
 ):
     """
-    Remove files using os.remove.
+    Remove files using ``os.remove``.
 
     :param source_dir: Source directory
     :param dest_dir: Source directory
@@ -30,7 +30,7 @@ def move(
     progress: bool = True,
 ):
     """
-    Move files using os.replace.
+    Move files using ``os.replace``.
 
     :param source_dir: Source directory
     :param dest_dir: Source directory
@@ -49,7 +49,7 @@ def copy(
     progress: bool = True,
 ):
     """
-    Copy files using shutil.copy2.
+    Copy files using ``shutil.copy2``.
 
     :param source_dir: Source directory
     :param dest_dir: Source directory

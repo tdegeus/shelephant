@@ -50,7 +50,7 @@ You can do this by:
 
 .. code-block:: bash
 
-    shelephant storage "laptop" "/path/to/my/data" --iname ".*h5" --ignore "bak.*"
+    shelephant storage "laptop" "/path/to/my/data" --rglob "*.h5" --skip "bak.*" --skip "\..*"
 
 This will:
 
@@ -66,16 +66,28 @@ This will:
 
         root: /path/to/my/data  # may be relative
         search:
-            - iname: # reduce present files to matching name (Python regex)
-                - '.*h5'
-            - ignore: # ignore files (Python regex)
-                - bak.*
+            - rglob: '*.h5'             # run as pathlib.Path(root).rglob(PATTERN)
+              skip: ['\..*, 'bak.*']    # ignore path(s) (Python regex)
+
+    .. tip::
+
+        Don't hesitate to modify this file by hand.
+        For example, you may want to have multiple "search" entries. For example:
+
+        .. code-block:: yaml
+
+            root: /path/to/my/data  # may be relative
+            search:
+                - rglob: '*.h5'
+                  skip: ['\..*, 'bak.*']
+                - rglob: '*.yaml'
+                  skip: ['\..*, 'bak.*', 'shelephant.*']
 
     .. note::
 
-        "search" is not mandatory.
-        Instead you can specify the managed files by hand (see below).
-        However, it is very useful to use "search" to automatically add files to the dataset.
+        "search" is not mandatory but highly recommended.
+        Instead you can rely on a "dump" file in the source directory (see ``shelephant_dump``).
+        If you specify neither "search" nor "dump" you have to specify the managed files by hand (see below).
 
 2.  Update the available storage locations in
 
@@ -151,7 +163,7 @@ Then:
 
 .. code-block:: bash
 
-    shelephant storage "usb" "/media/myusb/mydata" --rglob ".*h5" --ignore "bak.*"
+    shelephant storage "usb" "/media/myusb/mydata" --rglob "*.h5" --skip "\..*"
 
 This will:
 
@@ -167,10 +179,8 @@ This will:
 
         root: /media/myusb/mydata
         search:
-            - rglob: '*h5'              # pathlib.Path(root).rglob(PATTERN)
-              skip: ['\..*']            # ignore path(s) (Python regex)
-            - exec: find . -name '*py'  # command to execute from root
-              skip: ['\..*']            # ignore path(s) (Python regex)
+            - rglob: '*.h5'
+              skip: '\..*'
 
 2.  Update the available storage locations in
 
@@ -210,7 +220,7 @@ This will:
 
 5.  Update the dataset directory.
 
-    In this example, both "laptop" and "usb" contain an identical file ``a.h5``, whereby ``.shelephant/storage.yaml`` marks "laptop" as preferential.
+    In this example, both "laptop" and "usb" contain an identical file ``a.h5``, whereby ``.shelephant/storage.yaml`` marks "laptop" as preferential (as it is listed first in ``.shelephant/storage.yaml``).
     Furthermore, "laptop" contains a file that "usb" does not have and vice versa.
     The "dataset" will now have all the files:
 
@@ -245,14 +255,14 @@ This will:
 
         This is a dangling link which you cannot use, but is there to help you keep track of the full dataset.
 
-Avoiding local storage
-----------------------
+Keeping the dataset clean
+-------------------------
 
-To avoid storing files in the dataset directory that you want to store in one/several storage locations, you can add
+To avoid that you store files in the dataset directory that you intend to store in one/several storage locations, you can add
 
 .. code-block:: bash
 
-    shelephant storage "here" shelephant --iname ".*h5" --ignore "bak.*"
+    shelephant storage "here" shelephant --rglob "*.h5" --skip "bak.*"
 
 whereby the name ``"here"`` is specifically reserved for the dataset directory.
 This will create:
@@ -266,13 +276,11 @@ with:
 .. code-block:: yaml
 
     search:
-        - iname:
-            - '.*h5'
-        - ignore:
-            - bak.*
+        - rglob: '*.h5'
+        - skip: 'bak.*''
 
 Running ``shelephant status`` will include lines for 'managed' files that are in the dataset directory but that you intent to have in a storage location.
-As an example, let us create a file ``e.h5`` in the dataset directory.
+As an example, let us assume that you create a file ``e.h5`` in the dataset directory.
 
 Getting an overview
 ===================
@@ -310,13 +318,13 @@ with columns:
 The status (column 3, 4, ...) can be
 
 *   ``==``: the file is the same in all locations where it is present.
-*   ``1``, ``2``, ...: different copies of the file exists; the same number means that the files are the same, whereby the lowest number is likely the newest version.
+*   ``1``, ``2``, ...: different copies of the file exist; the same number means that the files are the same.
 *   ``x``: the file is not available in that location.
-*   ``?``: the file is available in that location but the ``sha256`` is unknown.
+*   ``?=``: the file is available in that location but the ``sha256`` is unknown.
 
 .. note::
 
-    Even tough ``e.h5`` is not a symbolic link, it is included in the overview, because it was marked as a type of file that you intent to store in a storage location.
+    Even though ``e.h5`` is not a symbolic link, it is included in the overview, because it was marked as a type of file that you intent to store in a storage location.
 
 There are several filters (that can be combined!):
 
@@ -327,7 +335,7 @@ option               description
 ``--ne``             more than one copy, at least one not equal (``1``, ``2``, ...)
 ``--eq``             more than one copy, all equal (``==``)
 ``--na``             currently not available in any connected storage location
-``--unknown``        status unknown (``?``)
+``--unknown``        sha256 unknown (``?=``)
 ``--storage`` NAME   specific storage location
 ==================== ===============================================================
 
@@ -406,18 +414,6 @@ You can also update a specific location:
 
     shelephant update usb --all
 
-
-``--updated``
--------------
-
-.. code-block:: bash
-
-    shelephant update --updated
-
-will only recompute the checksums on files that have been modified since the last update.
-The assertion is done based on the modification time stored in ``.shelephant/state``.
-This is not guaranteed to be fully accurate.
-
 ``--shallow``
 -------------
 
@@ -445,14 +441,17 @@ Likewise for moving files:
 
 where ``source`` and ``destination`` are storage locations (e.g. "here", "laptop", "usb", ...).
 
-``--temp``
-----------
+Temporary copy
+==============
 
 If you want to work on a file without changing *any* of the storage locations, you can make a temporary copy:
 
 .. code-block:: bash
 
-    shelephant copy --temp path [path ...]
+    shelephant temp path [path ...]
+
+This will remote the symbolic link of ``path`` and replace it by a copy of the file.
+You will have to get this temporary copy out-of-the-way before your next dataset update.
 
 Advanced
 ========
@@ -465,7 +464,7 @@ For example:
 .. code-block:: bash
 
     cd /media/myusb/mydata
-    shelephant_dump --search /path/to/my/dataset/.shelephant/storage/usb.yaml --output myfiles.yaml --details
+    shelephant_dump --search /path/to/my/dataset/.shelephant/storage/usb.yaml --output myfiles.yaml --info
     cp myfiles.yaml /path/to/my/dataset/.shelephant/state/usb.yaml
 
 (or any variant to copy).
@@ -476,6 +475,7 @@ For example:
 
     .. code-block:: bash
 
+        cd /media/myusb/mydata
         shelephant_dump ...
         cp myfiles.yaml /path/to/my/dataset/.shelephant/state/usb.yaml
 

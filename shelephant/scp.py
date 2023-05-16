@@ -14,7 +14,7 @@ def copy(
     progress: bool = True,
 ):
     """
-    Copy files using scp.
+    Copy files using *scp*.
 
     :param source_dir: Source directory. If remote: ``[user@]host:path``.
     :param dest_dir: Source directory. If remote: ``[user@]host:path``.
