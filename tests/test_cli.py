@@ -3,6 +3,7 @@ import io
 import os
 import pathlib
 import re
+import shutil
 import unittest
 
 import shelephant
@@ -18,6 +19,7 @@ from shelephant.search import cwd
 from shelephant.search import tempdir
 
 has_ssh = shelephant.ssh.has_keys_set("localhost")
+has_rsync = shutil.which("rsync") is not None
 
 
 class Test_shelephant_parse(unittest.TestCase):
@@ -103,11 +105,52 @@ class Test_shelephant_cp(unittest.TestCase):
             data = shelephant.dataset.Location(root="dest", files=files).getinfo()
             self.assertTrue(check == data)
 
+        if has_rsync:
+            expect = [
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+                "foo.txt == foo.txt",
+            ]
+        else:
+            expect = [
+                "foo.txt => foo.txt",
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+            ]
+        ret = sio.getvalue()
+        ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
+        self.assertEqual(ret, expect)
+
+    def test_basic_basic(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <dest_dirname> --mode basic
+        """
+        with tempdir(), contextlib.redirect_stdout(io.StringIO()) as sio:
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant_dump(files)
+                args = [shelephant.f_dump, "../dest", "--mode", "basic"]
+                shelephant_cp(["-n", "--colors", "none"] + args)
+                shelephant_cp(["-f", "--quiet"] + args)
+
+            data = shelephant.dataset.Location(root="dest", files=files).getinfo()
+            self.assertTrue(check == data)
+
         expect = [
+            "foo.txt => foo.txt",
             "bar.txt => bar.txt",
             "more.txt -> more.txt",
             "even_more.txt -> even_more.txt",
-            "foo.txt == foo.txt",
         ]
         ret = sio.getvalue()
         ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
@@ -137,12 +180,20 @@ class Test_shelephant_cp(unittest.TestCase):
             data = shelephant.dataset.Location(root="dest", files=files).getinfo()
             self.assertTrue(check == data)
 
-        expect = [
-            "bar.txt => bar.txt",
-            "more.txt -> more.txt",
-            "even_more.txt -> even_more.txt",
-            "foo.txt == foo.txt",
-        ]
+        if has_rsync:
+            expect = [
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+                "foo.txt == foo.txt",
+            ]
+        else:
+            expect = [
+                "foo.txt => foo.txt",
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+            ]
         ret = sio.getvalue()
         ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
         self.assertEqual(ret, expect)
@@ -165,6 +216,41 @@ class Test_shelephant_cp(unittest.TestCase):
                 check = create_dummy_files(files)
                 shelephant_dump(["-i"] + files)
                 shelephant_hostinfo(["../dest", "-d"])
+                args = [shelephant.f_dump, shelephant.f_hostinfo]
+                shelephant_cp(["-n", "--colors", "none"] + args)
+                shelephant_cp(["-f", "--quiet"] + args)
+
+            data = shelephant.dataset.Location(root="dest", files=files).getinfo()
+            self.assertTrue(check == data)
+
+        expect = [
+            "bar.txt => bar.txt",
+            "more.txt -> more.txt",
+            "even_more.txt -> even_more.txt",
+            "foo.txt == foo.txt",
+        ]
+        ret = sio.getvalue()
+        ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
+        self.assertEqual(ret, expect)
+
+    def test_destinfo_sha256_2(self):
+        """
+        shelephant_cp <sourceinfo.yaml> <destinfo.yaml>
+        """
+        with tempdir(), contextlib.redirect_stdout(io.StringIO()) as sio:
+            pathlib.Path("src").mkdir()
+            pathlib.Path("dest").mkdir()
+
+            with cwd("dest"):
+                create_dummy_files(["foo.txt"])
+                create_dummy_files(["bar.txt"], keep=slice(2, None, None))
+                shelephant_dump(["foo.txt", "bar.txt"])
+
+            with cwd("src"):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                check = create_dummy_files(files)
+                shelephant_dump(["-i"] + files)
+                shelephant_hostinfo(["../dest", "-d", "--info"])
                 args = [shelephant.f_dump, shelephant.f_hostinfo]
                 shelephant_cp(["-n", "--colors", "none"] + args)
                 shelephant_cp(["-f", "--quiet"] + args)
@@ -209,12 +295,20 @@ class Test_shelephant_cp(unittest.TestCase):
 
             self.assertTrue(check == data)
 
-        expect = [
-            "bar.txt => bar.txt",
-            "more.txt -> more.txt",
-            "even_more.txt -> even_more.txt",
-            "foo.txt == foo.txt",
-        ]
+        if has_rsync:
+            expect = [
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+                "foo.txt == foo.txt",
+            ]
+        else:
+            expect = [
+                "foo.txt => foo.txt",
+                "bar.txt => bar.txt",
+                "more.txt -> more.txt",
+                "even_more.txt -> even_more.txt",
+            ]
         ret = sio.getvalue()
         ret = list(filter(None, [re.sub(r"\s+", " ", line) for line in ret.splitlines()]))
         self.assertEqual(ret, expect)
@@ -392,26 +486,22 @@ class Test_shelephant_diff(unittest.TestCase):
                 create_dummy_files(["foo.txt"])
                 create_dummy_files(["bar.txt"], keep=slice(2, None, None))
                 create_dummy_files(["receive.txt"], keep=slice(6, None, None))
-                shelephant_dump(["-i", "foo.txt", "bar.txt", "receive.txt"])
+                shelephant_dump(["foo.txt", "bar.txt", "receive.txt"])
 
             with cwd("src"):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 create_dummy_files(files)
                 shelephant_dump(["-i"] + files)
-                shelephant_hostinfo(["../dest", "-d"])
+                shelephant_hostinfo(["../dest", "-d", "--info"])
                 shelephant_diff([shelephant.f_dump, shelephant.f_hostinfo, "-o", "foo.yaml"])
                 data = shelephant.yaml.read("foo.yaml")
 
         expect = {
             "!=": ["bar.txt"],
-            "->": ["more.txt", "even_more.txt"],
+            "->": ["even_more.txt", "more.txt"],
             "<-": ["receive.txt"],
             "==": ["foo.txt"],
         }
-
-        for key in expect:
-            expect[key] = sorted(expect[key])
-
         self.assertEqual(data, expect)
 
     def test_output(self):
@@ -431,19 +521,26 @@ class Test_shelephant_diff(unittest.TestCase):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 create_dummy_files(files)
                 shelephant_dump(files)
-                shelephant_diff([shelephant.f_dump, "../dest", "-o", "foo.yaml"])
-                data = shelephant.yaml.read("foo.yaml")
+                args = [shelephant.f_dump, "../dest"]
+                if has_rsync:
+                    shelephant_diff(args + ["-o", "rsync.yaml", "--mode", "rsync"])
+                    data_rsync = shelephant.yaml.read("rsync.yaml")
+                shelephant_diff(args + ["-o", "basic.yaml", "--mode", "basic"])
+                data_basic = shelephant.yaml.read("basic.yaml")
+
+        if has_rsync:
+            expect = {
+                "!=": ["bar.txt"],
+                "->": ["more.txt", "even_more.txt"],
+                "==": ["foo.txt"],
+            }
+            self.assertEqual(data_rsync, expect)
 
         expect = {
-            "!=": ["bar.txt"],
+            "?=": ["foo.txt", "bar.txt"],
             "->": ["more.txt", "even_more.txt"],
-            "==": ["foo.txt"],
         }
-
-        for key in expect:
-            expect[key] = expect[key]
-
-        self.assertEqual(data, expect)
+        self.assertEqual(data_basic, expect)
 
     def test_output_filter(self):
         """
@@ -457,19 +554,24 @@ class Test_shelephant_diff(unittest.TestCase):
                 create_dummy_files(["foo.txt"])
                 create_dummy_files(["bar.txt"], keep=slice(2, None, None))
                 create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+                shelephant_dump(["foo.txt", "bar.txt", "receive.txt"])
 
             with cwd("src"):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 create_dummy_files(files)
-                shelephant_dump(files)
-                shelephant_diff(
-                    [shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "<-, ->"]
-                )
+                shelephant_dump(["-i"] + files)
+                shelephant_hostinfo(["../dest", "-d", "--info"])
+                args = [shelephant.f_dump, shelephant.f_hostinfo]
+                shelephant_diff(args + ["-o", "foo.yaml", "--filter", "<-, ->"])
                 data = shelephant.yaml.read("foo.yaml")
 
-        self.assertEqual(data, ["more.txt", "even_more.txt"])
+        expect = {
+            "->": ["even_more.txt", "more.txt"],
+            "<-": ["receive.txt"],
+        }
+        self.assertEqual(data, expect)
 
-    def test_output_filter2(self):
+    def test_output_filter_list(self):
         """
         shelephant_diff <sourceinfo.yaml> <destinfo.yaml>
         """
@@ -481,15 +583,18 @@ class Test_shelephant_diff(unittest.TestCase):
                 create_dummy_files(["foo.txt"])
                 create_dummy_files(["bar.txt"], keep=slice(2, None, None))
                 create_dummy_files(["receive.txt"], keep=slice(6, None, None))
+                shelephant_dump(["foo.txt", "bar.txt", "receive.txt"])
 
             with cwd("src"):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 create_dummy_files(files)
-                shelephant_dump(files)
-                shelephant_diff([shelephant.f_dump, "../dest", "-o", "foo.yaml", "--filter", "!="])
+                shelephant_dump(["-i"] + files)
+                shelephant_hostinfo(["../dest", "-d", "--info"])
+                args = [shelephant.f_dump, shelephant.f_hostinfo]
+                shelephant_diff(args + ["-o", "foo.yaml", "--filter", "<-"])
                 data = shelephant.yaml.read("foo.yaml")
 
-        self.assertEqual(data, ["bar.txt"])
+        self.assertEqual(data, ["receive.txt"])
 
     def test_table(self):
         """
