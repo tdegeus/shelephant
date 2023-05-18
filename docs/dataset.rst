@@ -50,7 +50,7 @@ You can do this by:
 
 .. code-block:: bash
 
-    shelephant storage "laptop" "/path/to/my/data" --rglob "*.h5" --skip "bak.*" --skip "\..*"
+    shelephant add "laptop" "/path/to/my/data" --rglob "*.h5" --skip "bak.*" --skip "\..*"
 
 This will:
 
@@ -163,7 +163,7 @@ Then:
 
 .. code-block:: bash
 
-    shelephant storage "usb" "/media/myusb/mydata" --rglob "*.h5" --skip "\..*"
+    shelephant add "usb" "/media/myusb/mydata" --rglob "*.h5" --skip "\..*"
 
 This will:
 
@@ -262,7 +262,7 @@ To avoid that you store files in the dataset directory that you intend to store 
 
 .. code-block:: bash
 
-    shelephant storage "here" shelephant --rglob "*.h5" --skip "bak.*"
+    shelephant add "here" shelephant --rglob "*.h5" --skip "bak.*"
 
 whereby the name ``"here"`` is specifically reserved for the dataset directory.
 This will create:

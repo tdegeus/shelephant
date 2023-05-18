@@ -1,14 +1,20 @@
+import argparse
 import json
+import os
 import pathlib
 import shutil
+import textwrap
 
 import numpy as np
+import prettytable
 
+from . import cli
 from . import info
 from . import scp
 from . import search
 from . import ssh
 from . import yaml
+from ._version import version
 from .external import exec_cmd
 
 
@@ -122,6 +128,31 @@ class Location:
             and np.all(np.equal(np.array(self._has_sha256)[a], np.array(other._has_sha256)[b]))
             and np.all(np.equal(np.array(self._has_size)[a], np.array(other._has_size)[b]))
         )
+
+    def __iadd__(self, other):
+        assert self.root == other.root, "root must be equal"
+        assert self.ssh == other.ssh, "ssh must be equal"
+        self._files += other._files
+        self._has_sha256 += other._has_sha256
+        self._has_size += other._has_size
+        self._sha256 += other._sha256
+        self._size += other._size
+        self.search = None
+        self.dump = None
+        return self
+
+    def __add__(self, other):
+        ret = Location(root=self.root, ssh=self.ssh)
+        assert ret.root == other.root, "root must be equal"
+        assert ret.ssh == other.ssh, "ssh must be equal"
+        ret._files = self._files + other._files
+        ret._has_sha256 = self._has_sha256 + other._has_sha256
+        ret._has_size = self._has_size + other._has_size
+        ret._sha256 = self._sha256 + other._sha256
+        ret._size = self._size + other._size
+        ret.search = None
+        ret.dump = None
+        return ret
 
     @classmethod
     def from_yaml(cls, path: str | pathlib.Path):
@@ -243,6 +274,21 @@ class Location:
 
         return self
 
+    def unique(self):
+        _, idx = np.unique(self._files, return_index=True)
+        # TODO: check that the checksums and sizes are the same
+        self._files = np.array(self._files)[idx].tolist()
+        self._sha256 = np.array(self._sha256)[idx].tolist()
+        self._size = np.array(self._size)[idx].tolist()
+        self._has_sha256 = np.array(self._has_sha256)[idx].tolist()
+        self._has_size = np.array(self._has_size)[idx].tolist()
+        return self
+
+    def isavailable(self) -> bool:
+        if self.ssh is None:
+            return self.root.is_dir()
+        return ssh.is_dir(self.ssh, self.root)
+
     def read(self, verbose: bool = False):
         """
         Read files from location.
@@ -252,7 +298,7 @@ class Location:
         :param verbose: Print progress (only relevant if ``ssh`` is set).
         """
         if self.dump is None and self.search is None:
-            return
+            return self
 
         assert not (self.dump is not None and self.search is not None)
 
@@ -374,3 +420,508 @@ class Location:
                 ret["?="].append(file)
 
         return ret
+
+
+# https://stackoverflow.com/a/68994012/2646505
+def _search_upwards_dir(dirname: str) -> pathlib.Path:
+    """
+    Search in the current directory and all directories above it for a directory
+    with a particular name.
+
+    :param dirname: The name of the directory to look for.
+    :return: The location of the first directory found or None, if none was found.
+    """
+    d = pathlib.Path.cwd()
+    root = pathlib.Path(d.root)
+
+    while d != root:
+        attempt = d / dirname
+        if attempt.is_dir():
+            return attempt
+        d = d.parent
+
+    return None
+
+
+def _init_parser():
+    """
+    Return parser for :py:func:`shelephant init`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Initialize a shelephant database by creating a directory ``.shelephant``
+        with an 'empty' database. Use ``shelephant add`` to add storage locations.
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def init(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _init_parser()
+    args = parser.parse_args(args)
+    sdir = pathlib.Path(".shelephant")
+    assert not sdir.is_dir(), '".shelephant" directory already exists'
+    sdir.mkdir()
+    (sdir / "data").mkdir()
+    (sdir / "storage").mkdir()
+    (sdir / "unavailable").symlink_to("dead-link")
+    (sdir / "symlinks.yaml").write_text("")
+    yaml.dump(sdir / "storage.yaml", ["here"])
+
+
+def _add_parser():
+    """
+    Return parser for :py:func:`shelephant add`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Add a storage location to the database.
+        The database in ``.shelephant`` is updated as follows:
+
+            -   The ``name`` is added to ``.shelephant/storage.yaml``.
+
+            -   A file ``.shelephant/storage/<name>.yaml`` is created with the search settings
+                and the present state of the storage location.
+
+            -   A symlink ``.shelephant/data/<name>`` is created to the storage location.
+                (if ``--ssh`` is given, the symlink points to a dead link).
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("name", type=str, help="Name of the storage location.")
+    parser.add_argument("root", type=str, help="Path to the storage location.")
+    parser.add_argument("--ssh", type=str, help="SSH host (e.g. user@host).")
+    parser.add_argument("--rglob", type=str, help="Search pattern for ``Path(root).rglob(...)``.")
+    parser.add_argument("--glob", type=str, help="Search pattern for ``Path(root).glob(...)``.")
+    parser.add_argument("--exec", type=str, help="Command to run from ``root``.")
+    parser.add_argument("--skip", type=str, action="append", help="Pattern to skip (Python regex).")
+    parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def add(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _add_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.name not in storage, f"storage location '{args.name}' already exists"
+
+    root = pathlib.Path(args.root)
+    if not root.is_absolute() and not args.ssh:
+        root = pathlib.Path(os.path.relpath(root.absolute(), sdir))
+
+    with search.cwd(sdir):
+        loc = Location(root=root, ssh=args.ssh)
+        s = []
+        d = {}
+        if args.skip is not None:
+            d["skip"] = args.skip
+        if args.rglob:
+            s.append({"rglob": args.rglob, **d})
+        if args.glob:
+            s.append({"glob": args.glob, **d})
+        if args.exec:
+            s.append({"exec": args.exec, **d})
+        if len(s) > 0:
+            loc.search = s
+
+        loc.to_yaml(f"storage/{args.name}.yaml")
+        yaml.dump("storage.yaml", storage + [args.name], force=True)
+
+        if root.is_absolute() and not args.ssh:
+            pathlib.Path(f"data/{args.name}").symlink_to(root)
+        elif not args.ssh:
+            pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / root)
+        else:
+            pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
+
+        if args.shallow:
+            update([args.name, "--shallow"])
+        else:
+            update([args.name])
+
+
+def _remove_parser():
+    """
+    Return parser for :py:func:`shelephant rm`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Remove a storage location to the database.
+        The database in ``.shelephant`` is updated as follows:
+
+            -   The ``name`` is removed from ``.shelephant/storage.yaml``.
+            -   ``.shelephant/storage/<name>.yaml`` is removed.
+            -   The symlink ``.shelephant/data/<name>`` is removed.
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("name", type=str, help="Name of the storage location.")
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def remove(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _remove_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.name in storage, f"storage location '{args.name}' does not exist"
+    storage.remove(args.name)
+    yaml.dump(sdir / "storage.yaml", storage, force=True)
+    os.remove(sdir / "storage" / f"{args.name}.yaml")
+    (sdir / "data" / args.name).unlink()
+    update([])
+
+
+def _update_parser():
+    """
+    Return parser for :py:func:`shelephant update`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Update the database.
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Update state of all (available) storage locations and --prune.",
+    )
+    parser.add_argument(
+        "name", type=str, nargs="*", help="Update state of storage location(s) and  --prune."
+    )
+    return parser
+
+
+def update(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _update_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+
+    if args.all:
+        args.name = yaml.read(sdir / "storage.yaml")
+        args.name.remove("here")
+
+    with search.cwd(sdir):
+        for name in args.name:
+            loc = Location.from_yaml(f"storage/{name}.yaml")
+            if loc.isavailable():
+                loc.read()
+                if not args.shallow:
+                    loc.getinfo()
+                loc.to_yaml(f"storage/{name}.yaml", force=True)
+
+        symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
+        storage = yaml.read("storage.yaml")
+        storage.remove("here")
+        files = {}
+        for name in storage[::-1]:
+            loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
+            if loc.ssh is None:
+                for f in loc.files(info=False):
+                    if (loc.root / f).is_file():
+                        files[pathlib.Path(f)] = pathlib.Path("data") / name
+                    else:
+                        files[pathlib.Path(f)] = "unavailable"
+            else:
+                for f in loc.files(info=False):
+                    files[pathlib.Path(f)] = "unavailable"
+
+        with search.cwd(sdir / ".."):
+            for f in symlinks:
+                if f.exists() and not f.is_symlink():
+                    raise RuntimeError(f"{f} managed by shelephant, but not a symlink")
+
+            for f in symlinks:
+                if f.is_symlink():
+                    f.unlink()
+
+            rm = []
+            for f in files:
+                if f.is_file():
+                    rm.append(f)
+            for f in rm:
+                files.pop(f)
+
+            if len(rm) > 0:
+                print("Local files conflicting with dataset. No links are created for these files:")
+                print("\n".join(map(str, rm)))
+
+            yaml.dump(".shelephant/symlinks.yaml", list(map(str, files)), force=True)
+
+            for f in files:
+                f.parent.mkdir(parents=True, exist_ok=True)
+            for f in files:
+                s = pathlib.Path(os.path.relpath(".shelephant", f.parent)) / files[f] / f
+                f.symlink_to(s)
+
+
+def _cp_parser():
+    """
+    Return parser for :py:func:`shelephant cp`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Copy files between storage locations.
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("source", type=str, help="name of the source.")
+    parser.add_argument("destination", type=str, help="name of the destination.")
+    parser.add_argument("path", type=str, nargs="+", help="path(s) to copy.")
+    return parser
+
+
+def cp(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _cp_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert args.source != "here", "Cannot copy from here."
+    assert args.destination != "here", "Cannot copy to here."
+    base = sdir.parent
+    paths = [os.path.relpath(path, base) for path in args.path]
+
+    with search.cwd(sdir):
+        opts = [f"storage/{args.source}.yaml", f"storage/{args.destination}.yaml"]
+        opts += ["--colors", args.colors]
+        opts += ["--force"] if args.force else []
+        opts += ["--quiet"] if args.quiet else []
+        opts += ["--dry-run"] if args.dry_run else []
+        cli.shelephant_cp(opts, paths)
+
+    update([args.source, args.destination])
+
+
+def _status_parser():
+    """
+    Return parser for :py:func:`shelephant status`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Status of the storage locations.
+        """
+    )
+
+    desc = ""
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--min-copies", type=int, help="Show files with minimal number of copies.")
+    parser.add_argument("--copies", type=int, help="Show files with specific number of copies.")
+    parser.add_argument("--ne", action="store_true", help="Show files with unequal copies.")
+    parser.add_argument("--na", action="store_true", help="Show files unavailable somewhere.")
+    parser.add_argument("--unknown", action="store_true", help="Show files with unknown sha256.")
+    parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
+    parser.add_argument("path", type=str, nargs="*", help="Filter to paths.")
+    return parser
+
+
+def status(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _status_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    base = sdir.parent
+    paths = [os.path.relpath(path, base) for path in args.path]
+
+    with search.cwd(sdir):
+        symlinks = np.sort(yaml.read("symlinks.yaml", []))
+        storage = yaml.read("storage.yaml")
+        storage.remove("here")
+
+        sha = "" * np.ones((len(symlinks), len(storage)), dtype=object)
+
+        for iname, name in enumerate(storage):
+            loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
+            sorter = np.argsort(loc._files)
+            idx = np.searchsorted(symlinks, np.array(loc._files)[sorter])
+            s = np.array(loc._sha256)[sorter]
+            h = ~np.array(loc._has_sha256, dtype=bool)
+            if np.any(h):
+                s[h] = "?="
+            sha[idx, iname] = s
+
+    def _reduce(ret):
+        missing = np.any(ret == "")
+        unknown = np.any(ret == "?=")
+        _, a, b = np.unique(ret, return_index=True, return_inverse=True)
+        n = a.size
+        if missing:
+            n -= 1
+            missing = ["x"]
+        else:
+            missing = []
+
+        if unknown:
+            n -= 1
+            unknown = ["?="]
+        else:
+            unknown = []
+
+        if n == 1:
+            names = ["=="]
+        else:
+            names = [str(i) for i in range(1, n + 1)]
+
+        names = np.array(missing + names + unknown, dtype=object)
+        return names[np.arange(a.size)[b]]
+
+    sha = np.apply_along_axis(_reduce, 1, sha)
+    sha = np.hstack((np.array([symlinks]).T, sha))
+
+    if args.min_copies is not None:
+        sha = sha[np.sum(sha[:, 1:] == "==", axis=1) >= args.min_copies]
+    if args.copies is not None:
+        sha = sha[np.sum(sha[:, 1:] == "==", axis=1) == args.copies]
+    if args.ne:
+        sha = sha[np.sum(sha[:, 1:] == "1", axis=1) > 0]
+    if args.na:
+        sha = sha[np.sum(sha[:, 1:] == "x", axis=1) > 0]
+    if args.unknown:
+        sha = sha[np.sum(sha[:, 1:] == "?=", axis=1) > 0]
+
+    if len(paths) > 0:
+        idx = np.intersect1d(paths, sha[:, 0], return_indices=True)[2]
+        sha = sha[idx]
+
+    out = prettytable.PrettyTable()
+    if args.table == "PLAIN_COLUMNS":
+        out.set_style(prettytable.PLAIN_COLUMNS)
+    elif args.table == "SINGLE_BORDER":
+        out.set_style(prettytable.SINGLE_BORDER)
+
+    out.field_names = ["path"] + storage
+
+    out.align["path"] = "l"
+    for name in storage:
+        out.align[name] = "c"
+
+    for row in sha:
+        out.add_row(row)
+
+    print(out.get_string())
+
+
+def git(args: list[str]):
+    """
+    Run git from ``.shelephant`` directory.
+    """
+    with search.cwd(_search_upwards_dir(".shelephant")):
+        exec_cmd(f"git {' '.join(args)}")

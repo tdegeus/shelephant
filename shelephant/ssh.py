@@ -26,7 +26,25 @@ def has_keys_set(hostname: str) -> bool:
     return False
 
 
-def file_exists(hostname: str, path: str, verbose: bool = False) -> bool:
+def is_dir(hostname: str, path: str, verbose: bool = False) -> bool:
+    """
+    Check if a directory exists on a remote system. Uses ``ssh``.
+
+    :param hostname: Hostname.
+    :param path: Directory (path on hostname).
+    :param verbose: Verbose commands.
+    :return: ``True`` if the file exists, ``False`` otherwise.
+    """
+
+    ret = exec_cmd(
+        f'ssh {hostname:s} "test -d {str(path):s} && echo found || echo not found"', verbose
+    )
+    if ret.strip() == "found":
+        return True
+    return False
+
+
+def is_file(hostname: str, path: str, verbose: bool = False) -> bool:
     """
     Check if a file exists on a remote system. Uses ``ssh``.
 
@@ -36,15 +54,11 @@ def file_exists(hostname: str, path: str, verbose: bool = False) -> bool:
     :return: ``True`` if the file exists, ``False`` otherwise.
     """
 
-    cmd = 'ssh {hostname:s} test -f "{path:s}" && echo found || echo not found'.format(
-        hostname=hostname, path=path
+    ret = exec_cmd(
+        f'ssh {hostname:s} "test -f {str(path):s} && echo found || echo not found"', verbose
     )
-
-    ret = exec_cmd(cmd, verbose)
-
-    if ret == "found":
+    if ret.strip() == "found":
         return True
-
     return False
 
 

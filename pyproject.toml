@@ -12,13 +12,14 @@ readme = "README.md"
 requires-python = ">=3.6"
 
 [project.scripts]
-shelephant_cp = "shelephant:_shelephant_cp_main"
-shelephant_diff = "shelephant:_shelephant_diff_main"
-shelephant_dump = "shelephant:_shelephant_dump_main"
-shelephant_hostinfo = "shelephant:_shelephant_hostinfo_main"
-shelephant_mv = "shelephant:_shelephant_mv_main"
-shelephant_parse = "shelephant:_shelephant_parse_main"
-shelephant_rm = "shelephant:_shelephant_rm_main"
+shelephant = "shelephant.cli:_shelephant_main"
+shelephant_cp = "shelephant.cli:_shelephant_cp_main"
+shelephant_diff = "shelephant.cli:_shelephant_diff_main"
+shelephant_dump = "shelephant.cli:_shelephant_dump_main"
+shelephant_hostinfo = "shelephant.cli:_shelephant_hostinfo_main"
+shelephant_mv = "shelephant.cli:_shelephant_mv_main"
+shelephant_parse = "shelephant.cli:_shelephant_parse_main"
+shelephant_rm = "shelephant.cli:_shelephant_rm_main"
 
 [project.urls]
 Source = "https://github.com/tdegeus/shelephant"

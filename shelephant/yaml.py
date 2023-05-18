@@ -7,11 +7,12 @@ import yaml
 from . import convert
 
 
-def read(filename: str | pathlib.Path) -> list | dict:
+def read(filename: str | pathlib.Path, default=None) -> list | dict:
     r"""
     Read YAML file and return its content.
 
     :param filename: The YAML file to read.
+    :param default: The default value to return if the file is empty.
     :return: The content of the YAML file.
     """
 
@@ -19,7 +20,10 @@ def read(filename: str | pathlib.Path) -> list | dict:
         raise OSError(f'"{filename} does not exist')
 
     with open(filename) as file:
-        return yaml.load(file.read(), Loader=yaml.FullLoader)
+        ret = yaml.load(file.read(), Loader=yaml.FullLoader)
+        if ret is None:
+            return default
+        return ret
 
 
 def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list | dict:
