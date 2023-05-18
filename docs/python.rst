@@ -15,7 +15,8 @@ SSH interface
 
 .. autosummary::
 
-    shelephant.ssh.file_exists
+    shelephant.ssh.is_file
+    shelephant.ssh.is_dir
     shelephant.ssh.has_keys_set
     shelephant.ssh.tempdir
 
