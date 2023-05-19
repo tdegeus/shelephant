@@ -674,6 +674,8 @@ def _update_parser():
     desc = textwrap.dedent(
         """
         Update the database.
+        This function always update the symbolic links, and optionally updates the available
+        files and checksums of (a) )storage location(s).
         """
     )
 
@@ -689,13 +691,9 @@ def _update_parser():
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Update state of all (available) storage locations and --prune.",
+        "--all", action="store_true", help="Update all (available) storage locations."
     )
-    parser.add_argument(
-        "name", type=str, nargs="*", help="Update state of storage location(s) and  --prune."
-    )
+    parser.add_argument("name", type=str, nargs="*", help="Update storage location(s).")
     return parser
 
 

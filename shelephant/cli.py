@@ -699,9 +699,9 @@ def _shelephant_main_parser():
         init    Initialize a new dataset.
         add     Add storage location to dataset.
         remove  Remove storage location from dataset.
+        update  Update dataset.
         status  Show status of files.
         cp      Copy files from one location to another.
-        update  Update dataset.
         git     Run git command on the database directory (``.shelephant``).
         ======= ================================================================
         """
