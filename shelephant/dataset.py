@@ -64,8 +64,7 @@ class Location:
             self._files = list(files.keys())
             self._clear_info()
             for i, file in enumerate(self._files):
-                self._has_sha256[i] = "sha256" in files[file]
-                self._has_size[i] = "size" in files[file]
+                self._has_info[i] = "sha256" in files[file]
                 self._sha256[i] = files[file].get("sha256", None)
                 self._size[i] = files[file].get("size", None)
         else:
@@ -75,8 +74,7 @@ class Location:
         """
         Clear file info.
         """
-        self._has_sha256 = [False] * len(self._files)
-        self._has_size = [False] * len(self._files)
+        self._has_info = [False] * len(self._files)
         self._sha256 = [None] * len(self._files)
         self._size = [None] * len(self._files)
         return self
@@ -88,22 +86,19 @@ class Location:
         :param files: List of files.
         """
         self._files = []
-        self._has_sha256 = []
-        self._has_size = []
+        self._has_info = []
         self._sha256 = []
         self._size = []
 
         for item in files:
             if type(item) == str:
                 self._files.append(item)
-                self._has_sha256.append(False)
-                self._has_size.append(False)
+                self._has_info.append(False)
                 self._sha256.append(None)
                 self._size.append(None)
             else:
                 self._files.append(item["path"])
-                self._has_sha256.append("sha256" in item)
-                self._has_size.append("size" in item)
+                self._has_info.append("sha256" in item)
                 self._sha256.append(item.get("sha256", None))
                 self._size.append(item.get("size", None))
 
@@ -126,16 +121,14 @@ class Location:
             np.all(np.equal(np.array(self._files)[a], np.array(other._files)[b]))
             and np.all(np.equal(np.array(self._sha256)[a], np.array(other._sha256)[b]))
             and np.all(np.equal(np.array(self._size)[a], np.array(other._size)[b]))
-            and np.all(np.equal(np.array(self._has_sha256)[a], np.array(other._has_sha256)[b]))
-            and np.all(np.equal(np.array(self._has_size)[a], np.array(other._has_size)[b]))
+            and np.all(np.equal(np.array(self._has_info)[a], np.array(other._has_info)[b]))
         )
 
     def __iadd__(self, other):
         assert self.root == other.root, "root must be equal"
         assert self.ssh == other.ssh, "ssh must be equal"
         self._files += other._files
-        self._has_sha256 += other._has_sha256
-        self._has_size += other._has_size
+        self._has_info += other._has_info
         self._sha256 += other._sha256
         self._size += other._size
         self.search = None
@@ -147,8 +140,7 @@ class Location:
         assert ret.root == other.root, "root must be equal"
         assert ret.ssh == other.ssh, "ssh must be equal"
         ret._files = self._files + other._files
-        ret._has_sha256 = self._has_sha256 + other._has_sha256
-        ret._has_size = self._has_size + other._has_size
+        ret._has_info = self._has_info + other._has_info
         ret._sha256 = self._sha256 + other._sha256
         ret._size = self._size + other._size
         ret.search = None
@@ -231,18 +223,14 @@ class Location:
         if not info:
             return self._files
 
-        if not np.any(self._has_sha256) and not np.any(self._has_size):
+        if not np.any(self._has_info):
             return self._files
 
         ret = []
 
         for i, file in enumerate(self._files):
-            if self._has_sha256[i] and self._has_size[i]:
+            if self._has_info[i]:
                 ret += [{"path": file, "sha256": self._sha256[i], "size": self._size[i]}]
-            elif self._has_sha256[i]:
-                ret += [{"path": file, "sha256": self._sha256[i]}]
-            elif self._has_size[i]:
-                ret += [{"path": file, "size": self._size[i]}]
             else:
                 ret += [file]
 
@@ -279,8 +267,7 @@ class Location:
             raise ValueError(f"Unknown key: {key}")
 
         self._files = np.array(self._files)[sorter].tolist()
-        self._has_sha256 = np.array(self._has_sha256)[sorter].tolist()
-        self._has_size = np.array(self._has_size)[sorter].tolist()
+        self._has_info = np.array(self._has_info)[sorter].tolist()
         self._sha256 = np.array(self._sha256)[sorter].tolist()
         self._size = np.array(self._size)[sorter].tolist()
 
@@ -298,8 +285,7 @@ class Location:
         self._files = np.array(self._files)[idx].tolist()
         self._sha256 = np.array(self._sha256)[idx].tolist()
         self._size = np.array(self._size)[idx].tolist()
-        self._has_sha256 = np.array(self._has_sha256)[idx].tolist()
-        self._has_size = np.array(self._has_size)[idx].tolist()
+        self._has_info = np.array(self._has_info)[idx].tolist()
         return self
 
     def isavailable(self) -> bool:
@@ -322,8 +308,7 @@ class Location:
         self._files = np.array(self._files)[keep].tolist()
         self._sha256 = np.array(self._sha256)[keep].tolist()
         self._size = np.array(self._size)[keep].tolist()
-        self._has_sha256 = np.array(self._has_sha256)[keep].tolist()
-        self._has_size = np.array(self._has_size)[keep].tolist()
+        self._has_info = np.array(self._has_info)[keep].tolist()
 
         return self
 
@@ -386,8 +371,7 @@ class Location:
             hash, size = info.getinfo([self._absroot / f for f in self._files], progress=progress)
             self._sha256 = hash
             self._size = size
-            self._has_sha256 = [True] * len(self._files)
-            self._has_size = [True] * len(self._files)
+            self._has_info = [True] * len(self._files)
             return self
 
         # on SSH remote host
@@ -405,10 +389,9 @@ class Location:
             scp.copy(hostpath, ".", ["sha256.txt", "size.txt"], progress=False, verbose=verbose)
 
             self._sha256 = pathlib.Path("sha256.txt").read_text().splitlines()
-            self._has_sha256 = [True] * len(self._sha256)
+            self._has_info = [True] * len(self._sha256)
 
             self._size = list(map(int, pathlib.Path("size.txt").read_text().splitlines()))
-            self._has_size = [True] * len(self._size)
 
         return self
 
@@ -450,7 +433,7 @@ class Location:
             ia = index_self[file]
             ib = index_other[file]
 
-            if self._has_sha256[ia] and other._has_sha256[ib]:
+            if self._has_info[ia] and other._has_info[ib]:
                 if self._sha256[ia] == other._sha256[ib]:
                     ret["=="].append(file)
                 else:
@@ -914,7 +897,7 @@ def status(args: list[str]):
             sorter = np.argsort(loc._files)
             idx = np.searchsorted(symlinks, np.array(loc._files)[sorter])
             s = np.array(loc._sha256)[sorter]
-            h = ~np.array(loc._has_sha256, dtype=bool)
+            h = ~np.array(loc._has_info, dtype=bool)
             if np.any(h):
                 s[h] = "?="
             sha[idx, -1 - iname] = s

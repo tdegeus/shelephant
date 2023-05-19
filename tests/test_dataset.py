@@ -27,9 +27,9 @@ class Test_Location(unittest.TestCase):
                 "files": [
                     "foo.txt",
                     "bar.txt",
-                    {"path": "a.txt", "sha256": "a"},
+                    {"path": "a.txt", "sha256": "a", "size": 3},
                     {"path": "c.txt", "sha256": "c", "size": 10},
-                    {"path": "d.txt", "size": 15},
+                    {"path": "d.txt", "sha256": "d", "size": 15},
                 ],
             }
             shelephant.yaml.dump("foo.yaml", data)
@@ -101,11 +101,11 @@ class Test_Location(unittest.TestCase):
     def test_diff(self):
         a = shelephant.dataset.Location(root=".", files=["a.h5", "b.h5", "c.h5", "mydir/e.h5"])
         a._sha256 = [None, "b", "c", None]
-        a._has_sha256 = [False, True, True, False]
+        a._has_info = [False, True, True, False]
 
         b = shelephant.dataset.Location(root=".", files=["a.h5", "b.h5", "c.h5"])
         b._sha256 = ["a", "b", "none"]
-        b._has_sha256 = [True, True, True]
+        b._has_info = [True, True, True]
 
         check = {
             "->": ["mydir/e.h5"],
