@@ -45,6 +45,7 @@ class Location:
 
     def __init__(self, root: str | pathlib.Path, ssh: str = None, files: list[str] = []) -> None:
         self.root = pathlib.Path(root)
+        self._absroot = self.root.absolute()
         self.ssh = ssh
         self.python = "python3"
         self.dump = None
@@ -168,7 +169,18 @@ class Location:
         if type(data) == list:
             data = {"files": data}
 
+        if "root" not in data:
+            root = path.parent
+            absroot = root.absolute()
+        else:
+            root = pathlib.Path(data["root"])
+            if root.is_absolute():
+                absroot = root
+            else:
+                absroot = pathlib.Path(os.path.normpath(path.parent.absolute() / root))
+
         ret = cls(root=data.get("root", path.parent), ssh=data.get("ssh", None))
+        ret._absroot = absroot
         ret.dump = data.get("dump", None)
         ret.search = data.get("search", None)
         ret._read_files(data.get("files", []))
@@ -246,7 +258,7 @@ class Location:
         """
 
         if self.ssh is None:
-            return str(self.root)
+            return str(self._absroot)
 
         return f'{self.ssh:s}:"{str(self.root):s}"'
 
@@ -286,7 +298,7 @@ class Location:
 
     def isavailable(self) -> bool:
         if self.ssh is None:
-            return self.root.is_dir()
+            return self._absroot.is_dir()
         return ssh.is_dir(self.ssh, self.root)
 
     def remove(self, paths: list[str]):
@@ -315,7 +327,7 @@ class Location:
         # read from YAML dump file
         if self.dump is not None:
             if self.ssh is None:
-                return self._read_files(yaml.read(self.root / self.dump))
+                return self._read_files(yaml.read(self._absroot / self.dump))
 
             with search.tempdir():
                 scp.copy(self.hostpath, ".", [self.dump], progress=False)
@@ -323,7 +335,7 @@ class Location:
 
         # search for files (locally)
         if self.ssh is None:
-            self._files = list(map(str, search.search(*self.search, root=self.root)))
+            self._files = list(map(str, search.search(*self.search, root=self._absroot)))
             return self._clear_info()
 
         # search for files (on SSH remote host)
@@ -354,7 +366,7 @@ class Location:
 
         # locally
         if self.ssh is None:
-            hash, size = info.getinfo([self.root / f for f in self._files], progress=progress)
+            hash, size = info.getinfo([self._absroot / f for f in self._files], progress=progress)
             self._sha256 = hash
             self._size = size
             self._has_sha256 = [True] * len(self._files)
@@ -496,7 +508,7 @@ def init(args: list[str]):
     (sdir / "unavailable").symlink_to("dead-link")
     (sdir / "symlinks.yaml").write_text("")
     yaml.dump(sdir / "storage.yaml", ["here"])
-    yaml.dump(sdir / "storage" / "here.yaml", {"root": ".."})
+    yaml.dump(sdir / "storage" / "here.yaml", {"root": "../.."})
 
 
 def _add_parser():
@@ -558,7 +570,7 @@ def add(args: list[str]):
 
     root = pathlib.Path(args.root)
     if not root.is_absolute() and not args.ssh:
-        root = pathlib.Path(os.path.relpath(root.absolute(), sdir))
+        root = pathlib.Path(os.path.relpath(root.absolute(), sdir / "storage"))
 
     with search.cwd(sdir):
         loc = Location(root=root, ssh=args.ssh)
@@ -581,7 +593,7 @@ def add(args: list[str]):
         if root.is_absolute() and not args.ssh:
             pathlib.Path(f"data/{args.name}").symlink_to(root)
         elif not args.ssh:
-            pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / root)
+            pathlib.Path(f"data/{args.name}").symlink_to(root)
         else:
             pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
@@ -715,14 +727,14 @@ def update(args: list[str]):
         for name in storage[::-1]:
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
             if loc.ssh is None:
-                for f in loc.files(info=False):
-                    if (loc.root / f).is_file():
-                        files[pathlib.Path(f)] = pathlib.Path("data") / name
-                    else:
-                        files[pathlib.Path(f)] = "unavailable"
-            else:
-                for f in loc.files(info=False):
-                    files[pathlib.Path(f)] = "unavailable"
+                if loc.isavailable():
+                    for f in loc.files(info=False):
+                        if (loc._absroot / f).is_file():
+                            files[pathlib.Path(f)] = pathlib.Path("data") / name
+                    continue
+
+            for f in loc.files(info=False):
+                files[pathlib.Path(f)] = "unavailable"
 
         with search.cwd(sdir / ".."):
             for f in symlinks:
