@@ -35,12 +35,16 @@ This creates a directory:
 
     .shelephant
 
-(i.e. ``/path/to/my/dataset/.shelephant``) and two files (that for the moment are empty):
+(i.e. ``/path/to/my/dataset/.shelephant``) and two files (and two empty directories and a dead symbolic link, more below):
 
 .. code-block:: bash
 
-    .shelephant/symlinks.yaml  # symlinks created by shelephant
-    .shelephant/storage.yaml   # priority of storage locations
+    .shelephant/symlinks.yaml  # symlinks created by shelephant (initially empty)
+    .shelephant/storage.yaml   # priority of storage locations (initially "- here")
+
+.. note::
+
+    You are allowed to use any name that you like to indicate storage locations, except ``here`` that is reserved for the dataset directory itself.
 
 Adding existing data
 --------------------
@@ -99,6 +103,7 @@ This will:
 
     .. code-block:: yaml
 
+        - here
         - laptop
 
 3.  Create a symbolic link to the storage location
@@ -107,22 +112,27 @@ This will:
 
         .shelephant/data/laptop -> /path/to/my/data
 
-4.  Determine the current state and store it in
+4.  Determine the current state and update
 
     .. code-block:: bash
 
-        .shelephant/state/laptop.yaml
+        .shelephant/storage/laptop.yaml
 
     which could be:
 
     .. code-block:: yaml
 
-        - path: a.h5
-          sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
-          size: 11559
-        - path: mydir/b.h5
-          sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
-          size: 1757
+        root: /path/to/my/data  # may be relative
+        search:
+            - rglob: '*.h5'             # run as pathlib.Path(root).rglob(PATTERN)
+              skip: ['\..*, 'bak.*']    # ignore path(s) (Python regex)
+        files:
+            - path: a.h5
+            sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
+            size: 11559
+            - path: mydir/b.h5
+            sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
+            size: 1757
 
     .. note::
 
@@ -134,14 +144,14 @@ This will:
 
         This file is assumed to reflect the state of the storage location.
         This is not automatically checked.
-        You are responsible to call ``shelephant update`` when needed (or make modifications by hand).
+        You are responsible to call ``shelephant update --all`` or ``shelephant update laptop`` when needed (or make modifications by hand).
 
 5.  Add files to the dataset directory by creating symbolic links to the storage location:
 
     .. code-block:: bash
 
         a.h5 -> .shelephant/data/laptop/a.h5
-        mydir/b.h5 -> .shelephant/data/laptop/mydir/b.h5
+        mydir/b.h5 -> ../.shelephant/data/laptop/mydir/b.h5
 
     .. note::
 
@@ -173,7 +183,7 @@ This will:
 
         .shelephant/storage/usb.yaml
 
-    with:
+    with (for example):
 
     .. code-block:: yaml
 
@@ -181,6 +191,13 @@ This will:
         search:
             - rglob: '*.h5'
               skip: '\..*'
+        files:
+            - path: a.h5
+            sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
+            size: 11559
+            - path: mydir/c.h5
+            sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
+            size: 4584
 
 2.  Update the available storage locations in
 
@@ -192,6 +209,7 @@ This will:
 
     .. code-block:: yaml
 
+        - here
         - laptop
         - usb
 
@@ -200,23 +218,6 @@ This will:
     .. code-block:: bash
 
         .shelephant/data/usb -> /media/myusb/mydata
-
-4.  Determine the current state in
-
-    .. code-block:: bash
-
-        .shelephant/state/usb.yaml
-
-    to for example:
-
-    .. code-block:: yaml
-
-        - path: a.h5
-          sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
-          size: 11559
-        - path: mydir/c.h5
-          sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
-          size: 4584
 
 5.  Update the dataset directory.
 
@@ -227,8 +228,8 @@ This will:
     .. code-block:: bash
 
         a.h5 -> .shelephant/data/laptop/a.h5
-        mydir/b.h5 -> .shelephant/data/laptop/mydir/b.h5
-        mydir/c.h5 -> .shelephant/data/usb/mydir/b.h5
+        mydir/b.h5 -> ../.shelephant/data/laptop/mydir/b.h5
+        mydir/c.h5 -> ../.shelephant/data/usb/mydir/b.h5
 
     .. note::
 
@@ -297,7 +298,7 @@ To get an overview use
 It will output something like:
 
 ============== ========== ========== =======
-name           in use     ``laptop`` ``usb``
+path           in use     ``laptop`` ``usb``
 ============== ========== ========== =======
 ``a.h5``       ``laptop`` ``==``     ``==``
 ``mydir/b.h5`` ``laptop`` ``==``     ``x``
@@ -336,7 +337,7 @@ option               description
 ``--eq``             more than one copy, all equal (``==``)
 ``--na``             currently not available in any connected storage location
 ``--unknown``        sha256 unknown (``?=``)
-``--storage`` NAME   specific storage location
+``--in-use`` NAME    list files used from a specific storage location
 ==================== ===============================================================
 
 ``--output``
@@ -346,7 +347,7 @@ If you want to do further processing, you can get a list of files in a yaml-file
 
 .. code-block:: bash
 
-    shelephant status [filers] --output myfiles.yaml
+    shelephant status [filters] --output myfiles.yaml
 
 ``--copy``
 ----------
@@ -355,26 +356,12 @@ To copy the selected files to a storage location or between storage locations, u
 
 .. code-block:: bash
 
-    shelephant status [filers] --copy source destination
+    shelephant status [filters] --copy source destination
 
 where ``source`` and ``destination`` are storage locations (e.g. "here", "laptop", "usb", ...).
 
-``--move``
-----------
-
-To move the selected files to a storage location or from one storage location to another, use:
-
-.. code-block:: bash
-
-    shelephant status [filers] --move source destination
-
-In practice this first copies and then removes the file.
-
 Getting updates
 ===============
-
-``--prune``
------------
 
 First suppose that you have changed a storage location by 'hand'.
 For example, you added some files to ``.shelephant/storage/usb.yaml``.
@@ -383,7 +370,7 @@ To update the symbolic links, run:
 
 .. code-block:: bash
 
-    shelephant update --prune
+    shelephant update
 
 This will add new links if needed, and remove all links that are not part of any storage location (and update ``.shelephant/symlinks.yaml``).
 For this example, removing "usb" will amount to removing the symbolic link ``mydir/c.h5``.
@@ -441,78 +428,8 @@ Likewise for moving files:
 
 where ``source`` and ``destination`` are storage locations (e.g. "here", "laptop", "usb", ...).
 
-Temporary copy
-==============
-
-If you want to work on a file without changing *any* of the storage locations, you can make a temporary copy:
-
-.. code-block:: bash
-
-    shelephant temp path [path ...]
-
-This will remote the symbolic link of ``path`` and replace it by a copy of the file.
-You will have to get this temporary copy out-of-the-way before your next dataset update.
-
 Advanced
 ========
-
-Getting updates by hand
------------------------
-
-For example:
-
-.. code-block:: bash
-
-    cd /media/myusb/mydata
-    shelephant_dump --search /path/to/my/dataset/.shelephant/storage/usb.yaml --output myfiles.yaml --info
-    cp myfiles.yaml /path/to/my/dataset/.shelephant/state/usb.yaml
-
-(or any variant to copy).
-
-.. note::
-
-    You could have even done
-
-    .. code-block:: bash
-
-        cd /media/myusb/mydata
-        shelephant_dump ...
-        cp myfiles.yaml /path/to/my/dataset/.shelephant/state/usb.yaml
-
-    if "usb" was not yet part of the dataset.
-    The minimal you need to do to make things work is:
-
-    1.  Create
-
-        .. code-block:: bash
-
-            .shelephant/storage/usb.yaml
-
-        with at minimal
-
-        .. code-block:: yaml
-
-            root: /media/myusb/mydata
-
-    2.  Edit
-
-        .. code-block:: bash
-
-            .shelephant/storage.yaml
-
-        to
-
-        .. code-block:: yaml
-
-            - laptop
-            - usb
-
-    3.  Run
-
-        .. code-block:: bash
-
-            cd /path/to/my/dataset
-            shelephant update --prune
 
 Updates with git
 ----------------
@@ -528,43 +445,45 @@ We now want to use a central storage (e.g. GitHub) to send updates about the dat
     shelephant git remote add origin <REMOTE_URL>
     shelephant git push -u origin main
 
-Now, on one of the storage locations (e.g. "usb") we are going to clone the repository:
+.. todo::
 
-.. code-block:: bash
+    Now, on one of the storage locations (e.g. "usb") we are going to clone the repository:
 
-    cd /media/myusb/mydata
-    git clone <REMOTE_URL> .shelephant
+    .. code-block:: bash
 
-.. note::
+        cd /media/myusb/mydata
+        git clone <REMOTE_URL> .shelephant
 
-    We can not use the *shelephant* proxy for git yet because there is no ``.shelephant`` folder yet.
+    .. note::
 
-**Important:** we will now tell shelephant that this is a storage location (such that symbolic links are not created), and which one it is:
+        We can not use the *shelephant* proxy for git yet because there is no ``.shelephant`` folder yet.
 
-.. code-block:: bash
+    **Important:** we will now tell shelephant that this is a storage location (such that symbolic links are not created), and which one it is:
 
-    shelephant lock "usb"
+    .. code-block:: bash
 
-Calling
+        shelephant lock "usb"
 
-.. code-block:: bash
+    Calling
 
-    shelephant update
+    .. code-block:: bash
 
-will now read ``.shelephant/storage/usb.yaml`` and update the list of files in ``.shelephant/state/usb.yaml`` according to ``"search"``.
-If ``"search"`` is not specified, only no longer existing files are removed from ``.shelephant/state/usb.yaml``, but nothing is added.
-Furthermore, it will update all metadata ("sha256", "size", "modified", "created") to the present values.
-To propagate this to the central storage we do:
+        shelephant update
 
-.. code-block:: bash
+    will now read ``.shelephant/storage/usb.yaml`` and update the list of files in ``.shelephant/state/usb.yaml`` according to ``"search"``.
+    If ``"search"`` is not specified, only no longer existing files are removed from ``.shelephant/state/usb.yaml``, but nothing is added.
+    Furthermore, it will update all metadata ("sha256", "size", "modified", "created") to the present values.
+    To propagate this to the central storage we do:
 
-    shelephant git add -A
-    shelephant git commit -m "Update state of usb-drive"
-    shelephant git push
+    .. code-block:: bash
 
-Now you can get the updates on your laptop (even if the two systems would not have any direct connection):
+        shelephant git add -A
+        shelephant git commit -m "Update state of usb-drive"
+        shelephant git push
 
-.. code-block:: bash
+    Now you can get the updates on your laptop (even if the two systems would not have any direct connection):
 
-    cd /path/to/my/dataset
-    shelephant git pull
+    .. code-block:: bash
+
+        cd /path/to/my/dataset
+        shelephant git pull

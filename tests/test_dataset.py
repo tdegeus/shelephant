@@ -146,12 +146,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == x",
-                "d.txt == x",
-                "e.txt x ==",
-                "f.txt x ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -195,12 +195,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == ==",
-                "d.txt == ==",
-                "e.txt x ==",
-                "f.txt x ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == ==",
+                "d.txt source1 == ==",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -227,12 +227,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == ==",
-                "d.txt == ==",
-                "e.txt == ==",
-                "f.txt == ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == ==",
+                "d.txt source1 == ==",
+                "e.txt source1 == ==",
+                "f.txt source1 == ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -283,12 +283,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == x",
-                "d.txt == x",
-                "e.txt x ==",
-                "f.txt x ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -331,12 +331,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == ==",
-                "d.txt == ==",
-                "e.txt x ==",
-                "f.txt x ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == ==",
+                "d.txt source1 == ==",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -363,12 +363,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == ==",
-                "b.txt == ==",
-                "c.txt == ==",
-                "d.txt == ==",
-                "e.txt == ==",
-                "f.txt == ==",
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == ==",
+                "d.txt source1 == ==",
+                "e.txt source1 == ==",
+                "f.txt source1 == ==",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -419,13 +419,13 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt == == x",
-                "b.txt == == x",
-                "c.txt == x x",
-                "d.txt == x x",
-                "e.txt x == x",
-                "f.txt x == x",
-                "g.txt x x ?=",
+                "a.txt source1 == == x",
+                "b.txt source1 == == x",
+                "c.txt source1 == x x",
+                "d.txt source1 == x x",
+                "e.txt source2 x == x",
+                "f.txt source2 x == x",
+                "g.txt source3 x x ?=",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -438,6 +438,63 @@ class Test_dataset(unittest.TestCase):
                 self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
                 self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
                 self.assertEqual(pathlib.Path(os.path.realpath("g.txt")).parent.name, "source3")
+
+    def test_unavailable(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            source3 = pathlib.Path("source3")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+            source3.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(source3):
+                create_dummy_files(["g.txt"], slice(8, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source3", "../source3", "--rglob", "*.txt", "--shallow"])
+
+            os.rename("source3", "foo")
+            with cwd(dataset):
+                shelephant.dataset.update([])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == == x",
+                "b.txt source1 == == x",
+                "c.txt source1 == x x",
+                "d.txt source1 == x x",
+                "e.txt source2 x == x",
+                "f.txt source2 x == x",
+                "g.txt ---- x x ?=",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
+                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
+                self.assertEqual(pathlib.Path(os.path.realpath("g.txt")).parent.name, "dead-link")
 
 
 if __name__ == "__main__":

@@ -289,6 +289,16 @@ class Location:
             return self.root.is_dir()
         return ssh.is_dir(self.ssh, self.root)
 
+    def remove(self, paths: list[str]):
+        keep = ~np.in1d(self._files, list(map(str, paths)))
+        self._files = np.array(self._files)[keep].tolist()
+        self._sha256 = np.array(self._sha256)[keep].tolist()
+        self._size = np.array(self._size)[keep].tolist()
+        self._has_sha256 = np.array(self._has_sha256)[keep].tolist()
+        self._has_size = np.array(self._has_size)[keep].tolist()
+
+        return self
+
     def read(self, verbose: bool = False):
         """
         Read files from location.
@@ -486,6 +496,7 @@ def init(args: list[str]):
     (sdir / "unavailable").symlink_to("dead-link")
     (sdir / "symlinks.yaml").write_text("")
     yaml.dump(sdir / "storage.yaml", ["here"])
+    yaml.dump(sdir / "storage" / "here.yaml", {"root": ".."})
 
 
 def _add_parser():
@@ -680,10 +691,17 @@ def update(args: list[str]):
 
     if args.all:
         args.name = yaml.read(sdir / "storage.yaml")
-        args.name.remove("here")
+        # args.name.remove("here")
 
     with search.cwd(sdir):
+        symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
+
         for name in args.name:
+            if name == "here":
+                path = "storage/here.yaml"
+                Location.from_yaml(path).read().remove(symlinks).to_yaml(path, force=True)
+                continue
+
             loc = Location.from_yaml(f"storage/{name}.yaml")
             if loc.isavailable():
                 loc.read()
@@ -691,7 +709,6 @@ def update(args: list[str]):
                     loc.getinfo()
                 loc.to_yaml(f"storage/{name}.yaml", force=True)
 
-        symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
         storage = yaml.read("storage.yaml")
         storage.remove("here")
         files = {}
@@ -824,6 +841,9 @@ def _status_parser():
     parser.add_argument("--na", action="store_true", help="Show files unavailable somewhere.")
     parser.add_argument("--unknown", action="store_true", help="Show files with unknown sha256.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
+    parser.add_argument("--in-use", type=str, help="Select storage location in use.")
+    parser.add_argument("--output", type=pathlib.Path, help="Dump to YAML file.")
+    parser.add_argument("--copy", type=str, nargs=2, help="Copy file selection.")
     parser.add_argument("path", type=str, nargs="*", help="Filter to paths.")
     return parser
 
@@ -841,14 +861,22 @@ def status(args: list[str]):
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
+    if args.output is not None:
+        raise NotImplementedError
+
+    if args.copy is not None:
+        raise NotImplementedError
+
     with search.cwd(sdir):
         symlinks = np.sort(yaml.read("symlinks.yaml", []))
         storage = yaml.read("storage.yaml")
         storage.remove("here")
+        extra = Location.from_yaml("storage/here.yaml").files(info=False)
 
         sha = "" * np.ones((len(symlinks), len(storage)), dtype=object)
+        inuse = "----" * np.ones((len(symlinks)), dtype=object)
 
-        for iname, name in enumerate(storage):
+        for iname, name in enumerate(storage[::-1]):
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
             sorter = np.argsort(loc._files)
             idx = np.searchsorted(symlinks, np.array(loc._files)[sorter])
@@ -856,7 +884,9 @@ def status(args: list[str]):
             h = ~np.array(loc._has_sha256, dtype=bool)
             if np.any(h):
                 s[h] = "?="
-            sha[idx, iname] = s
+            sha[idx, -1 - iname] = s
+            if loc.isavailable():
+                inuse[idx] = name
 
     def _reduce(ret):
         missing = np.any(ret == "")
@@ -884,18 +914,25 @@ def status(args: list[str]):
         return names[np.arange(a.size)[b]]
 
     sha = np.apply_along_axis(_reduce, 1, sha)
-    sha = np.hstack((np.array([symlinks]).T, sha))
+    sha = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
+
+    e = "x" * np.ones((len(extra), sha.shape[1]), dtype=object)
+    e[:, 0] = extra
+    e[:, 1] = "here"
+    sha = np.vstack((sha, e))
 
     if args.min_copies is not None:
-        sha = sha[np.sum(sha[:, 1:] == "==", axis=1) >= args.min_copies]
+        sha = sha[np.sum(sha[:, 2:] == "==", axis=1) >= args.min_copies]
     if args.copies is not None:
-        sha = sha[np.sum(sha[:, 1:] == "==", axis=1) == args.copies]
+        sha = sha[np.sum(sha[:, 2:] == "==", axis=1) == args.copies]
     if args.ne:
-        sha = sha[np.sum(sha[:, 1:] == "1", axis=1) > 0]
+        sha = sha[np.sum(sha[:, 2:] == "1", axis=1) > 0]
     if args.na:
-        sha = sha[np.sum(sha[:, 1:] == "x", axis=1) > 0]
+        sha = sha[np.sum(sha[:, 2:] == "x", axis=1) > 0]
     if args.unknown:
-        sha = sha[np.sum(sha[:, 1:] == "?=", axis=1) > 0]
+        sha = sha[np.sum(sha[:, 2:] == "?=", axis=1) > 0]
+    if args.in_use is not None:
+        sha = sha[sha[:, 1] == args.in_use]
 
     if len(paths) > 0:
         idx = np.intersect1d(paths, sha[:, 0], return_indices=True)[2]
@@ -907,9 +944,10 @@ def status(args: list[str]):
     elif args.table == "SINGLE_BORDER":
         out.set_style(prettytable.SINGLE_BORDER)
 
-    out.field_names = ["path"] + storage
+    out.field_names = ["path", "in use"] + storage
 
     out.align["path"] = "l"
+    out.align["in use"] = "l"
     for name in storage:
         out.align[name] = "c"
 
