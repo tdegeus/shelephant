@@ -18,6 +18,19 @@ from ._version import version
 from .external import exec_cmd
 
 
+def _force_absolute(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path:
+    """
+    Force a path to be absolute.
+
+    :param root: The root directory.
+    :param path: The path that may be absolute or relative.
+    :return: The absolute ``path``.
+    """
+    if path.is_absolute():
+        return path
+    return pathlib.Path(os.path.normpath(root.absolute() / path))
+
+
 class Location:
     """
     Location information.
@@ -43,9 +56,16 @@ class Location:
             location = Location(root="~/data"[, ssh="user@host"])
     """
 
-    def __init__(self, root: str | pathlib.Path, ssh: str = None, files: list[str] = []) -> None:
+    def __init__(
+        self,
+        root: str | pathlib.Path,
+        ssh: str = None,
+        mount: pathlib.Path = None,
+        files: list[str] = [],
+    ) -> None:
         self.root = pathlib.Path(root)
-        self._absroot = self.root.absolute()
+        self._mount = mount is not None
+        self._absroot = self.root.absolute() if not mount else mount.absolute()
         self.ssh = ssh
         self.python = "python3"
         self.dump = None
@@ -161,18 +181,10 @@ class Location:
         if type(data) == list:
             data = {"files": data}
 
-        if "root" not in data:
-            root = path.parent
-            absroot = root.absolute()
-        else:
-            root = pathlib.Path(data["root"])
-            if root.is_absolute():
-                absroot = root
-            else:
-                absroot = pathlib.Path(os.path.normpath(path.parent.absolute() / root))
-
         ret = cls(root=data.get("root", path.parent), ssh=data.get("ssh", None))
-        ret._absroot = absroot
+        ret._mount = "mount" in data
+        assert not ret._mount or ret.ssh is not None, "ssh must be set when using mount"
+        ret._absroot = data.get("mount", _force_absolute(path.parent, ret.root))
         ret.dump = data.get("dump", None)
         ret.search = data.get("search", None)
         ret._read_files(data.get("files", []))
@@ -288,13 +300,14 @@ class Location:
         self._has_info = np.array(self._has_info)[idx].tolist()
         return self
 
-    def isavailable(self) -> bool:
+    def isavailable(self, mount: bool = False) -> bool:
         """
         Check if location is available.
 
+        :param mount: Check if mount is available.
         :return: True if available.
         """
-        if self.ssh is None:
+        if self.ssh is None or mount:
             return self._absroot.is_dir()
         return ssh.is_dir(self.ssh, self.root)
 
@@ -550,8 +563,9 @@ def _add_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("name", type=str, help="Name of the storage location.")
-    parser.add_argument("root", type=str, nargs="?", help="Path to the storage location.")
+    parser.add_argument("root", type=pathlib.Path, nargs="?", help="Path to the storage location.")
     parser.add_argument("--ssh", type=str, help="SSH host (e.g. user@host).")
+    parser.add_argument("--mount", type=pathlib.Path, help="Optional mount location for SSH host.")
     parser.add_argument("--rglob", type=str, help="Search pattern for ``Path(root).rglob(...)``.")
     parser.add_argument("--glob", type=str, help="Search pattern for ``Path(root).glob(...)``.")
     parser.add_argument("--exec", type=str, help="Command to run from ``root``.")
@@ -574,17 +588,19 @@ def add(args: list[str]):
 
     if args.name == "here":
         assert args.root is None, "root is not allowed"
-        root = "../.."
+        args.root = pathlib.Path("../..")
     else:
         assert args.root is not None, "root is required"
         storage = yaml.read(sdir / "storage.yaml")
         assert args.name not in storage, f"storage location '{args.name}' already exists"
-        root = pathlib.Path(args.root)
-        if not root.is_absolute() and not args.ssh:
-            root = pathlib.Path(os.path.relpath(root.absolute(), sdir / "storage"))
+        if not args.root.is_absolute() and not args.ssh:
+            args.root = pathlib.Path(os.path.relpath(args.root.absolute(), sdir / "storage"))
+        if args.mount is not None:
+            if not args.mount.is_absolute():
+                args.mount = pathlib.Path(os.path.relpath(args.mount.absolute(), sdir / "storage"))
 
     with search.cwd(sdir):
-        loc = Location(root=root, ssh=args.ssh)
+        loc = Location(root=args.root, ssh=args.ssh, mount=args.mount)
         s = []
         d = {}
         if args.skip is not None:
@@ -603,10 +619,12 @@ def add(args: list[str]):
         if args.name != "here":
             yaml.dump("storage.yaml", storage + [args.name], force=True)
 
-            if root.is_absolute() and not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(root)
+            if args.root.is_absolute() and not args.ssh:
+                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
+            elif args.ssh is not None and args.mount is not None:
+                pathlib.Path(f"data/{args.name}").symlink_to(args.mount)
             elif not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(root)
+                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
             else:
                 pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
@@ -733,15 +751,13 @@ def update(args: list[str]):
         files = {}
         for name in storage[::-1]:
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
-            if loc.ssh is None:
-                if loc.isavailable():
-                    for f in loc.files(info=False):
-                        if (loc._absroot / f).is_file():
-                            files[pathlib.Path(f)] = pathlib.Path("data") / name
-                    continue
-
-            for f in loc.files(info=False):
-                files[pathlib.Path(f)] = "unavailable"
+            if loc.isavailable(mount=True):
+                for f in loc.files(info=False):
+                    if (loc._absroot / f).is_file():
+                        files[pathlib.Path(f)] = pathlib.Path("data") / name
+            else:
+                for f in loc.files(info=False):
+                    files[pathlib.Path(f)] = "unavailable"
 
         with search.cwd(sdir / ".."):
             for f in symlinks:
@@ -899,7 +915,7 @@ def status(args: list[str]):
             if np.any(h):
                 s[h] = "?="
             sha[idx, -1 - iname] = s
-            if loc.isavailable():
+            if loc.isavailable(mount=True):
                 inuse[idx] = name
 
     def _reduce(ret):

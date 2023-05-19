@@ -253,9 +253,6 @@ class Test_dataset(unittest.TestCase):
                     self.assertTrue((s1 + s2).unique() == f)
 
     def test_basic_ssh(self):
-        """
-        shelephant_cp <sourceinfo.yaml> <dest_dirname_on_host> --ssh <user@host>
-        """
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
@@ -387,6 +384,74 @@ class Test_dataset(unittest.TestCase):
                     f.search = [{"rglob": "*.txt"}]
                     f.read().getinfo()
                     self.assertTrue((s1 + s2).unique() == f)
+
+    def test_basic_ssh_mount(self):
+        if not has_ssh:
+            raise unittest.SkipTest("'ssh localhost' does not work")
+
+        with tempdir(), shelephant.ssh.tempdir("localhost") as source2:
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            mount = pathlib.Path("mount")
+
+            dataset.mkdir()
+            source1.mkdir()
+            mount.symlink_to(source2)
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                s1 = create_dummy_files(files)
+
+            with cwd(source2):
+                s2 = create_dummy_files(["a.txt", "b.txt"])
+                s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
+                shelephant.dataset.add(
+                    [
+                        "source2",
+                        str(source2),
+                        "--ssh",
+                        "localhost",
+                        "--mount",
+                        str(mount),
+                        "--rglob",
+                        "*.txt",
+                    ]
+                )
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
+                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "mount")
+                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "mount")
+
+            with cwd(dataset):
+                self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo"])
+                l1 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source1.yaml")
+                l2 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source2.yaml")
+                self.assertTrue(s1 == l1)
+                self.assertTrue(s2 == l2)
+
+                sym = shelephant.dataset.Location(root=".")
+                sym.search = [{"rglob": "*.txt"}]
+                self.assertTrue((s1 + s2).unique().files(False) == sym.read().sort().files(False))
 
     def test_shallow(self):
         with tempdir():
