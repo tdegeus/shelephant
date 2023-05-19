@@ -93,13 +93,13 @@ Command-line interface
 
 .. autosummary::
 
-    shelephant.shelephant_cp
-    shelephant.shelephant_diff
-    shelephant.shelephant_dump
-    shelephant.shelephant_hostinfo
-    shelephant.shelephant_mv
-    shelephant.shelephant_parse
-    shelephant.shelephant_rm
+    shelephant.cli.shelephant_cp
+    shelephant.cli.shelephant_diff
+    shelephant.cli.shelephant_dump
+    shelephant.cli.shelephant_hostinfo
+    shelephant.cli.shelephant_mv
+    shelephant.cli.shelephant_parse
+    shelephant.cli.shelephant_rm
 
 Details
 -------

@@ -14,6 +14,7 @@ shelephant
    :caption: API
    :maxdepth: 1
 
+   dataset_api.rst
    cli.rst
    python.rst
 
