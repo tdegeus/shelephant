@@ -43,14 +43,6 @@ shelephant update
     :func: _update_parser
     :prog: shelephant update
 
-shelephant cp
--------------
-
-.. argparse::
-    :module: shelephant.dataset
-    :func: _cp_parser
-    :prog: shelephant cp
-
 shelephant status
 -----------------
 
@@ -58,3 +50,11 @@ shelephant status
     :module: shelephant.dataset
     :func: _status_parser
     :prog: shelephant status
+
+shelephant cp
+-------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _cp_parser
+    :prog: shelephant cp
