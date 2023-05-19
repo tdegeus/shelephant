@@ -684,21 +684,61 @@ def shelephant_diff(args: list[str]):
         print(out.get_string(sortby=args.sort))
 
 
+def _shelephant_main_parser():
+    """
+    Return parser for :py:func:`shelephant`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Available commands:
+
+        ======= ================================================================
+        command description
+        ======= ================================================================
+        init    Initialize a new dataset.
+        add     Add storage location to dataset.
+        remove  Remove storage location from dataset.
+        status  Show status of files.
+        cp      Copy files from one location to another.
+        update  Update dataset.
+        git     Run git command on the database directory (``.shelephant``).
+        ======= ================================================================
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    choices = ["init", "add", "remove", "status", "cp", "update", "git"]
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("command", type=str, choices=choices, help="Command to run.")
+    return parser
+
+
 def _shelephant_main():
     assert len(sys.argv) >= 2, "No command given."
-    if sys.argv[1].lower() == "init":
+    parser = _shelephant_main_parser()
+    args = parser.parse_args([sys.argv[1]])
+
+    if args.command == "init":
         dataset.init(sys.argv[2:])
-    elif sys.argv[1].lower() == "add":
+    elif args.command == "add":
         dataset.add(sys.argv[2:])
-    elif sys.argv[1].lower() == "remove":
+    elif args.command == "remove":
         dataset.remove(sys.argv[2:])
-    elif sys.argv[1].lower() == "status":
+    elif args.command == "status":
         dataset.status(sys.argv[2:])
-    elif sys.argv[1].lower() == "cp":
+    elif args.command == "cp":
         dataset.cp(sys.argv[2:])
-    elif sys.argv[1].lower() == "update":
+    elif args.command == "update":
         dataset.update(sys.argv[2:])
-    elif sys.argv[1].lower() == "git":
+    elif args.command == "git":
         dataset.git(sys.argv[2:])
     else:
         raise ValueError(f"Unknown command '{sys.argv[1]}'.")

@@ -287,8 +287,14 @@ class Location:
         return self
 
     def unique(self):
+        """
+        Remove duplicate filename.
+
+        .. todo::
+
+            Check that the checksums and sizes are the same.
+        """
         _, idx = np.unique(self._files, return_index=True)
-        # TODO: check that the checksums and sizes are the same
         self._files = np.array(self._files)[idx].tolist()
         self._sha256 = np.array(self._sha256)[idx].tolist()
         self._size = np.array(self._size)[idx].tolist()
@@ -297,11 +303,21 @@ class Location:
         return self
 
     def isavailable(self) -> bool:
+        """
+        Check if location is available.
+
+        :return: True if available.
+        """
         if self.ssh is None:
             return self._absroot.is_dir()
         return ssh.is_dir(self.ssh, self.root)
 
     def remove(self, paths: list[str]):
+        """
+        Remove files from list of files.
+
+        :param paths: List of paths to remove.
+        """
         keep = ~np.in1d(self._files, list(map(str, paths)))
         self._files = np.array(self._files)[keep].tolist()
         self._sha256 = np.array(self._sha256)[keep].tolist()
@@ -314,8 +330,9 @@ class Location:
     def read(self, verbose: bool = False):
         """
         Read files from location.
-            -   If ``dump`` is set, read from dump file.
-            -   If ``search`` is set, search for files.
+
+        -   If ``dump`` is set, read from dump file.
+        -   If ``search`` is set, search for files.
 
         :param verbose: Print progress (only relevant if ``ssh`` is set).
         """
@@ -477,8 +494,6 @@ def _init_parser():
         """
     )
 
-    desc = ""
-
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
         argparse.ArgumentDefaultsHelpFormatter,
@@ -521,17 +536,26 @@ def _add_parser():
         Add a storage location to the database.
         The database in ``.shelephant`` is updated as follows:
 
-            -   The ``name`` is added to ``.shelephant/storage.yaml``.
+        -   The ``name`` is added to ``.shelephant/storage.yaml``.
 
-            -   A file ``.shelephant/storage/<name>.yaml`` is created with the search settings
-                and the present state of the storage location.
+        -   A file ``.shelephant/storage/<name>.yaml`` is created with the search settings
+            and the present state of the storage location.
 
-            -   A symlink ``.shelephant/data/<name>`` is created to the storage location.
-                (if ``--ssh`` is given, the symlink points to a dead link).
+        -   A symlink ``.shelephant/data/<name>`` is created to the storage location.
+            (if ``--ssh`` is given, the symlink points to a dead link).
+
+        .. note::
+
+            A special case is
+
+            .. code-block:: bash
+
+                shelephant add here --rglob '*.h5'
+
+            which helps to investigate your database directory.
+            Note that ``here`` is a reserved name and that you should not specify the root.
         """
     )
-
-    desc = ""
 
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
@@ -543,7 +567,7 @@ def _add_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("name", type=str, help="Name of the storage location.")
-    parser.add_argument("root", type=str, help="Path to the storage location.")
+    parser.add_argument("root", type=str, nargs="?", help="Path to the storage location.")
     parser.add_argument("--ssh", type=str, help="SSH host (e.g. user@host).")
     parser.add_argument("--rglob", type=str, help="Search pattern for ``Path(root).rglob(...)``.")
     parser.add_argument("--glob", type=str, help="Search pattern for ``Path(root).glob(...)``.")
@@ -565,12 +589,16 @@ def add(args: list[str]):
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
 
-    storage = yaml.read(sdir / "storage.yaml")
-    assert args.name not in storage, f"storage location '{args.name}' already exists"
-
-    root = pathlib.Path(args.root)
-    if not root.is_absolute() and not args.ssh:
-        root = pathlib.Path(os.path.relpath(root.absolute(), sdir / "storage"))
+    if args.name == "here":
+        assert args.root is None, "root is not allowed"
+        root = "../.."
+    else:
+        assert args.root is not None, "root is required"
+        storage = yaml.read(sdir / "storage.yaml")
+        assert args.name not in storage, f"storage location '{args.name}' already exists"
+        root = pathlib.Path(args.root)
+        if not root.is_absolute() and not args.ssh:
+            root = pathlib.Path(os.path.relpath(root.absolute(), sdir / "storage"))
 
     with search.cwd(sdir):
         loc = Location(root=root, ssh=args.ssh)
@@ -587,15 +615,17 @@ def add(args: list[str]):
         if len(s) > 0:
             loc.search = s
 
-        loc.to_yaml(f"storage/{args.name}.yaml")
-        yaml.dump("storage.yaml", storage + [args.name], force=True)
+        loc.to_yaml(f"storage/{args.name}.yaml", force=True)
 
-        if root.is_absolute() and not args.ssh:
-            pathlib.Path(f"data/{args.name}").symlink_to(root)
-        elif not args.ssh:
-            pathlib.Path(f"data/{args.name}").symlink_to(root)
-        else:
-            pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
+        if args.name != "here":
+            yaml.dump("storage.yaml", storage + [args.name], force=True)
+
+            if root.is_absolute() and not args.ssh:
+                pathlib.Path(f"data/{args.name}").symlink_to(root)
+            elif not args.ssh:
+                pathlib.Path(f"data/{args.name}").symlink_to(root)
+            else:
+                pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
         if args.shallow:
             update([args.name, "--shallow"])
@@ -613,13 +643,11 @@ def _remove_parser():
         Remove a storage location to the database.
         The database in ``.shelephant`` is updated as follows:
 
-            -   The ``name`` is removed from ``.shelephant/storage.yaml``.
-            -   ``.shelephant/storage/<name>.yaml`` is removed.
-            -   The symlink ``.shelephant/data/<name>`` is removed.
+        -   The ``name`` is removed from ``.shelephant/storage.yaml``.
+        -   ``.shelephant/storage/<name>.yaml`` is removed.
+        -   The symlink ``.shelephant/data/<name>`` is removed.
         """
     )
-
-    desc = ""
 
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
@@ -665,8 +693,6 @@ def _update_parser():
         Update the database.
         """
     )
-
-    desc = ""
 
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
@@ -776,8 +802,6 @@ def _cp_parser():
         """
     )
 
-    desc = ""
-
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
         argparse.ArgumentDefaultsHelpFormatter,
@@ -808,7 +832,6 @@ def cp(args: list[str]):
     parser = _cp_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert args.source != "here", "Cannot copy from here."
     assert args.destination != "here", "Cannot copy to here."
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
@@ -834,8 +857,6 @@ def _status_parser():
         Status of the storage locations.
         """
     )
-
-    desc = ""
 
     class MyFmt(
         argparse.RawDescriptionHelpFormatter,
