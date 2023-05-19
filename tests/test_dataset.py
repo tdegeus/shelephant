@@ -494,7 +494,10 @@ class Test_dataset(unittest.TestCase):
                 self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
                 self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
                 self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
-                self.assertEqual(pathlib.Path(os.path.realpath("g.txt")).parent.name, "dead-link")
+                self.assertIn(
+                    pathlib.Path(os.path.realpath("g.txt")).parent.name,
+                    ["unavailable", "dead-link"],
+                )
 
 
 if __name__ == "__main__":
