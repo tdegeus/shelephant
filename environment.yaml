@@ -2,9 +2,7 @@ channels:
 - conda-forge
 dependencies:
 - click
-- docopt
 - furo
-- mergedeep
 - numpy
 - pre-commit
 - prettytable
