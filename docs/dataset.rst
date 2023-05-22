@@ -3,7 +3,7 @@
 Dataset management
 ******************
 
-The idea is that you will have a "dataset" directory that instead of storing the data has symbolic links to one of the available "storage" locations.
+The idea is that you will have a "dataset" directory that has symbolic links to one of the available "storage" locations, instead of storing the data itself.
 This allows for distributed storage and/or storage of multiple copies of the same data.
 
 *   Reading and modifying files in the "dataset" directory will be done as normal.
@@ -128,11 +128,11 @@ This will:
               skip: ['\..*, 'bak.*']    # ignore path(s) (Python regex)
         files:
             - path: a.h5
-            sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
-            size: 11559
+              sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
+              size: 11559
             - path: mydir/b.h5
-            sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
-            size: 1757
+              sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
+              size: 1757
 
     .. note::
 
@@ -193,11 +193,11 @@ This will:
               skip: '\..*'
         files:
             - path: a.h5
-            sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
-            size: 11559
+              sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
+              size: 11559
             - path: mydir/c.h5
-            sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
-            size: 4584
+              sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
+              size: 4584
 
 2.  Update the available storage locations in
 
@@ -263,10 +263,10 @@ To avoid that you store files in the dataset directory that you intend to store 
 
 .. code-block:: bash
 
-    shelephant add "here" shelephant --rglob "*.h5" --skip "bak.*"
+    shelephant add "here" --rglob "*.h5" --skip "bak.*"
 
 whereby the name ``"here"`` is specifically reserved for the dataset directory.
-This will create:
+This will update:
 
 .. code-block:: bash
 
@@ -276,9 +276,16 @@ with:
 
 .. code-block:: yaml
 
+    root: ../..
     search:
         - rglob: '*.h5'
-        - skip: 'bak.*''
+        - skip: 'bak.*'
+
+.. note::
+
+    There is no ``files`` entry.
+    Instead, the presence of files is searched on the fly if needed.
+    Since these are 'unmanaged' files, no checksums are needed.
 
 Running ``shelephant status`` will include lines for 'managed' files that are in the dataset directory but that you intent to have in a storage location.
 As an example, let us assume that you create a file ``e.h5`` in the dataset directory.
@@ -430,6 +437,30 @@ where ``source`` and ``destination`` are storage locations (e.g. "here", "laptop
 
 Advanced
 ========
+
+SSH host
+--------
+
+If you add an SSH host:
+
+.. code-block:: bash
+
+    shelephant add "cluster" "/path/on/remote" --rglob "*.h5" --ssh "user@host"
+
+*shelephant* will search for the files on the remote host and compute their checksums there.
+Depending on the priority of the storage locations, it will create 'dead' symbolic links.
+This allows you to keep an overview of the structure of the dataset and of the location and number of copies of each file (but you cannot use the files locally).
+
+If you want to use the remote files locally, you need on *sshfs* mount.
+If you mount the remote location you can either add it is a local storage location (just like any local directory or removable storage location), or you can indicate that it is a remote location.
+For the latter do
+
+.. code-block:: bash
+
+    shelephant add "cluster" "/path/on/remote" --rglob "*.h5" --ssh "user@host" --mount /local/mount
+
+This will create the symbolic links to the relevant locations in ``/local/mount``, but it will compute the checksums directly on the remote host.
+The additional benefit is that if the mount is unavailable, the behaviour is the same as for any SSH host.
 
 Updates with git
 ----------------
