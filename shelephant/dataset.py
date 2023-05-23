@@ -571,6 +571,7 @@ def _add_parser():
     parser.add_argument("--exec", type=str, help="Command to run from ``root``.")
     parser.add_argument("--skip", type=str, action="append", help="Pattern to skip (Python regex).")
     parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("--version", action="version", version=version)
     return parser
 
@@ -628,10 +629,12 @@ def add(args: list[str]):
             else:
                 pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
+        opts = [args.name]
         if args.shallow:
-            update([args.name, "--shallow"])
-        else:
-            update([args.name])
+            opts.append("--shallow")
+        if args.quiet:
+            opts.append("--quiet")
+        update(opts)
 
 
 def _remove_parser():
@@ -711,6 +714,7 @@ def _update_parser():
     parser.add_argument(
         "--all", action="store_true", help="Update all (available) storage locations."
     )
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("name", type=str, nargs="*", help="Update storage location(s).")
     return parser
 
@@ -743,7 +747,7 @@ def update(args: list[str]):
             if loc.isavailable():
                 loc.read()
                 if not args.shallow:
-                    loc.getinfo()
+                    loc.getinfo(progress=not args.quiet)
                 loc.to_yaml(f"storage/{name}.yaml", force=True)
 
         storage = yaml.read("storage.yaml")
@@ -841,7 +845,7 @@ def cp(args: list[str]):
         opts += ["--dry-run"] if args.dry_run else []
         cli.shelephant_cp(opts, paths)
 
-    update([args.source, args.destination])
+    update([args.source, args.destination, "--quiet"])
 
 
 def _status_parser():

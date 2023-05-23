@@ -139,10 +139,10 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.init([])
-                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
-                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.remove(["source2"])
-                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
@@ -273,7 +273,7 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.init([])
-                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(
                     ["source2", str(source2), "--ssh", "localhost", "--rglob", "*.txt"]
                 )
@@ -408,7 +408,7 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.init([])
-                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(
                     [
                         "source2",
@@ -478,9 +478,11 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.init([])
-                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
-                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt"])
-                shelephant.dataset.add(["source3", "../source3", "--rglob", "*.txt", "--shallow"])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    ["source3", "../source3", "--rglob", "*.txt", "--shallow", "-q"]
+                )
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
@@ -529,13 +531,15 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset):
                 shelephant.dataset.init([])
-                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt"])
-                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt"])
-                shelephant.dataset.add(["source3", "../source3", "--rglob", "*.txt", "--shallow"])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    ["source3", "../source3", "--rglob", "*.txt", "--shallow", "-q"]
+                )
 
             os.rename("source3", "foo")
             with cwd(dataset):
-                shelephant.dataset.update([])
+                shelephant.dataset.update(["--quiet"])
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
