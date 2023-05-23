@@ -27,9 +27,9 @@ class Test_Location(unittest.TestCase):
                 "files": [
                     "foo.txt",
                     "bar.txt",
-                    {"path": "a.txt", "sha256": "a", "size": 3},
-                    {"path": "c.txt", "sha256": "c", "size": 10},
-                    {"path": "d.txt", "sha256": "d", "size": 15},
+                    {"path": "a.txt", "sha256": "a", "size": 3, "mtime": 0.0},
+                    {"path": "c.txt", "sha256": "c", "size": 10, "mtime": 0.0},
+                    {"path": "d.txt", "sha256": "d", "size": 15, "mtime": 0.0},
                 ],
             }
             shelephant.yaml.dump("foo.yaml", data)
@@ -174,7 +174,7 @@ class Test_dataset(unittest.TestCase):
                 sym = shelephant.dataset.Location(root=".")
                 sym.search = [{"rglob": "*.txt"}]
                 sym.read().getinfo()
-                self.assertTrue((s1 + s2).unique() == sym)
+                self.assertTrue(s1 + s2 == sym)
 
             # copy source1 -> source2
 
@@ -250,7 +250,7 @@ class Test_dataset(unittest.TestCase):
                     f = shelephant.dataset.Location(root=".")
                     f.search = [{"rglob": "*.txt"}]
                     f.read().getinfo()
-                    self.assertTrue((s1 + s2).unique() == f)
+                    self.assertTrue(s1 + s2 == f)
 
     def test_basic_ssh(self):
         if not has_ssh:
@@ -275,7 +275,7 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.init([])
                 shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(
-                    ["source2", str(source2), "--ssh", "localhost", "--rglob", "*.txt"]
+                    ["source2", str(source2), "--ssh", "localhost", "--rglob", "*.txt", "-q"]
                 )
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
@@ -299,7 +299,7 @@ class Test_dataset(unittest.TestCase):
                 self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "dead-link")
 
             with cwd(dataset):
-                self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo"])
+                self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo", "-q"])
                 l1 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source1.yaml")
                 l2 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source2.yaml")
                 self.assertTrue(s1 == l1)
@@ -307,7 +307,7 @@ class Test_dataset(unittest.TestCase):
 
                 sym = shelephant.dataset.Location(root=".")
                 sym.search = [{"rglob": "*.txt"}]
-                self.assertTrue((s1 + s2).unique().files(False) == sym.read().sort().files(False))
+                self.assertTrue((s1 + s2).files(False) == sym.read().sort().files(False))
 
             # copy source1 -> source2
 
@@ -383,7 +383,7 @@ class Test_dataset(unittest.TestCase):
                     f = shelephant.dataset.Location(root=".")
                     f.search = [{"rglob": "*.txt"}]
                     f.read().getinfo()
-                    self.assertTrue((s1 + s2).unique() == f)
+                    self.assertTrue(s1 + s2 == f)
 
     def test_basic_ssh_mount(self):
         if not has_ssh:
@@ -419,6 +419,7 @@ class Test_dataset(unittest.TestCase):
                         str(mount),
                         "--rglob",
                         "*.txt",
+                        "-q",
                     ]
                 )
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
@@ -443,7 +444,7 @@ class Test_dataset(unittest.TestCase):
                 self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "mount")
 
             with cwd(dataset):
-                self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo"])
+                self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo", "-q"])
                 l1 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source1.yaml")
                 l2 = shelephant.dataset.Location.from_yaml(".shelephant/storage/source2.yaml")
                 self.assertTrue(s1 == l1)
@@ -451,7 +452,7 @@ class Test_dataset(unittest.TestCase):
 
                 sym = shelephant.dataset.Location(root=".")
                 sym.search = [{"rglob": "*.txt"}]
-                self.assertTrue((s1 + s2).unique().files(False) == sym.read().sort().files(False))
+                self.assertTrue((s1 + s2).files(False) == sym.read().sort().files(False))
 
     def test_shallow(self):
         with tempdir():

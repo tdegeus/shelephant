@@ -45,6 +45,7 @@ def create_dummy_files(filenames: list[str], keep: list = None) -> dataset.Locat
         ret[file] = {
             "sha256": sha,
             "size": os.path.getsize(file),
+            "mtime": os.path.getmtime(file),
         }
 
     return dataset.Location(root=".", files=ret)
