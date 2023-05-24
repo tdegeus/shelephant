@@ -934,9 +934,12 @@ def update(args: list[str]):
                 loc.to_yaml(f"storage/{name}.yaml", force=True)
                 if not args.shallow:
                     loc.basic_check_info(verbose=args.verbose)
-                    pbar = tqdm.tqdm(total=np.sum(loc._size), disable=args.quiet)
+                    off = np.sum(loc._size[loc._has_info])
+                    pbar = tqdm.tqdm(
+                        total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
+                    )
                     while not loc.has_info():
-                        pbar.n = np.sum(loc._size[loc._has_info])
+                        pbar.n = np.sum(loc._size[loc._has_info]) - off
                         pbar.refresh()
                         loc.getinfo(max_size=1e10, progress=not args.quiet, verbose=args.verbose)
                         loc.to_yaml(f"storage/{name}.yaml", force=True)
