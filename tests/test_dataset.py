@@ -605,12 +605,12 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "foo/a.txt source1 == == ==",
-                "foo/b.txt source1 == == ==",
-                "foo/c.txt source1 == x ==",
-                "foo/d.txt source1 == x ==",
-                "foo/e.txt source2 x == x",
-                "foo/f.txt source2 x == x",
+                os.path.join("foo", "a.txt") + " source1 == == ==",
+                os.path.join("foo", "b.txt") + " source1 == == ==",
+                os.path.join("foo", "c.txt") + " source1 == x ==",
+                os.path.join("foo", "d.txt") + " source1 == x ==",
+                os.path.join("foo", "e.txt") + " source2 x == x",
+                os.path.join("foo", "f.txt") + " source2 x == x",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
