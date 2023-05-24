@@ -353,7 +353,7 @@ The status (column 3, 4, ...) can be
 *   ``==``: the file is the same in all locations where it is present.
 *   ``1``, ``2``, ...: different copies of the file exist; the same number means that the files are the same.
 *   ``x``: the file is not available in that location.
-*   ``?=``: the file is available in that location but the ``sha256`` is unknown.
+*   ``?``: the file is available in that location but the ``sha256`` is unknown.
 
 .. note::
 
@@ -368,7 +368,7 @@ option               description
 ``--ne``             more than one copy, at least one not equal (``1``, ``2``, ...)
 ``--eq``             more than one copy, all equal (``==``)
 ``--na``             currently not available in any connected storage location
-``--unknown``        sha256 unknown (``?=``)
+``--unknown``        sha256 unknown (``?``)
 ``--in-use`` NAME    list files used from a specific storage location
 ==================== ===============================================================
 

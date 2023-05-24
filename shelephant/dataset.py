@@ -1122,16 +1122,16 @@ def status(args: list[str]):
             sorter = np.argsort(files)
             idx = np.searchsorted(symlinks, files[sorter])
             s = np.array(loc._sha256)[sorter]
-            h = ~np.array(loc._has_info, dtype=bool)
+            h = ~loc._has_info[sorter]
             if np.any(h):
-                s[h] = "?="
+                s[h] = "?"
             sha[idx, -1 - iname] = s
             if loc.isavailable(mount=True):
                 inuse[idx] = name
 
     def _reduce(ret):
         missing = np.any(ret == "")
-        unknown = np.any(ret == "?=")
+        unknown = np.any(ret == "?")
         _, a, b = np.unique(ret, return_index=True, return_inverse=True)
         n = a.size
         if missing:
@@ -1142,7 +1142,7 @@ def status(args: list[str]):
 
         if unknown:
             n -= 1
-            unknown = ["?="]
+            unknown = ["?"]
         else:
             unknown = []
 

@@ -5,6 +5,8 @@ import pathlib
 import re
 import unittest
 
+import numpy as np
+
 import shelephant
 from shelephant._tests import create_dummy_files
 from shelephant.cli import f_dump
@@ -493,7 +495,7 @@ class Test_dataset(unittest.TestCase):
                 "d.txt source1 == x x",
                 "e.txt source2 x == x",
                 "f.txt source2 x == x",
-                "g.txt source3 x x ?=",
+                "g.txt source3 x x ?",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -520,15 +522,17 @@ class Test_dataset(unittest.TestCase):
             source3.mkdir()
 
             with cwd(source1):
-                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                files = ["b.txt", "c.txt", "d.txt", "h.txt"]
                 create_dummy_files(files)
 
             with cwd(source2):
-                create_dummy_files(["a.txt", "b.txt"])
-                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+                create_dummy_files(["b.txt"])
+                create_dummy_files(["c.txt"], slice(3, None, None))
+                create_dummy_files(["e.txt", "k.txt"], slice(4, None, None))
 
             with cwd(source3):
-                create_dummy_files(["g.txt"], slice(8, None, None))
+                info = create_dummy_files(["b.txt"])
+                create_dummy_files(["a.txt", "g.txt"], slice(6, None, None))
 
             with cwd(dataset):
                 shelephant.dataset.init([])
@@ -537,6 +541,13 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.add(
                     ["source3", "../source3", "--rglob", "*.txt", "--shallow", "-q"]
                 )
+                loc = shelephant.dataset.Location.from_yaml(".shelephant/storage/source3.yaml")
+                i = np.argwhere(loc._files == "b.txt").ravel()[0]
+                loc._has_info[i] = True
+                loc._sha256[i] = info._sha256[0]
+                loc._mtime[i] = info._mtime[0]
+                loc._size[i] = info._size[0]
+                loc.to_yaml(".shelephant/storage/source3.yaml", force=True)
 
             os.rename("source3", "foo")
             with cwd(dataset):
@@ -546,28 +557,27 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
             expect = [
-                "a.txt source1 == == x",
-                "b.txt source1 == == x",
-                "c.txt source1 == x x",
+                "a.txt ---- x x ?",
+                "b.txt source1 == == ==",
+                "c.txt source1 2 1 x",
                 "d.txt source1 == x x",
                 "e.txt source2 x == x",
-                "f.txt source2 x == x",
-                "g.txt ---- x x ?=",
+                "g.txt ---- x x ?",
+                "h.txt source1 == x x",
+                "k.txt source2 x == x",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
-                self.assertIn(
-                    pathlib.Path(os.path.realpath("g.txt")).parent.name,
-                    ["unavailable", "dead-link"],
-                )
+                for f in ["b.txt", "c.txt", "d.txt", "h.txt"]:
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "source1")
+                for f in ["e.txt", "k.txt"]:
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "source2")
+                for f in ["a.txt", "g.txt"]:
+                    self.assertIn(
+                        pathlib.Path(os.path.realpath(f)).parent.name, ["unavailable", "dead-link"]
+                    )
 
     def test_prefix(self):
         with tempdir():
