@@ -256,6 +256,31 @@ This will:
 
         This is a dangling link which you cannot use, but is there to help you keep track of the full dataset.
 
+.. tip::
+
+    If you store a subdirectory of a dataset somewhere else, you can avoid storing the structure.
+    For example, as dataset as follows:
+
+    .. code-block:: none
+
+        |-- a.h5
+        |-- mydir
+        |   |-- b.h5
+        |   `-- c.h5
+
+    where you want to store ``mydir`` on a USB drive. Such that for example ``/mount/usb/mydata`` contains:
+
+    .. code-block:: none
+
+        |-- b.h5
+        `-- c.h5
+
+    You can do this by:
+
+    .. code-block:: bash
+
+        shelephant add "usb" "/mount/usb/mydata" --rglob "*.h5" --prefix "mydir"
+
 Keeping the dataset clean
 -------------------------
 
