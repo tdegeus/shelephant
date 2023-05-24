@@ -40,6 +40,7 @@ class Location:
 
     *   :py:attr:`Location.root`: The root directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
+    *   :py:attr:`Location.prefix` (optional): Prefix to add to all paths.
     *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
     *   :py:attr:`Location.dump` (optional): Location of "dump" file -- file with list of files.
     *   :py:attr:`Location.search` (optional):
@@ -62,6 +63,7 @@ class Location:
         root: str | pathlib.Path,
         ssh: str = None,
         mount: pathlib.Path = None,
+        prefix: pathlib.Path = None,
         files: list[str] = [],
     ) -> None:
         """
@@ -73,6 +75,7 @@ class Location:
         self.root = pathlib.Path(root)
         self._mount = mount is not None
         self._absroot = self.root.absolute() if not mount else mount.absolute()
+        self.prefix = pathlib.Path(prefix) if prefix is not None else None
         self.ssh = ssh
         self.python = "python3"
         self.dump = None
@@ -262,7 +265,11 @@ class Location:
         if type(data) == list:
             data = {"files": data}
 
-        ret = cls(root=data.get("root", path.parent), ssh=data.get("ssh", None))
+        ret = cls(
+            root=data.get("root", path.parent),
+            ssh=data.get("ssh", None),
+            prefix=data.get("prefix", None),
+        )
         ret._mount = "mount" in data
         assert not ret._mount or ret.ssh is not None, "ssh must be set when using mount"
         ret._absroot = data.get("mount", _force_absolute(path.parent, ret.root))
@@ -297,6 +304,9 @@ class Location:
 
         if self.search is not None:
             ret["search"] = self.search
+
+        if self.prefix is not None:
+            ret["prefix"] = str(self.prefix)
 
         if len(self._files) > 0:
             ret["files"] = self.files(info=True)
@@ -740,6 +750,7 @@ def _add_parser():
     parser.add_argument("root", type=pathlib.Path, nargs="?", help="Path to the storage location.")
     parser.add_argument("--ssh", type=str, help="SSH host (e.g. user@host).")
     parser.add_argument("--mount", type=pathlib.Path, help="Optional mount location for SSH host.")
+    parser.add_argument("--prefix", type=pathlib.Path, help="Add prefix to all files.")
     parser.add_argument("--rglob", type=str, help="Search pattern for ``Path(root).rglob(...)``.")
     parser.add_argument("--glob", type=str, help="Search pattern for ``Path(root).glob(...)``.")
     parser.add_argument("--exec", type=str, help="Command to run from ``root``.")
@@ -775,7 +786,7 @@ def add(args: list[str]):
                 args.mount = pathlib.Path(os.path.relpath(args.mount.absolute(), sdir / "storage"))
 
     with search.cwd(sdir):
-        loc = Location(root=args.root, ssh=args.ssh, mount=args.mount)
+        loc = Location(root=args.root, ssh=args.ssh, mount=args.mount, prefix=args.prefix)
         s = []
         d = {}
         if args.skip is not None:
@@ -935,13 +946,14 @@ def update(args: list[str]):
         files = {}
         for name in storage[::-1]:
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
+            prefix = loc.prefix if loc.prefix is not None else pathlib.Path(".")
             if loc.isavailable(mount=True):
                 for f in loc.files(info=False):
                     if (loc._absroot / f).is_file():
-                        files[pathlib.Path(f)] = pathlib.Path("data") / name
+                        files[prefix / pathlib.Path(f)] = pathlib.Path("data") / name
             else:
                 for f in loc.files(info=False):
-                    files[pathlib.Path(f)] = "unavailable"
+                    files[prefix / pathlib.Path(f)] = "unavailable"
 
         with search.cwd(sdir / ".."):
             for f in symlinks:
@@ -1092,8 +1104,12 @@ def status(args: list[str]):
 
         for iname, name in enumerate(storage[::-1]):
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
-            sorter = np.argsort(loc._files)
-            idx = np.searchsorted(symlinks, np.array(loc._files)[sorter])
+            if loc.prefix is not None:
+                files = np.array([str(loc.prefix / f) for f in loc._files])
+            else:
+                files = loc._files
+            sorter = np.argsort(files)
+            idx = np.searchsorted(symlinks, files[sorter])
             s = np.array(loc._sha256)[sorter]
             h = ~np.array(loc._has_info, dtype=bool)
             if np.any(h):
