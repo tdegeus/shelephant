@@ -569,6 +569,72 @@ class Test_dataset(unittest.TestCase):
                     ["unavailable", "dead-link"],
                 )
 
+    def test_prefix(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1/foo")
+            source2 = pathlib.Path("source2/foo")
+            source3 = pathlib.Path("source3")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+            source3.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(source3):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    ["source3", "../source3", "--rglob", "*.txt", "--prefix", "foo", "-q"]
+                )
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "foo/a.txt source1 == == ==",
+                "foo/b.txt source1 == == ==",
+                "foo/c.txt source1 == x ==",
+                "foo/d.txt source1 == x ==",
+                "foo/e.txt source2 x == x",
+                "foo/f.txt source2 x == x",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset / "foo"):
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("a.txt")).parent.parent.name, "source1"
+                )
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("b.txt")).parent.parent.name, "source1"
+                )
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("c.txt")).parent.parent.name, "source1"
+                )
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("d.txt")).parent.parent.name, "source1"
+                )
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("e.txt")).parent.parent.name, "source2"
+                )
+                self.assertEqual(
+                    pathlib.Path(os.path.realpath("f.txt")).parent.parent.name, "source2"
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
