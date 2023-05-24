@@ -900,6 +900,12 @@ def _update_parser():
     parser.add_argument(
         "--all", action="store_true", help="Update all (available) storage locations."
     )
+    parser.add_argument(
+        "--chunk",
+        type=lambda x: int(float(x)),
+        default=1e10,
+        help="Chunk size for computing checksums (bytes).",
+    )
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("name", type=str, nargs="*", help="Update storage location(s).")
     return parser
@@ -941,7 +947,9 @@ def update(args: list[str]):
                     while not loc.has_info():
                         pbar.n = np.sum(loc._size[loc._has_info]) - off
                         pbar.refresh()
-                        loc.getinfo(max_size=1e10, progress=not args.quiet, verbose=args.verbose)
+                        loc.getinfo(
+                            max_size=args.chunk, progress=not args.quiet, verbose=args.verbose
+                        )
                         loc.to_yaml(f"storage/{name}.yaml", force=True)
 
         storage = yaml.read("storage.yaml")
