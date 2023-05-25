@@ -121,6 +121,40 @@ class Test_Location(unittest.TestCase):
 
 
 class Test_dataset(unittest.TestCase):
+    def test_status_partial(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+
+            dataset.mkdir()
+            source1.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                source = create_dummy_files(files)
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset):
+                links = shelephant.dataset.Location(root=".")
+                links.search = [{"rglob": "*.txt"}]
+                links.read().getinfo()
+                self.assertTrue(source == links)
+
+            with cwd(source1):
+                pathlib.Path("b.txt").write_text("foo-foo")
+                pathlib.Path("d.txt").write_text("foo-bar")
+                source = shelephant.dataset.Location(root=".")
+                source.search = [{"rglob": "*.txt"}]
+                source.read().getinfo()
+
+            with cwd(dataset):
+                shelephant.dataset.update(["source1", "d.txt", "b.txt", "-q"])
+                data = shelephant.dataset.Location.from_yaml(".shelephant/storage/source1.yaml")
+                self.assertTrue(source == data)
+
     def test_basic(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

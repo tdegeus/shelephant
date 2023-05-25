@@ -127,6 +127,20 @@ class Location:
         self._mtime = np.empty(self._files.size, dtype=np.float64)
         return self
 
+    def _append(self, files: list[str]):
+        """
+        Extend list of files.
+        """
+        files = np.array(files)
+        n = files.size
+        self._files = np.hstack((self._files, files))
+        self._has_info = np.hstack((self._has_info, np.zeros(n, dtype=self._has_info.dtype)))
+        self._sha256 = np.hstack((self._sha256, np.empty(n, dtype=self._sha256.dtype)))
+        self._size = np.hstack((self._size, np.empty(n, dtype=self._size.dtype)))
+        self._mtime = np.hstack((self._mtime, np.empty(n, dtype=self._mtime.dtype)))
+
+        return self
+
     def _prune(self, files: list[str]):
         """
         Update database with list of files.
@@ -147,14 +161,7 @@ class Location:
 
         # add paths from "files" that are not in "_files"
         keep = ~np.in1d(files, self._files)
-        n = np.sum(keep)
-        self._files = np.hstack((self._files, files[keep]))
-        self._has_info = np.hstack((self._has_info, np.zeros(n, dtype=self._has_info.dtype)))
-        self._sha256 = np.hstack((self._sha256, np.empty(n, dtype=self._sha256.dtype)))
-        self._size = np.hstack((self._size, np.empty(n, dtype=self._size.dtype)))
-        self._mtime = np.hstack((self._mtime, np.empty(n, dtype=self._mtime.dtype)))
-
-        return self
+        return self._append(files[keep])
 
     def _overwrite_dataset_from_dict(self, files: list):
         """
@@ -476,21 +483,32 @@ class Location:
         """
         return np.all(self._has_info)
 
-    def basic_check_info(self, progress: bool = False, verbose: bool = False):
+    def basic_check_info(
+        self, paths: list[pathlib.Path] = None, progress: bool = False, verbose: bool = False
+    ):
         """
         Remove sha256 from all files of which the size/mtime has changed.
 
+        :param paths: List of paths to check. Have to be relative to the root of the dataset.
         :param progress: Show progress bar (only relevant if ``ssh`` is not set).
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
+        if paths is None:
+            paths = self._files
+            index = None
+        else:
+            paths = np.sort(paths)
+            sorter = np.argsort(self._files)
+            index = sorter[np.searchsorted(self._files[sorter], paths)]
+            assert np.all(self._files[index] == paths), "not all paths are in the dataset"
 
         if self.ssh is None:
-            files = [self._absroot / f for f in self._files]
+            files = [self._absroot / f for f in paths]
             size, mtime, _ = info.getinfo(files, sha256=False, progress=progress)
         else:
             with ssh.tempdir(self.ssh) as remote, search.tempdir():
                 shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
-                files = [str(self.root / i) for i in self._files]
+                files = [str(self.root / i) for i in paths]
                 pathlib.Path("files.txt").write_text("\n".join(files))
                 hostpath = f'{self.ssh:s}:"{str(remote):s}"'
                 scp.copy(".", hostpath, ["script.py", "files.txt"], progress=False, verbose=verbose)
@@ -510,13 +528,24 @@ class Location:
 
         size = np.array(size, dtype=np.int64)
         mtime = np.array(mtime, dtype=np.float64)
-        rm = np.logical_or(self._size != size, self._mtime != mtime)
-        self._has_info[rm] = False
-        self._size[~self._has_info] = size[~self._has_info]
-        self._mtime[~self._has_info] = mtime[~self._has_info]
+
+        if index is None:
+            rm = np.logical_or(self._size != size, self._mtime != mtime)
+            self._has_info[rm] = False
+            self._size[~self._has_info] = size[~self._has_info]
+            self._mtime[~self._has_info] = mtime[~self._has_info]
+        else:
+            rm = np.logical_or(self._size[index] != size, self._mtime[index] != mtime)
+            self._has_info[index[rm]] = False
+            keep = ~self._has_info[index]
+            self._size[index[keep]] = size[keep]
+            self._mtime[index[keep]] = mtime[keep]
+
+        return self
 
     def getinfo(
         self,
+        paths: list[pathlib.Path] = None,
         max_size: int = None,
         progress: bool = False,
         verbose: bool = False,
@@ -528,15 +557,23 @@ class Location:
         This will stop the computation when the total size exceeds ``max_size``.
         You can then call this function recursively (with ``clean=False``) to flush you buffer.
 
-        :param clean: Recompute sha256/size/mtime for all files.
+        :param paths: List of paths to check. Have to be relative to the root of the dataset.
         :param max_size: Compute the sha256/size/mtime until the total size exceeds ``max_size``.
         :param progress: Show progress bar (only relevant if ``ssh`` is not set).
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
 
-        index = np.argwhere(~self._has_info).flatten()
-        sorter = np.argsort(self._size[~self._has_info])
-        index = index[sorter]
+        if paths is None:
+            paths = self._files
+            index = np.arange(self._files.size)
+        else:
+            paths = np.sort(paths)
+            sorter = np.argsort(self._files)
+            index = sorter[np.searchsorted(self._files[sorter], paths)]
+            assert np.all(self._files[index] == paths), "not all paths are in the dataset"
+
+        index = index[np.argwhere(~self._has_info[index]).flatten()]
+        index = index[np.argsort(self._size[index])]
         files = self._files[index]
         size = self._size[index]
 
@@ -905,6 +942,9 @@ def _update_parser():
     )
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("name", type=str, nargs="?", help="Update storage location(s).")
+    parser.add_argument(
+        "path", type=pathlib.Path, nargs="*", help="Update only specific paths on location."
+    )
     return parser
 
 
@@ -918,6 +958,9 @@ def update(args: list[str]):
     parser = _update_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    base = sdir.parent
+    paths = [os.path.relpath(path, base) for path in args.path]
+    paths = paths if len(paths) > 0 else None
 
     if args.name is None:
         args.name = []
@@ -925,34 +968,46 @@ def update(args: list[str]):
         args.name = yaml.read(sdir / "storage.yaml")
     else:
         assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
+        assert args.name != "here" or len(paths) == 0, "cannot specify paths for 'here'"
         args.name = [args.name]
 
     with search.cwd(sdir):
         symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
 
+        # update the database for all locations
         for name in args.name:
-            if name == "here":
-                path = "storage/here.yaml"
-                Location.from_yaml(path).read().remove(symlinks).to_yaml(path, force=True)
+            # "here": search for files that are not managed by shelephant
+            if name == "here" and paths is None:
+                f = "storage/here.yaml"
+                Location.from_yaml(f).read().remove(symlinks).to_yaml(f, force=True)
                 continue
-
+            # other locations: search for files and compute sha256/size/mtime
             loc = Location.from_yaml(f"storage/{name}.yaml")
-            if loc.isavailable():
+            if not loc.isavailable():
+                continue
+            if paths is None:
                 loc.read(verbose=args.verbose)
-                loc.to_yaml(f"storage/{name}.yaml", force=True)
-                if not args.shallow:
-                    loc.basic_check_info(verbose=args.verbose)
-                    off = np.sum(loc._size[loc._has_info])
-                    pbar = tqdm.tqdm(
-                        total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
+            else:
+                new = ~np.in1d(paths, loc._files)
+                if np.sum(new) != 0 and new.size > 0:
+                    loc._append(np.array(paths)[new])
+            loc.to_yaml(f"storage/{name}.yaml", force=True)
+            if not args.shallow:
+                loc.basic_check_info(paths=paths, verbose=args.verbose)
+                off = np.sum(loc._size[loc._has_info])
+                pbar = tqdm.tqdm(
+                    total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
+                )
+                while not loc.has_info():
+                    pbar.n = np.sum(loc._size[loc._has_info]) - off
+                    pbar.refresh()
+                    loc.getinfo(
+                        paths=paths,
+                        max_size=args.chunk,
+                        progress=not args.quiet,
+                        verbose=args.verbose,
                     )
-                    while not loc.has_info():
-                        pbar.n = np.sum(loc._size[loc._has_info]) - off
-                        pbar.refresh()
-                        loc.getinfo(
-                            max_size=args.chunk, progress=not args.quiet, verbose=args.verbose
-                        )
-                        loc.to_yaml(f"storage/{name}.yaml", force=True)
+                    loc.to_yaml(f"storage/{name}.yaml", force=True)
 
         storage = yaml.read("storage.yaml")
         storage.remove("here")
@@ -1050,7 +1105,8 @@ def cp(args: list[str]):
         opts += ["--dry-run"] if args.dry_run else []
         cli.shelephant_cp(opts, paths)
 
-    update([args.destination, "--quiet"])
+    if not args.dry_run:
+        update(["--quiet", args.destination, *paths])
 
 
 def _status_parser():
