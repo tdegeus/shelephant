@@ -165,10 +165,10 @@ class Location:
                 return self
 
         # remove paths from "_files" that are not in "files"
-        self._slice(np.in1d(self._files, files))
+        self._slice(np.in1d(self._files, files, assume_unique=True))
 
         # add paths from "files" that are not in "_files"
-        keep = ~np.in1d(files, self._files)
+        keep = ~np.in1d(files, self._files, assume_unique=True)
         return self._append(files[keep])
 
     def _overwrite_dataset_from_dict(self, files: list):
