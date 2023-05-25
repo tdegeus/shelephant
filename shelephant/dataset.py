@@ -898,16 +898,13 @@ def _update_parser():
     parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
     parser.add_argument(
-        "--all", action="store_true", help="Update all (available) storage locations."
-    )
-    parser.add_argument(
         "--chunk",
         type=lambda x: int(float(x)),
         default=1e10,
         help="Chunk size for computing checksums (bytes).",
     )
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
-    parser.add_argument("name", type=str, nargs="*", help="Update storage location(s).")
+    parser.add_argument("name", type=str, nargs="?", help="Update storage location(s).")
     return parser
 
 
@@ -922,8 +919,13 @@ def update(args: list[str]):
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
 
-    if args.all:
+    if args.name is None:
+        args.name = []
+    elif args.name.lower() == "--all":
         args.name = yaml.read(sdir / "storage.yaml")
+    else:
+        assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
+        args.name = [args.name]
 
     with search.cwd(sdir):
         symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
@@ -1048,7 +1050,7 @@ def cp(args: list[str]):
         opts += ["--dry-run"] if args.dry_run else []
         cli.shelephant_cp(opts, paths)
 
-    update([args.source, args.destination, "--quiet"])
+    update([args.destination, "--quiet"])
 
 
 def _status_parser():
