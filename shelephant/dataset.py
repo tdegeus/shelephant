@@ -4,6 +4,7 @@ import os
 import pathlib
 import shutil
 import textwrap
+from copy import deepcopy
 
 import numpy as np
 import prettytable
@@ -19,7 +20,7 @@ from ._version import version
 from .external import exec_cmd
 
 
-def _force_absolute(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path:
+def _force_absolute_path(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path:
     """
     Force a path to be absolute.
 
@@ -119,7 +120,7 @@ class Location:
 
     def _clear_info(self):
         """
-        Clear file info.
+        Clear all info.
         """
         self._has_info = np.zeros(self._files.size, dtype=bool)
         self._sha256 = np.empty(self._files.size, dtype="U64")
@@ -130,6 +131,13 @@ class Location:
     def _append(self, files: list[str]):
         """
         Extend list of files.
+
+        .. warning::
+
+            ``files`` is assumed to be unique and not part of ``self._files``.
+            There is no check on this.
+
+        :param files: List of files.
         """
         files = np.array(files)
         n = files.size
@@ -138,14 +146,14 @@ class Location:
         self._sha256 = np.hstack((self._sha256, np.empty(n, dtype=self._sha256.dtype)))
         self._size = np.hstack((self._size, np.empty(n, dtype=self._size.dtype)))
         self._mtime = np.hstack((self._mtime, np.empty(n, dtype=self._mtime.dtype)))
-
         return self
 
     def _prune(self, files: list[str]):
         """
-        Update database with list of files.
+        Overwrite database with list of files.
         If files are already in the database, the sha256/size/mtime is kept.
         For new files the sha256/size/mtime is set to None.
+        (Files that were in the database but that are not in ``files`` are removed.)
 
         :param files: List of files.
         """
@@ -240,22 +248,10 @@ class Location:
 
     def __add__(self, other):
         """
-        Add files from other location.
-
-        .. todo::
-
-            In case of duplicate files: check that the checksums and sizes are the same.
+        Add files from two locations.
         """
-        ret = Location(root=self.root, ssh=self.ssh)
-        assert ret.root == other.root, "root must be equal"
-        assert ret.ssh == other.ssh, "ssh must be equal"
-        ret._files = np.hstack((self._files, other._files))
-        ret._has_info = np.hstack((self._has_info, other._has_info))
-        ret._sha256 = np.hstack((self._sha256, other._sha256))
-        ret._size = np.hstack((self._size, other._size))
-        ret._mtime = np.hstack((self._mtime, other._mtime))
-        ret.search = None
-        ret.dump = None
+        ret = deepcopy(self)
+        ret += other
         return ret._unique()
 
     @classmethod
@@ -279,7 +275,7 @@ class Location:
         )
         ret._mount = "mount" in data
         assert not ret._mount or ret.ssh is not None, "ssh must be set when using mount"
-        ret._absroot = data.get("mount", _force_absolute(path.parent, ret.root))
+        ret._absroot = data.get("mount", _force_absolute_path(path.parent, ret.root))
         ret.dump = data.get("dump", None)
         ret.search = data.get("search", None)
         ret._overwrite_dataset_from_dict(data.get("files", []))
@@ -402,12 +398,7 @@ class Location:
             Check that the checksums and sizes are the same.
         """
         _, idx = np.unique(self._files, return_index=True)
-        self._files = self._files[idx]
-        self._sha256 = self._sha256[idx]
-        self._size = self._size[idx]
-        self._mtime = self._mtime[idx]
-        self._has_info = self._has_info[idx]
-        return self
+        return self._slice(idx)
 
     def isavailable(self, mount: bool = False) -> bool:
         """
@@ -458,7 +449,9 @@ class Location:
 
         # search locally for files (the sha256/size/mtime of 'new' files is set to None)
         if self.ssh is None:
-            return self._prune(list(map(str, search.search(*self.search, root=self._absroot))))
+            return self._prune(
+                sorted(list(map(str, search.search(*self.search, root=self._absroot))))
+            )
 
         # search on SSH remote host for files (the sha256/size/mtime of 'new' files is set to None)
         with ssh.tempdir(self.ssh) as remote, search.tempdir():
@@ -473,7 +466,7 @@ class Location:
                 verbose=verbose,
             )
             scp.copy(host, ".", ["files.txt"], progress=False, verbose=verbose)
-            return self._prune(pathlib.Path("files.txt").read_text().splitlines())
+            return self._prune(sorted(pathlib.Path("files.txt").read_text().splitlines()))
 
     def has_info(self) -> bool:
         """
@@ -482,6 +475,19 @@ class Location:
         :return: True if available.
         """
         return np.all(self._has_info)
+
+    def _getindex(self, paths: list[str]) -> np.array:
+        """
+        Get index of paths in dataset.
+
+        :param paths: List of paths.
+        :return: ``paths`` (sorted) and its index in ``self._files``.
+        """
+        paths = np.sort(paths)
+        sorter = np.argsort(self._files)
+        index = sorter[np.searchsorted(self._files[sorter], paths)]
+        assert np.all(self._files[index] == paths), "not all paths are in the dataset"
+        return paths, index
 
     def basic_check_info(
         self, paths: list[pathlib.Path] = None, progress: bool = False, verbose: bool = False
@@ -494,13 +500,10 @@ class Location:
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
         if paths is None:
-            paths = self._files
             index = None
+            paths = self._files
         else:
-            paths = np.sort(paths)
-            sorter = np.argsort(self._files)
-            index = sorter[np.searchsorted(self._files[sorter], paths)]
-            assert np.all(self._files[index] == paths), "not all paths are in the dataset"
+            paths, index = self._getindex(paths)
 
         if self.ssh is None:
             files = [self._absroot / f for f in paths]
@@ -567,10 +570,7 @@ class Location:
             paths = self._files
             index = np.arange(self._files.size)
         else:
-            paths = np.sort(paths)
-            sorter = np.argsort(self._files)
-            index = sorter[np.searchsorted(self._files[sorter], paths)]
-            assert np.all(self._files[index] == paths), "not all paths are in the dataset"
+            paths, index = self._getindex(paths)
 
         index = index[np.argwhere(~self._has_info[index]).flatten()]
         index = index[np.argsort(self._size[index])]
@@ -1060,6 +1060,12 @@ def _cp_parser():
     desc = textwrap.dedent(
         """
         Copy files between storage locations.
+
+        .. note::
+
+            The copied files are added to the database of the destination.
+            The is no check that this fits ``dump`` and ``search`` settings.
+            If it does not you need to run ``shelephant update`` manually.
         """
     )
 
