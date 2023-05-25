@@ -87,13 +87,13 @@ class Location:
 
         if type(files) == list:
             self._files = np.array(files)
-            self._clear_info()
+            self._clear_all_info()
         elif type(files) == str:
             self._files = np.array([files])
-            self._clear_info()
+            self._clear_all_info()
         elif type(files) == dict:
             self._files = np.array(list(files.keys()))
-            self._clear_info()
+            self._clear_all_info()
             for i, file in enumerate(self._files):
                 self._has_info[i] = "sha256" in files[file]
                 if self._has_info[i]:
@@ -118,7 +118,7 @@ class Location:
         self._mtime = self._mtime[keep]
         return self
 
-    def _clear_info(self):
+    def _clear_all_info(self):
         """
         Clear all info.
         """
@@ -146,6 +146,8 @@ class Location:
         self._sha256 = np.hstack((self._sha256, np.empty(n, dtype=self._sha256.dtype)))
         self._size = np.hstack((self._size, np.empty(n, dtype=self._size.dtype)))
         self._mtime = np.hstack((self._mtime, np.empty(n, dtype=self._mtime.dtype)))
+        if self.search is not None:
+            return self.sort()
         return self
 
     def _prune(self, files: list[str]):
@@ -279,6 +281,8 @@ class Location:
         ret.dump = data.get("dump", None)
         ret.search = data.get("search", None)
         ret._overwrite_dataset_from_dict(data.get("files", []))
+        if ret.search is not None:
+            ret.sort()
         return ret
 
     def to_yaml(self, path: str | pathlib.Path, force: bool = False):
@@ -371,23 +375,15 @@ class Location:
         """
 
         if key == "files":
-            sorter = np.argsort(self._files)
-        elif key == "size":
-            sorter = np.argsort(self._size)
-        elif key == "mtime":
-            sorter = np.argsort(self._mtime)
-        elif key == "sha256":
-            sorter = np.argsort(self._sha256)
-        else:
-            raise ValueError(f"Unknown key: {key}")
+            return self._slice(np.argsort(self._files))
+        if key == "size":
+            return self._slice(np.argsort(self._size))
+        if key == "mtime":
+            return self._slice(np.argsort(self._mtime))
+        if key == "sha256":
+            return self._slice(np.argsort(self._sha256))
 
-        self._files = self._files[sorter]
-        self._has_info = self._has_info[sorter]
-        self._sha256 = self._sha256[sorter]
-        self._size = self._size[sorter]
-        self._mtime = self._mtime[sorter]
-
-        return self
+        raise ValueError(f"Unknown key: {key}")
 
     def _unique(self):
         """
