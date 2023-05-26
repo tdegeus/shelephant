@@ -737,6 +737,42 @@ class Test_dataset(unittest.TestCase):
                 sym.read().getinfo()
                 self.assertTrue(s1 + s2 == sym)
 
+    def test_status(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                d1 = pathlib.Path("mydir")
+                d2 = d1 / "foo"
+                d2.mkdir(parents=True, exist_ok=True)
+                create_dummy_files(["a.txt", "b.txt"])
+                with cwd(d1):
+                    create_dummy_files(["c.txt", "d.txt"], slice(2, None, None))
+                with cwd(d2):
+                    create_dummy_files(["e.txt", "f.txt"], slice(4, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset / "mydir"), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status([".", "--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "c.txt source1 ==",
+                "d.txt source1 ==",
+                os.path.join("foo", "e.txt") + " source1 ==",
+                os.path.join("foo", "f.txt") + " source1 ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
 
 if __name__ == "__main__":
     unittest.main()
