@@ -859,6 +859,7 @@ def add(args: list[str]):
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
+    assert args.name != "all", "all is a reserved name"
 
     if args.name == "here":
         assert args.root is None, "root is not allowed"
@@ -1017,7 +1018,7 @@ def update(args: list[str]):
 
     if args.name is None:
         args.name = []
-    elif args.name.lower() == "--all":
+    elif args.name.lower() == "all":
         assert lock is None, "cannot update all locations from storage location"
         args.name = yaml.read(sdir / "storage.yaml")
     else:
@@ -1243,7 +1244,18 @@ def _status_parser():
     parser.add_argument("--in-use", type=str, help="Select storage location in use.")
     parser.add_argument("--output", type=pathlib.Path, help="Dump to YAML file.")
     parser.add_argument("--copy", type=str, nargs=2, help="Copy file selection.")
-    parser.add_argument("path", type=str, nargs="*", help="Filter to paths.")
+    parser.add_argument(
+        "-b",
+        "--relative-to-base",
+        action="store_true",
+        help="Show path relative to base directory of dataset.",
+    )
+    parser.add_argument(
+        "path",
+        type=str,
+        nargs="*",
+        help="Filter to paths (either one directory, or multiple files).",
+    )
     return parser
 
 
@@ -1258,6 +1270,7 @@ def status(args: list[str]):
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
     base = sdir.parent
+    cwd = os.path.relpath(pathlib.Path.cwd(), base)
     paths = [os.path.relpath(path, base) for path in args.path]
 
     if args.output is not None:
@@ -1315,29 +1328,36 @@ def status(args: list[str]):
         _sha[info] = sorter[info]
         sha[i, :] = _sha
 
-    sha = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
+    data = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
 
-    e = "x" * np.ones((len(extra), sha.shape[1]), dtype=object)
+    e = "x" * np.ones((len(extra), data.shape[1]), dtype=object)
     e[:, 0] = extra
     e[:, 1] = "here"
-    sha = np.vstack((sha, e))
+    data = np.vstack((data, e))
 
     if args.min_copies is not None:
-        sha = sha[np.sum(sha[:, 2:] == "==", axis=1) >= args.min_copies]
+        data = data[np.sum(data[:, 2:] == "==", axis=1) >= args.min_copies]
     if args.copies is not None:
-        sha = sha[np.sum(sha[:, 2:] == "==", axis=1) == args.copies]
+        data = data[np.sum(data[:, 2:] == "==", axis=1) == args.copies]
     if args.ne:
-        sha = sha[np.sum(sha[:, 2:] == "1", axis=1) > 0]
+        data = data[np.sum(data[:, 2:] == "1", axis=1) > 0]
     if args.na:
-        sha = sha[np.sum(sha[:, 2:] == "x", axis=1) > 0]
+        data = data[np.sum(data[:, 2:] == "x", axis=1) > 0]
     if args.unknown:
-        sha = sha[np.sum(sha[:, 2:] == "?=", axis=1) > 0]
+        data = data[np.sum(data[:, 2:] == "?=", axis=1) > 0]
     if args.in_use is not None:
-        sha = sha[sha[:, 1] == args.in_use]
+        data = data[data[:, 1] == args.in_use]
 
     if len(paths) > 0:
-        idx = np.intersect1d(paths, sha[:, 0], return_indices=True)[2]
-        sha = sha[idx]
+        keep = np.zeros(data.shape[0], dtype=bool)
+        for path in paths:
+            keep = np.logical_or(
+                keep, [os.path.commonpath([str(i), path]) == path for i in data[:, 0]]
+            )
+        data = data[keep]
+
+    if not args.relative_to_base:
+        data[:, 0] = [os.path.relpath(i, cwd) for i in data[:, 0]]
 
     out = prettytable.PrettyTable()
     if args.table == "PLAIN_COLUMNS":
@@ -1352,7 +1372,7 @@ def status(args: list[str]):
     for name in storage:
         out.align[name] = "c"
 
-    for row in sha:
+    for row in data:
         out.add_row(row)
 
     print(out.get_string())
