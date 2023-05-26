@@ -974,6 +974,8 @@ def update(args: list[str]):
         symlinks = yaml.read("symlinks.yaml", [])
         symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
 
+        # update files and info
+
         for name in args.name:
             # "here": search for files that are not managed by shelephant
             if name == "here" and paths is None:
@@ -981,7 +983,7 @@ def update(args: list[str]):
                 Location.from_yaml(f).read().remove(list(symlinks.keys())).to_yaml(f, force=True)
                 continue
 
-            # other locations: search for files and compute sha256/size/mtime
+            # other locations: search for files (or add files by hand)
             loc = Location.from_yaml(f"storage/{name}.yaml")
             if not loc.isavailable():
                 continue
@@ -993,24 +995,30 @@ def update(args: list[str]):
                     loc._append(np.array(paths)[new])
             loc.overwrite_yaml(f"storage/{name}.yaml")
 
-            if not args.shallow:
-                loc.check_changes(paths=paths, verbose=args.verbose)
-                if loc.has_info():
-                    continue
-                off = np.sum(loc._size[loc._has_info])
-                pbar = tqdm.tqdm(
-                    total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
+            if args.shallow:
+                continue
+
+            # compute sha256/size/mtime of files that changed since the last update
+            loc.check_changes(paths=paths, verbose=args.verbose)
+            if loc.has_info():
+                continue
+
+            off = np.sum(loc._size[loc._has_info])
+            pbar = tqdm.tqdm(
+                total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
+            )
+            while not loc.has_info():
+                loc.getinfo(
+                    paths=paths,
+                    max_size=args.chunk,
+                    progress=not args.quiet,
+                    verbose=args.verbose,
                 )
-                while not loc.has_info():
-                    loc.getinfo(
-                        paths=paths,
-                        max_size=args.chunk,
-                        progress=not args.quiet,
-                        verbose=args.verbose,
-                    )
-                    loc.overwrite_yaml(f"storage/{name}.yaml")
-                    pbar.n = np.sum(loc._size[loc._has_info]) - off
-                    pbar.refresh()
+                loc.overwrite_yaml(f"storage/{name}.yaml")
+                pbar.n = np.sum(loc._size[loc._has_info]) - off
+                pbar.refresh()
+
+        # update symlinks
 
         storage = yaml.read("storage.yaml")
         storage.remove("here")
@@ -1046,17 +1054,17 @@ def update(args: list[str]):
                     raise RuntimeError(f"{f} managed by shelephant, but not a symlink")
                 f.unlink()
 
-            rm = []
+            unmanage = []
             for f in add_links:
                 if f.is_file():
-                    rm.append(f)
-            for f in rm:
+                    unmanage.append(f)
+            for f in unmanage:
                 add_links.pop(f)
                 files.pop(f)
 
-            if len(rm) > 0:
+            if len(unmanage) > 0:
                 print("Local files conflicting with dataset. No links are created for these files:")
-                print("\n".join(map(str, rm)))
+                print("\n".join(map(str, unmanage)))
 
             store = [{"path": str(i), "storage": str(files[i])} for i in sorted(files.keys())]
             yaml.overwrite(".shelephant/symlinks.yaml", store)
