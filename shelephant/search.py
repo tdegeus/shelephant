@@ -66,6 +66,8 @@ def _search_rglob(rglob: str, skip: list[str] = []) -> list[pathlib.Path]:
     :param skip: A list of regex to skip.
     :return: A list of paths.
     """
+    if isinstance(skip, str):
+        skip = [skip]
     ret = []
     for path in pathlib.Path(".").rglob(rglob):
         if _check_skip(str(path), skip):
@@ -82,6 +84,8 @@ def _search_glob(glob: str, skip: list[str] = []) -> list[pathlib.Path]:
     :param skip: A list of regex to skip.
     :return: A list of paths.
     """
+    if isinstance(skip, str):
+        skip = [skip]
     ret = []
     for path in pathlib.Path(".").glob(glob):
         if _check_skip(str(path), skip):
@@ -98,6 +102,8 @@ def _search_exec(exec: str, skip: list[str] = []) -> list[pathlib.Path]:
     :param skip: A list of regex to skip.
     :return: A list of paths.
     """
+    if isinstance(skip, str):
+        skip = [skip]
     paths = subprocess.check_output(exec, shell=True).decode("utf-8").splitlines()
     paths = list(filter(None, paths))
     ret = []
