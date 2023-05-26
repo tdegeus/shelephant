@@ -968,14 +968,15 @@ def update(args: list[str]):
         args.name = [args.name]
 
     with search.cwd(sdir):
-        symlinks = list(map(pathlib.Path, yaml.read("symlinks.yaml", [])))
+        symlinks = yaml.read("symlinks.yaml", [])
+        symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
 
         # update the database for all locations
         for name in args.name:
             # "here": search for files that are not managed by shelephant
             if name == "here" and paths is None:
                 f = "storage/here.yaml"
-                Location.from_yaml(f).read().remove(symlinks).to_yaml(f, force=True)
+                Location.from_yaml(f).read().remove(list(symlinks.keys())).to_yaml(f, force=True)
                 continue
             # other locations: search for files and compute sha256/size/mtime
             loc = Location.from_yaml(f"storage/{name}.yaml")
@@ -1021,31 +1022,43 @@ def update(args: list[str]):
                 for f in loc.files(info=False):
                     files[prefix / pathlib.Path(f)] = "unavailable"
 
+        add_links = []
+        rm_links = []
+
+        for symlink in symlinks:
+            if symlink not in files:
+                rm_links.append(symlink)
+            elif files[symlink] != symlinks[symlink]:
+                add_links.append(symlink)
+                rm_links.append(symlink)
+
+        for symlink in files:
+            if symlink not in symlinks:
+                add_links.append(symlink)
+
         with search.cwd(sdir / ".."):
-            for f in symlinks:
+            for f in rm_links:
                 if f.exists() and not f.is_symlink():
                     raise RuntimeError(f"{f} managed by shelephant, but not a symlink")
-
-            for f in symlinks:
-                if f.is_symlink():
-                    f.unlink()
+                f.unlink()
 
             rm = []
-            for f in files:
+            for f in add_links:
                 if f.is_file():
                     rm.append(f)
             for f in rm:
+                add_links.pop(f)
                 files.pop(f)
 
             if len(rm) > 0:
                 print("Local files conflicting with dataset. No links are created for these files:")
                 print("\n".join(map(str, rm)))
 
-            yaml.dump(".shelephant/symlinks.yaml", list(map(str, files)), force=True)
+            store = [{"path": str(i), "storage": str(files[i])} for i in sorted(files.keys())]
+            yaml.dump(".shelephant/symlinks.yaml", store, force=True)
 
-            for f in files:
+            for f in add_links:
                 f.parent.mkdir(parents=True, exist_ok=True)
-            for f in files:
                 s = pathlib.Path(os.path.relpath(".shelephant", f.parent)) / files[f] / f
                 f.symlink_to(s)
 
@@ -1167,7 +1180,7 @@ def status(args: list[str]):
         raise NotImplementedError
 
     with search.cwd(sdir):
-        symlinks = np.sort(yaml.read("symlinks.yaml", []))
+        symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
         storage = yaml.read("storage.yaml")
         storage.remove("here")
         extra = Location.from_yaml("storage/here.yaml").files(info=False)
