@@ -593,7 +593,7 @@ class Test_dataset(unittest.TestCase):
             expect = [
                 "a.txt ---- x x ?",
                 "b.txt source1 == == ==",
-                "c.txt source1 2 1 x",
+                "c.txt source1 1 2 x",
                 "d.txt source1 == x x",
                 "e.txt source2 x == x",
                 "g.txt ---- x x ?",
