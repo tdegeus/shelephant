@@ -55,7 +55,7 @@ def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list |
 
 
 def dump(filename: str | pathlib.Path, data: list | dict, force: bool = False):
-    r"""
+    """
     Dump data to YAML file.
 
     :param filename: The output filename.
@@ -78,6 +78,27 @@ def dump(filename: str | pathlib.Path, data: list | dict, force: bool = False):
 
     with open(filename, "w") as file:
         yaml.dump(data, file)
+
+
+def overwrite(filename: str | pathlib.Path, data: list | dict):
+    """
+    Overwrite existing YAML file with data.
+    This function only changes the file if the content has indeed changed.
+
+    :param filename: The output filename.
+    :param data: The data to dump.
+    """
+
+    if not os.path.isfile(filename):
+        return dump(filename, data)
+
+    ret = yaml.dump(data, default_flow_style=False, default_style="")
+    old = pathlib.Path(filename).read_text()
+
+    if ret == old:
+        return
+
+    pathlib.Path(filename).write_text(ret)
 
 
 def preview(data: list | dict):
