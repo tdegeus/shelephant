@@ -294,6 +294,15 @@ class Location:
         """
         yaml.dump(path, self.asdict(), force=force)
 
+    def overwrite_yaml(self, path: str | pathlib.Path):
+        """
+        Overwrite yaml file.
+        This function only changes the file if the content has indeed changed.
+
+        :param path: Path to yaml file.
+        """
+        yaml.overwrite(path, self.asdict())
+
     def asdict(self) -> dict:
         """
         Return as dictionary.
@@ -833,10 +842,10 @@ def add(args: list[str]):
         if len(s) > 0:
             loc.search = s
 
-        loc.to_yaml(f"storage/{args.name}.yaml", force=True)
+        loc.overwrite_yaml(f"storage/{args.name}.yaml")
 
         if args.name != "here":
-            yaml.dump("storage.yaml", storage + [args.name], force=True)
+            yaml.overwrite("storage.yaml", storage + [args.name])
 
             if args.root.is_absolute() and not args.ssh:
                 pathlib.Path(f"data/{args.name}").symlink_to(args.root)
@@ -899,7 +908,7 @@ def remove(args: list[str]):
     storage = yaml.read(sdir / "storage.yaml")
     assert args.name in storage, f"storage location '{args.name}' does not exist"
     storage.remove(args.name)
-    yaml.dump(sdir / "storage.yaml", storage, force=True)
+    yaml.overwrite(sdir / "storage.yaml", storage)
     os.remove(sdir / "storage" / f"{args.name}.yaml")
     (sdir / "data" / args.name).unlink()
     update([])
@@ -988,7 +997,7 @@ def update(args: list[str]):
                 new = ~np.in1d(paths, loc._files)
                 if np.sum(new) != 0 and new.size > 0:
                     loc._append(np.array(paths)[new])
-            loc.to_yaml(f"storage/{name}.yaml", force=True)
+            loc.overwrite_yaml(f"storage/{name}.yaml")
             if not args.shallow:
                 loc.basic_check_info(paths=paths, verbose=args.verbose)
                 if loc.has_info():
@@ -1004,7 +1013,7 @@ def update(args: list[str]):
                         progress=not args.quiet,
                         verbose=args.verbose,
                     )
-                    loc.to_yaml(f"storage/{name}.yaml", force=True)
+                    loc.overwrite_yaml(f"storage/{name}.yaml")
                     pbar.n = np.sum(loc._size[loc._has_info]) - off
                     pbar.refresh()
 
@@ -1055,7 +1064,7 @@ def update(args: list[str]):
                 print("\n".join(map(str, rm)))
 
             store = [{"path": str(i), "storage": str(files[i])} for i in sorted(files.keys())]
-            yaml.dump(".shelephant/symlinks.yaml", store, force=True)
+            yaml.overwrite(".shelephant/symlinks.yaml", store)
 
             for f in add_links:
                 f.parent.mkdir(parents=True, exist_ok=True)
