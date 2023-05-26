@@ -1197,7 +1197,8 @@ def status(args: list[str]):
         storage.remove("here")
         extra = Location.from_yaml("storage/here.yaml").files(info=False)
 
-        sha = "" * np.ones((len(symlinks), len(storage)), dtype=object)
+        sha = "x" * np.ones((len(symlinks), len(storage)), dtype=object)
+        mtime = np.inf * np.ones(sha.shape, dtype=np.float64)
         inuse = "----" * np.ones((len(symlinks)), dtype=object)
 
         for iname, name in enumerate(storage[::-1]):
@@ -1209,39 +1210,36 @@ def status(args: list[str]):
             sorter = np.argsort(files)
             idx = np.searchsorted(symlinks, files[sorter])
             s = np.array(loc._sha256)[sorter]
+            m = np.array(loc._mtime)[sorter]
             h = ~loc._has_info[sorter]
             if np.any(h):
                 s[h] = "?"
+                m[h] = np.inf
             sha[idx, -1 - iname] = s
+            mtime[idx, -1 - iname] = m
             if loc.isavailable(mount=True):
                 inuse[idx] = name
 
-    def _reduce(ret):
-        missing = np.any(ret == "")
-        unknown = np.any(ret == "?")
-        _, a, b = np.unique(ret, return_index=True, return_inverse=True)
-        n = a.size
-        if missing:
-            n -= 1
-            missing = ["x"]
-        else:
-            missing = []
+    for i in range(sha.shape[0]):
+        _sha = sha[i, :]
+        unique = np.unique(_sha)
+        info = np.logical_and(unique != "x", unique != "?")
 
-        if unknown:
-            n -= 1
-            unknown = ["?"]
-        else:
-            unknown = []
+        if np.sum(info) == 0:
+            continue
 
-        if n == 1:
-            names = ["=="]
-        else:
-            names = [str(i) for i in range(1, n + 1)]
+        if np.sum(info) == 1:
+            _sha[_sha == unique[info][0]] = "=="
+            sha[i, :] = _sha
+            continue
 
-        names = np.array(missing + names + unknown, dtype=object)
-        return names[np.arange(a.size)[b]]
+        info = np.logical_and(_sha != "x", _sha != "?")
+        _mtime = mtime[i, :]
+        _mtime[~info] = np.inf
+        sorter = np.array(list(map(str, 1 + np.argsort(_mtime))), dtype=object)
+        _sha[info] = sorter[info]
+        sha[i, :] = _sha
 
-    sha = np.apply_along_axis(_reduce, 1, sha)
     sha = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
 
     e = "x" * np.ones((len(extra), sha.shape[1]), dtype=object)
