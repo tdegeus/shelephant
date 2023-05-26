@@ -3,6 +3,7 @@ import io
 import os
 import pathlib
 import re
+import shutil
 import unittest
 
 import numpy as np
@@ -678,6 +679,63 @@ class Test_dataset(unittest.TestCase):
                 self.assertEqual(
                     pathlib.Path(os.path.realpath("f.txt")).parent.parent.name, "source2"
                 )
+
+    def test_git(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                s1 = create_dummy_files(files)
+
+            with cwd(source2):
+                s2 = create_dummy_files(["a.txt", "b.txt"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    ["source2", "../source2", "--rglob", "*.txt", "--skip", r"\.shelephant.*", "-q"]
+                )
+
+            with cwd(source2):
+                s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+                shutil.copytree("../dataset/.shelephant", ".shelephant", symlinks=True)
+                shelephant.dataset.lock(["source2"])
+                shelephant.dataset.update(["--quiet"])
+                shutil.copy2(
+                    ".shelephant/storage/source2.yaml",
+                    "../dataset/.shelephant/storage/source2.yaml",
+                )
+
+            with cwd(dataset):
+                shelephant.dataset.update(["--quiet"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                sym = shelephant.dataset.Location(root=".")
+                sym.search = [{"rglob": "*.txt"}]
+                sym.read().getinfo()
+                self.assertTrue(s1 + s2 == sym)
 
 
 if __name__ == "__main__":

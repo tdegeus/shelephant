@@ -501,45 +501,43 @@ We now want to use a central storage (e.g. GitHub) to send updates about the dat
     shelephant git remote add origin <REMOTE_URL>
     shelephant git push -u origin main
 
-.. todo::
+Now, on one of the storage locations (e.g. "usb") we are going to clone the repository:
 
-    Now, on one of the storage locations (e.g. "usb") we are going to clone the repository:
+.. code-block:: bash
 
-    .. code-block:: bash
+    cd /media/myusb/mydata
+    git clone <REMOTE_URL> .shelephant
 
-        cd /media/myusb/mydata
-        git clone <REMOTE_URL> .shelephant
+.. note::
 
-    .. note::
+    We can not yet use the *shelephant* proxy for git yet because there is no ``.shelephant`` folder yet.
 
-        We can not use the *shelephant* proxy for git yet because there is no ``.shelephant`` folder yet.
+**Important:** we will now tell shelephant that this is a storage location (such that symbolic links are not created), and which one it is:
 
-    **Important:** we will now tell shelephant that this is a storage location (such that symbolic links are not created), and which one it is:
+.. code-block:: bash
 
-    .. code-block:: bash
+    shelephant lock "usb"
 
-        shelephant lock "usb"
+Calling
 
-    Calling
+.. code-block:: bash
 
-    .. code-block:: bash
+    shelephant update
 
-        shelephant update
+will now read ``.shelephant/storage/usb.yaml`` and update the list of files according to ``"search"``.
+If ``"search"`` is not specified, only no longer existing files are removed from ``.shelephant/state/usb.yaml``, but nothing is added.
+Furthermore, it will update all metadata ("sha256", "size", "mtime") to the present values.
+To propagate this to the central storage we do:
 
-    will now read ``.shelephant/storage/usb.yaml`` and update the list of files in ``.shelephant/state/usb.yaml`` according to ``"search"``.
-    If ``"search"`` is not specified, only no longer existing files are removed from ``.shelephant/state/usb.yaml``, but nothing is added.
-    Furthermore, it will update all metadata ("sha256", "size", "modified", "created") to the present values.
-    To propagate this to the central storage we do:
+.. code-block:: bash
 
-    .. code-block:: bash
+    shelephant git add -A
+    shelephant git commit -m "Update state of usb-drive"
+    shelephant git push
 
-        shelephant git add -A
-        shelephant git commit -m "Update state of usb-drive"
-        shelephant git push
+Now you can get the updates on your laptop (even if the two systems would not have any direct connection):
 
-    Now you can get the updates on your laptop (even if the two systems would not have any direct connection):
+.. code-block:: bash
 
-    .. code-block:: bash
-
-        cd /path/to/my/dataset
-        shelephant git pull
+    cd /path/to/my/dataset
+    shelephant git pull

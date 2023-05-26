@@ -256,6 +256,19 @@ class Location:
         ret += other
         return ret._unique()
 
+    def copy_files(self, other):
+        """
+        Copy files (and size/mtime/sha256) from other location.
+
+        :param other: Other location.
+        """
+        self._files = other._files
+        self._has_info = other._has_info
+        self._sha256 = other._sha256
+        self._size = other._size
+        self._mtime = other._mtime
+        return self
+
     @classmethod
     def from_yaml(cls, path: str | pathlib.Path):
         """
@@ -742,6 +755,44 @@ def init(args: list[str]):
     yaml.dump(sdir / "storage" / "here.yaml", {"root": "../.."})
 
 
+def _lock_parser():
+    """
+    Return parser for :py:func:`shelephant lock`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Lock as storage location.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("name", type=str, help="Name of the storage location.")
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def lock(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _lock_parser()
+    args = parser.parse_args(args)
+    sdir = pathlib.Path(".shelephant")
+    assert args.name in yaml.read(sdir / "storage.yaml"), f"storage location '{args.name}' unknown"
+    (sdir / "lock.txt").write_text(args.name)
+
+
 def _add_parser():
     """
     Return parser for :py:func:`shelephant add`.
@@ -807,6 +858,7 @@ def add(args: list[str]):
     parser = _add_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
 
     if args.name == "here":
         assert args.root is None, "root is not allowed"
@@ -898,6 +950,7 @@ def remove(args: list[str]):
     parser = _remove_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
 
     storage = yaml.read(sdir / "storage.yaml")
     assert args.name in storage, f"storage location '{args.name}' does not exist"
@@ -960,15 +1013,21 @@ def update(args: list[str]):
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
     paths = paths if len(paths) > 0 else None
+    lock = None if not (sdir / "lock.txt").exists() else (sdir / "lock.txt").read_text().strip()
 
     if args.name is None:
         args.name = []
     elif args.name.lower() == "--all":
+        assert lock is None, "cannot update all locations from storage location"
         args.name = yaml.read(sdir / "storage.yaml")
     else:
+        assert lock is None, "cannot update all locations from storage location"
         assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
         assert args.name != "here" or len(paths) == 0, "cannot specify paths for 'here'"
         args.name = [args.name]
+
+    if lock is not None:
+        args.name = [lock]
 
     with search.cwd(sdir):
         symlinks = yaml.read("symlinks.yaml", [])
@@ -985,6 +1044,11 @@ def update(args: list[str]):
 
             # other locations: search for files (or add files by hand)
             loc = Location.from_yaml(f"storage/{name}.yaml")
+            if lock is not None:
+                loc.root = pathlib.Path("..")
+                loc._absroot = loc.root.absolute()
+                loc.ssh = None
+                loc.mount = False
             if not loc.isavailable():
                 continue
             if paths is None:
@@ -993,7 +1057,12 @@ def update(args: list[str]):
                 new = ~np.in1d(paths, loc._files)
                 if np.sum(new) != 0 and new.size > 0:
                     loc._append(np.array(paths)[new])
-            loc.overwrite_yaml(f"storage/{name}.yaml")
+
+            if lock is not None:
+                f = f"storage/{name}.yaml"
+                Location.from_yaml(f).copy_files(loc).overwrite_yaml(f)
+            else:
+                loc.overwrite_yaml(f"storage/{name}.yaml")
 
             if args.shallow:
                 continue
@@ -1014,11 +1083,17 @@ def update(args: list[str]):
                     progress=not args.quiet,
                     verbose=args.verbose,
                 )
-                loc.overwrite_yaml(f"storage/{name}.yaml")
+                if lock is not None:
+                    f = f"storage/{name}.yaml"
+                    Location.from_yaml(f).copy_files(loc).overwrite_yaml(f)
+                else:
+                    loc.overwrite_yaml(f"storage/{name}.yaml")
                 pbar.n = np.sum(loc._size[loc._has_info]) - off
                 pbar.refresh()
 
         # update symlinks
+        if lock is not None:
+            return
 
         storage = yaml.read("storage.yaml")
         storage.remove("here")
@@ -1283,9 +1358,12 @@ def status(args: list[str]):
     print(out.get_string())
 
 
-def git(args: list[str]):
+def git(args: list[str], verbose: bool = False):
     """
     Run git from ``.shelephant`` directory.
+
+    :param args: Command-line arguments (should be all strings).
+    :param verbose: Show verbose output.
     """
     with search.cwd(_search_upwards_dir(".shelephant")):
-        exec_cmd(f"git {' '.join(args)}")
+        exec_cmd(f"git {' '.join(args)}", verbose=verbose)
