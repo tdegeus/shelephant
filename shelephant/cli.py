@@ -702,6 +702,7 @@ def _shelephant_main_parser():
         update  Update dataset.
         status  Show status of files.
         cp      Copy files from one location to another.
+        lock    Lock as storage location.
         git     Run git command on the database directory (``.shelephant``).
         ======= ================================================================
         """
@@ -714,7 +715,7 @@ def _shelephant_main_parser():
     ):
         pass
 
-    choices = ["init", "add", "remove", "status", "cp", "update", "git"]
+    choices = ["init", "add", "remove", "status", "cp", "update", "lock", "git"]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("command", type=str, choices=choices, help="Command to run.")
@@ -738,6 +739,8 @@ def _shelephant_main():
         dataset.cp(sys.argv[2:])
     elif args.command == "update":
         dataset.update(sys.argv[2:])
+    elif args.command == "lock":
+        dataset.lock(sys.argv[2:])
     elif args.command == "git":
         dataset.git(sys.argv[2:])
     else:
