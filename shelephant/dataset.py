@@ -56,7 +56,7 @@ class Location:
 
     *   Create from scratch::
 
-            location = Location(root="~/data"[, ssh="user@host"])
+            location = Location(root="~/data", ...)
     """
 
     def __init__(
@@ -71,6 +71,7 @@ class Location:
         :param root: The root directory (may be relative, unless on remote SSH host).
         :param ssh: ``[user@]host``.
         :param mount: Mount location for SSH host.
+        :param prefix: Prefix to add to all paths.
         :param files: List of files.
         """
         self.root = pathlib.Path(root)
@@ -170,8 +171,7 @@ class Location:
         self._slice(np.in1d(self._files, files, assume_unique=True))
 
         # add paths from "files" that are not in "_files"
-        keep = ~np.in1d(files, self._files, assume_unique=True)
-        return self._append(files[keep])
+        return self._append(files[~np.in1d(files, self._files, assume_unique=True)])
 
     def _overwrite_dataset_from_dict(self, files: list):
         """
@@ -401,6 +401,10 @@ class Location:
         .. todo::
 
             Check that the checksums and sizes are the same.
+
+        .. todo::
+
+            Keep sorted?
         """
         _, idx = np.unique(self._files, return_index=True)
         return self._slice(idx)
@@ -434,7 +438,7 @@ class Location:
 
         -   If ``search`` is set, search for files.
             This preserves sha256/size/mtime if paths are already in the database
-            (there if not check that they are accurate).
+            (there is no check that they are still accurate).
 
         :param verbose: Print progress (only relevant if ``ssh`` is set).
         """
@@ -477,7 +481,7 @@ class Location:
         """
         Check if sha256/size/mtime is available for all files.
 
-        :return: True if available.
+        :return: True if sha256/size/mtime is available for all files.
         """
         return np.all(self._has_info)
 
@@ -486,7 +490,7 @@ class Location:
         Get index of paths in dataset.
 
         :param paths: List of paths.
-        :return: ``paths`` (sorted) and its index in ``self._files``.
+        :return: ``paths`` (sorted) and their indices in ``self._files``.
         """
         paths = np.sort(paths)
         sorter = np.argsort(self._files)
@@ -494,61 +498,86 @@ class Location:
         assert np.all(self._files[index] == paths), "not all paths are in the dataset"
         return paths, index
 
-    def basic_check_info(
+    def _get_info(self, paths: list[pathlib.Path], sha256: bool, progress: bool, verbose: bool):
+        """
+        Get mtime/size/sha256 of a list of files.
+
+        :param paths: List of paths to check.
+        :param progress: Show progress bar (only relevant if ``ssh`` is not set).
+        :param verbose: Show verbose output (only relevant if ``ssh`` is set).
+        :return: size, mtime, sha256
+        """
+
+        if self.ssh is None:
+            files = [self._absroot / f for f in paths]
+            size, mtime, hash = info.getinfo(files, sha256=sha256, progress=progress)
+            return (
+                np.array(size, dtype=np.int64),
+                np.array(mtime, dtype=np.float64),
+                np.array(hash, dtype="U64"),
+            )
+
+        with ssh.tempdir(self.ssh) as remote, search.tempdir():
+            files = [str(self.root / i) for i in paths]
+            pathlib.Path("files.txt").write_text("\n".join(files))
+            pathlib.Path("sha256.txt").write_text("")
+            shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
+
+            extra = ["sha256.txt"] if sha256 else []
+            hostpath = f'{self.ssh:s}:"{str(remote):s}"'
+            scp.copy(
+                ".", hostpath, extra + ["script.py", "files.txt"], progress=False, verbose=verbose
+            )
+            exec_cmd(
+                f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"', verbose=verbose
+            )
+            scp.copy(
+                hostpath, ".", extra + ["size.txt", "mtime.txt"], progress=False, verbose=verbose
+            )
+            size = np.array(
+                list(map(int, pathlib.Path("size.txt").read_text().splitlines())),
+                dtype=np.int64,
+            )
+            mtime = np.array(
+                list(map(float, pathlib.Path("mtime.txt").read_text().splitlines())),
+                dtype=np.float64,
+            )
+            if sha256:
+                hash = np.array(pathlib.Path("sha256.txt").read_text().splitlines(), dtype="U64")
+            else:
+                hash = []
+
+        return size, mtime, hash
+
+    def check_changes(
         self, paths: list[pathlib.Path] = None, progress: bool = False, verbose: bool = False
     ):
         """
         Remove sha256 from all files of which the size/mtime has changed.
 
-        :param paths: List of paths to check. Have to be relative to the root of the dataset.
+        :param paths:
+            List of paths to check.
+            Paths to be relative to the root of the dataset.
+            Default: all files in the database.
+
         :param progress: Show progress bar (only relevant if ``ssh`` is not set).
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
         if paths is None:
-            index = None
-            paths = self._files
-        else:
-            paths, index = self._getindex(paths)
-
-        if self.ssh is None:
-            files = [self._absroot / f for f in paths]
-            size, mtime, _ = info.getinfo(files, sha256=False, progress=progress)
-        else:
-            with ssh.tempdir(self.ssh) as remote, search.tempdir():
-                shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
-                files = [str(self.root / i) for i in paths]
-                pathlib.Path("files.txt").write_text("\n".join(files))
-                hostpath = f'{self.ssh:s}:"{str(remote):s}"'
-                scp.copy(".", hostpath, ["script.py", "files.txt"], progress=False, verbose=verbose)
-                exec_cmd(
-                    f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"',
-                    verbose=verbose,
-                )
-                scp.copy(hostpath, ".", ["size.txt", "mtime.txt"], progress=False, verbose=verbose)
-                size = np.array(
-                    list(map(int, pathlib.Path("size.txt").read_text().splitlines())),
-                    dtype=np.int64,
-                )
-                mtime = np.array(
-                    list(map(float, pathlib.Path("mtime.txt").read_text().splitlines())),
-                    dtype=np.float64,
-                )
-
-        size = np.array(size, dtype=np.int64)
-        mtime = np.array(mtime, dtype=np.float64)
-
-        if index is None:
+            size, mtime, _ = self._get_info(self._files, False, progress, verbose)
             rm = np.logical_or(self._size != size, self._mtime != mtime)
             self._has_info[rm] = False
             self._size[~self._has_info] = size[~self._has_info]
             self._mtime[~self._has_info] = mtime[~self._has_info]
-        else:
-            rm = np.logical_or(self._size[index] != size, self._mtime[index] != mtime)
-            self._has_info[index[rm]] = False
-            keep = ~self._has_info[index]
-            self._size[index[keep]] = size[keep]
-            self._mtime[index[keep]] = mtime[keep]
+            return self
 
+        paths, index = self._getindex(paths)
+        size, mtime, _ = self._get_info(paths, False, progress, verbose)
+        rm = np.logical_or(self._size[index] != size, self._mtime[index] != mtime)
+        self._has_info[index[rm]] = False
+        keep = ~self._has_info[index]
+        self._size[index[keep]] = size[keep]
+        self._mtime[index[keep]] = mtime[keep]
         return self
 
     def getinfo(
@@ -592,46 +621,11 @@ class Location:
                 index = index[:i]
                 files = files[:i]
 
-        if self.ssh is None:
-            size, mtime, hash = info.getinfo([self._absroot / f for f in files], progress=progress)
-        else:
-            with ssh.tempdir(self.ssh) as remote, search.tempdir():
-                pathlib.Path("sha256.txt").write_text("")
-                shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
-                pathlib.Path("files.txt").write_text("\n".join([str(self.root / i) for i in files]))
-                hostpath = f'{self.ssh:s}:"{str(remote):s}"'
-                scp.copy(
-                    ".",
-                    hostpath,
-                    ["script.py", "files.txt", "sha256.txt"],
-                    progress=False,
-                    verbose=verbose,
-                )
-                exec_cmd(
-                    f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"',
-                    verbose=verbose,
-                )
-                scp.copy(
-                    hostpath,
-                    ".",
-                    ["size.txt", "mtime.txt", "sha256.txt"],
-                    progress=False,
-                    verbose=verbose,
-                )
-                hash = np.array(pathlib.Path("sha256.txt").read_text().splitlines(), dtype="U64")
-                size = np.array(
-                    list(map(int, pathlib.Path("size.txt").read_text().splitlines())),
-                    dtype=np.int64,
-                )
-                mtime = np.array(
-                    list(map(float, pathlib.Path("mtime.txt").read_text().splitlines())),
-                    dtype=np.float64,
-                )
-
+        size, mtime, hash = self._get_info(files, True, progress, verbose)
         self._has_info[index] = True
-        self._sha256[index] = np.array(hash, dtype="U64")
-        self._size[index] = np.array(size, dtype=np.int64)
-        self._mtime[index] = np.array(mtime, dtype=np.float64)
+        self._sha256[index] = hash
+        self._size[index] = size
+        self._mtime[index] = mtime
         return self
 
     def diff(self, other) -> dict:
@@ -980,13 +974,13 @@ def update(args: list[str]):
         symlinks = yaml.read("symlinks.yaml", [])
         symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
 
-        # update the database for all locations
         for name in args.name:
             # "here": search for files that are not managed by shelephant
             if name == "here" and paths is None:
                 f = "storage/here.yaml"
                 Location.from_yaml(f).read().remove(list(symlinks.keys())).to_yaml(f, force=True)
                 continue
+
             # other locations: search for files and compute sha256/size/mtime
             loc = Location.from_yaml(f"storage/{name}.yaml")
             if not loc.isavailable():
@@ -998,8 +992,9 @@ def update(args: list[str]):
                 if np.sum(new) != 0 and new.size > 0:
                     loc._append(np.array(paths)[new])
             loc.overwrite_yaml(f"storage/{name}.yaml")
+
             if not args.shallow:
-                loc.basic_check_info(paths=paths, verbose=args.verbose)
+                loc.check_changes(paths=paths, verbose=args.verbose)
                 if loc.has_info():
                     continue
                 off = np.sum(loc._size[loc._has_info])
