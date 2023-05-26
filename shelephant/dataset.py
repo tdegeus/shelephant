@@ -997,8 +997,6 @@ def update(args: list[str]):
                     total=np.sum(loc._size) - off, disable=args.quiet, unit="B", unit_scale=True
                 )
                 while not loc.has_info():
-                    pbar.n = np.sum(loc._size[loc._has_info]) - off
-                    pbar.refresh()
                     loc.getinfo(
                         paths=paths,
                         max_size=args.chunk,
@@ -1006,6 +1004,8 @@ def update(args: list[str]):
                         verbose=args.verbose,
                     )
                     loc.to_yaml(f"storage/{name}.yaml", force=True)
+                    pbar.n = np.sum(loc._size[loc._has_info]) - off
+                    pbar.refresh()
 
         storage = yaml.read("storage.yaml")
         storage.remove("here")
