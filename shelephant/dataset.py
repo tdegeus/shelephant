@@ -1024,7 +1024,7 @@ def update(args: list[str]):
     else:
         assert lock is None, "cannot update all locations from storage location"
         assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
-        assert args.name != "here" or len(paths) == 0, "cannot specify paths for 'here'"
+        assert args.name != "here" or paths is None, "cannot specify paths for 'here'"
         args.name = [args.name]
 
     if lock is not None:
@@ -1163,7 +1163,7 @@ def _cp_parser():
         .. note::
 
             The copied files are added to the database of the destination.
-            The is no check that this fits ``dump`` and ``search`` settings.
+            There is no check that this fits ``dump`` and ``search`` settings.
             If it does not you need to run ``shelephant update`` manually.
         """
     )
@@ -1211,6 +1211,74 @@ def cp(args: list[str]):
         cli.shelephant_cp(opts, paths)
 
     if not args.dry_run:
+        update(["--quiet", args.destination, *paths])
+
+
+def _mv_parser():
+    """
+    Return parser for :py:func:`shelephant mv`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Move files to other storage location.
+
+        .. note::
+
+            The copied files are added to the database of the destination.
+            There is no check that this fits ``dump`` and ``search`` settings.
+            If it does not you need to run ``shelephant update`` manually.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("source", type=str, help="name of the source.")
+    parser.add_argument("destination", type=str, help="name of the destination.")
+    parser.add_argument("path", type=str, nargs="+", help="path(s) to copy.")
+    return parser
+
+
+def mv(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _mv_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert args.destination != "here", "Cannot copy to here."
+    base = sdir.parent
+    paths = [os.path.relpath(path, base) for path in args.path]
+
+    with search.cwd(sdir):
+        dest = Location.from_yaml(f"storage/{args.destination}.yaml")
+        assert dest.ssh is None, "Cannot move to remote location."
+        opts = [f"storage/{args.source}.yaml", str(dest._absroot)]
+        opts += ["--colors", args.colors]
+        opts += ["--force"] if args.force else []
+        opts += ["--quiet"] if args.quiet else []
+        opts += ["--dry-run"] if args.dry_run else []
+        cli.shelephant_mv(opts, paths)
+
+    if not args.dry_run:
+        with search.cwd(sdir):
+            f = f"storage/{args.source}.yaml"
+            Location.from_yaml(f).remove(paths).overwrite_yaml(f)
         update(["--quiet", args.destination, *paths])
 
 

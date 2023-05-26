@@ -491,6 +491,135 @@ class Test_dataset(unittest.TestCase):
                 sym.search = [{"rglob": "*.txt"}]
                 self.assertTrue((s1 + s2).files(False) == sym.read().sort().files(False))
 
+    def test_mv(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt", "c.txt", "d.txt"])
+
+            with cwd(source2):
+                create_dummy_files(["e.txt", "f.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == x",
+                "b.txt source1 == x",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                files = ["c.txt", "d.txt"]
+                shelephant.dataset.mv(["source1", "source2", "-n", "--colors", "none"] + files)
+                shelephant.dataset.mv(["source1", "source2", "-f", "-q"] + files)
+
+            expect = [
+                "c.txt -> c.txt",
+                "d.txt -> d.txt",
+            ]
+            ret = _plain(sio.getvalue())
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == x",
+                "b.txt source1 == x",
+                "c.txt source2 x ==",
+                "d.txt source2 x ==",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+    def test_mv_here(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt"])
+
+            with cwd(dataset):
+                create_dummy_files(["c.txt", "d.txt"])
+
+            with cwd(source2):
+                create_dummy_files(["e.txt", "f.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+                data = shelephant.yaml.read(".shelephant/storage/here.yaml")
+                data["search"] = [{"rglob": "*.txt"}]
+                shelephant.yaml.dump(".shelephant/storage/here.yaml", data, force=True)
+                shelephant.dataset.update(["-q", "here"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == x",
+                "b.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+                "c.txt here x x",
+                "d.txt here x x",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                files = ["c.txt", "d.txt"]
+                shelephant.dataset.mv(["here", "source2", "-n", "--colors", "none"] + files)
+                shelephant.dataset.mv(["here", "source2", "-f", "-q"] + files)
+
+            expect = [
+                "c.txt -> c.txt",
+                "d.txt -> d.txt",
+            ]
+            ret = _plain(sio.getvalue())
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == x",
+                "b.txt source1 == x",
+                "c.txt source2 x ==",
+                "d.txt source2 x ==",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
     def test_shallow(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

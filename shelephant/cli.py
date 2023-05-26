@@ -370,7 +370,7 @@ def shelephant_mv(args: list[str], paths: list[str] = None):
     files = source.files(info=False)
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
-    sourcepath = source.root
+    sourcepath = source._absroot
     destpath = args.dest
     status = local.diff(sourcepath, destpath, files)
     assert status.pop("<-", []) == [], "Cannot move from destination to source"
@@ -702,6 +702,7 @@ def _shelephant_main_parser():
         update  Update dataset.
         status  Show status of files.
         cp      Copy files from one location to another.
+        mv      Move files from one location to another (both local).
         lock    Lock as storage location.
         git     Run git command on the database directory (``.shelephant``).
         ======= ================================================================
