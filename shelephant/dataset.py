@@ -168,9 +168,7 @@ class Location:
             if np.all(np.equal(self._files, files)):
                 return self
 
-        _, i, j = np.intersect1d(
-            self._files, files, return_indices=True, assume_unique=True
-        )
+        _, i, j = np.intersect1d(self._files, files, return_indices=True, assume_unique=True)
         k = np.ones(files.size, dtype=bool)
         k[j] = False
         self._slice(i)
@@ -1137,9 +1135,8 @@ def update(args: list[str]):
 
         with search.cwd(sdir / ".."):
             for f in rm_links:
-                if f.exists() and not f.is_symlink():
-                    raise RuntimeError(f"{f} managed by shelephant, but not a symlink")
-                f.unlink()
+                if f.exists():
+                    f.unlink()
 
             unmanage = []
             for f in add_links:
