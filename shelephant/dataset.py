@@ -142,6 +142,8 @@ class Location:
         """
         files = np.array(files)
         n = files.size
+        if n == 0:
+            return self
         self._files = np.hstack((self._files, files))
         self._has_info = np.hstack((self._has_info, np.zeros(n, dtype=self._has_info.dtype)))
         self._sha256 = np.hstack((self._sha256, np.empty(n, dtype=self._sha256.dtype)))
@@ -158,20 +160,22 @@ class Location:
         For new files the sha256/size/mtime is set to None.
         (Files that were in the database but that are not in ``files`` are removed.)
 
-        :param files: List of files.
+        :param files: List of files (unique, no assertion).
         """
         files = np.array(files)
-        assert np.unique(files).size == files.size, "duplicate filenames"
 
         if self._files.size == files.size:
             if np.all(np.equal(self._files, files)):
                 return self
 
-        # remove paths from "_files" that are not in "files"
-        self._slice(np.in1d(self._files, files, assume_unique=True))
-
-        # add paths from "files" that are not in "_files"
-        return self._append(files[~np.in1d(files, self._files, assume_unique=True)])
+        _, i, j = np.intersect1d(
+            self._files, files, return_indices=True, assume_unique=True
+        )
+        k = np.ones(files.size, dtype=bool)
+        k[j] = False
+        self._slice(i)
+        self._append(files[k])
+        return self
 
     def _overwrite_dataset_from_dict(self, files: list):
         """
@@ -439,7 +443,13 @@ class Location:
 
         :param paths: List of paths to remove.
         """
-        return self._slice(~np.in1d(self._files, list(map(str, paths))))
+
+        _, i, _ = np.intersect1d(
+            self._files, np.unique(list(map(str, paths))), return_indices=True, assume_unique=True
+        )
+        k = np.ones(self._files.size, dtype=bool)
+        k[i] = False
+        return self._slice(k)
 
     def read(self, verbose: bool = False):
         """
@@ -1013,7 +1023,7 @@ def update(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
-    paths = paths if len(paths) > 0 else None
+    paths = np.unique(paths) if len(paths) > 0 else None
     lock = None if not (sdir / "lock.txt").exists() else (sdir / "lock.txt").read_text().strip()
 
     if args.name is None:
@@ -1055,9 +1065,10 @@ def update(args: list[str]):
             if paths is None:
                 loc.read(verbose=args.verbose)
             else:
-                new = ~np.in1d(paths, loc._files)
-                if np.sum(new) != 0 and new.size > 0:
-                    loc._append(np.array(paths)[new])
+                _, i, _ = np.intersect1d(paths, loc._files, return_indices=True, assume_unique=True)
+                k = np.ones(paths.size, dtype=bool)
+                k[i] = False
+                loc._append(paths[k])
 
             if lock is not None:
                 f = f"storage/{name}.yaml"
@@ -1446,12 +1457,11 @@ def status(args: list[str]):
     print(out.get_string())
 
 
-def git(args: list[str], verbose: bool = False):
+def git(args: list[str]):
     """
     Run git from ``.shelephant`` directory.
 
     :param args: Command-line arguments (should be all strings).
-    :param verbose: Show verbose output.
     """
     with search.cwd(_search_upwards_dir(".shelephant")):
-        exec_cmd(f"git {' '.join(args)}", verbose=verbose)
+        print(exec_cmd(f"git {' '.join(args)}"))
