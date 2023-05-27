@@ -1135,7 +1135,7 @@ def update(args: list[str]):
 
         with search.cwd(sdir / ".."):
             for f in rm_links:
-                if f.exists():
+                if f.is_symlink():
                     f.unlink()
 
             unmanage = []
