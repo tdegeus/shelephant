@@ -16,6 +16,15 @@ This allows for distributed storage and/or storage of multiple copies of the sam
 
 There are methods to copy or move files to or between the "storage" locations.
 
+.. tip::
+
+    The two key reasons to use this tool are:
+
+    1.  To keep an overview of a the dataset's structure also if some storage locations may not be available part of the time.
+
+    2.  To keep a track of where multiple copies of files are and to get an overview of which copies might be outdated.
+        In addition, you can easily 'enforce' multiple copies.
+
 Basic usage
 ===========
 
@@ -44,7 +53,7 @@ This creates a directory:
 
 .. note::
 
-    You are allowed to use any name that you like to indicate storage locations, except ``here`` that is reserved for the dataset directory itself.
+    You are allowed to use any name that you like to indicate storage locations, except ``here`` that is reserved for the dataset directory itself, and ``all`` and ``any`` that are keywords to select indicate a generic selection of datasets.
 
 Adding existing data
 --------------------
@@ -130,9 +139,11 @@ This will:
             - path: a.h5
               sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
               size: 11559
+              mtime: 12345.567
             - path: mydir/b.h5
               sha256: 3cff1315981715840ed1df9180cd2af82a65b6b1bbec7793770d36ad0fbc2816
               size: 1757
+              mtime: 12346.897
 
     .. note::
 
@@ -140,11 +151,15 @@ This will:
         You can use ``--shallow`` to skip this.
         However, this will degrade the functionality of *shelephant* and the integrity of the dataset.
 
+    .. note::
+
+        The modification time (``mtime``, in seconds from epoch) and size are used to estimate is the *sha256* might have changed when you update the dataset.
+
     .. warning::
 
         This file is assumed to reflect the state of the storage location.
         This is not automatically checked.
-        You are responsible to call ``shelephant update --all`` or ``shelephant update laptop`` when needed (or make modifications by hand).
+        You are responsible to call ``shelephant update all`` or ``shelephant update laptop`` when needed (or make modifications by hand).
 
 5.  Add files to the dataset directory by creating symbolic links to the storage location:
 
@@ -159,8 +174,10 @@ This will:
 
         .. code-block:: yaml
 
-            - a.h5
-            - mydir/b.h5
+            - path: a.h5
+              storage: laptop
+            - path: mydir/b.h5
+              storage: laptop
 
 Adding secondary storage
 ------------------------
@@ -195,9 +212,17 @@ This will:
             - path: a.h5
               sha256: bbbd486f44cba693a77d216709631c2c3139b1e7e523ff1fcced2100c4a19e59
               size: 11559
+              mtime: 12347.123
             - path: mydir/c.h5
               sha256: 6eaf422f26a81854a230b80fd18aaef7e8d94d661485bd2e97e695b9dce7bf7f
               size: 4584
+              mtime: 12348.465
+
+    .. note::
+
+        Note how the *sha256* is used to check equality.
+        *size* and *mtime* are merely used to signal the need to update *sha256*.
+        They thus matter on the relevant storage location only.
 
 2.  Update the available storage locations in
 
@@ -237,9 +262,12 @@ This will:
 
         .. code-block:: yaml
 
-            - a.h5
-            - mydir/b.h5
+            - path: a.h5
+              storage: laptop
+            - path: mydir/b.h5
+              storage: laptop
             - mydir/c.h5
+              storage: usb
 
     .. warning::
 
@@ -264,9 +292,9 @@ This will:
     .. code-block:: none
 
         |-- a.h5
-        |-- mydir
-        |   |-- b.h5
-        |   `-- c.h5
+        `-- mydir
+            |-- b.h5
+            `-- c.h5
 
     where you want to store ``mydir`` on a USB drive. Such that for example ``/mount/usb/mydata`` contains:
 
@@ -352,6 +380,7 @@ The status (column 3, 4, ...) can be
 
 *   ``==``: the file is the same in all locations where it is present.
 *   ``1``, ``2``, ...: different copies of the file exist; the same number means that the files are the same.
+    The lower number, the newer the file likely is.
 *   ``x``: the file is not available in that location.
 *   ``?``: the file is available in that location but the ``sha256`` is unknown.
 
@@ -417,21 +446,21 @@ For this example, removing "usb" will amount to removing the symbolic link ``myd
     Not that this is a problem!
     The storage itself is never touched.
 
-``--all``
----------
+``all``
+-------
 
 .. code-block:: bash
 
-    shelephant update --all
+    shelephant update all
 
-will update every file in ``.shelephant/state`` (if it is possible, i.e. if the storage location is available).
-It will also update the symbolic links (i.e. it includes ``--prune``).
+will update every file in ``.shelephant/storage`` (if the storage location is available).
+It will also update the symbolic links.
 
 You can also update a specific location:
 
 .. code-block:: bash
 
-    shelephant update usb --all
+    shelephant update usb
 
 ``--shallow``
 -------------
@@ -450,13 +479,13 @@ To copy files to a storage location, use:
 
 .. code-block:: bash
 
-    shelephant copy source destination path [path ...]
+    shelephant cp source destination path [path ...]
 
 Likewise for moving files:
 
 .. code-block:: bash
 
-    shelephant move source destination path [path ...]
+    shelephant mv source destination path [path ...]
 
 where ``source`` and ``destination`` are storage locations (e.g. "here", "laptop", "usb", ...).
 

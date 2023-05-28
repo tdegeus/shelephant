@@ -868,6 +868,7 @@ def add(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.name != "all", "all is a reserved name"
+    assert args.name != "any", "any is a reserved name"
 
     if args.name == "here":
         assert args.root is None, "root is not allowed"

@@ -47,6 +47,8 @@ Locally
         A copy plan is proposed before copying files.
         Copying only proceeds if the plan is accepted.
         This plan is based on precomputed *sha256* checksums, *rsync* criteria, and/or simple file existence.
+        Based on the available information and backend a default combination is used, but this can be customised.
+        **Important:** files that are listed as equal are not touched in any way.
 
 To SSH host
 -----------
@@ -70,6 +72,7 @@ To SSH host
     .. note::
 
         *rsync* is used to propose a copy plan and to copy files if that plan is accepted.
+        In this case *rsync* is a mandatory dependency.
 
     .. tip::
 
@@ -136,10 +139,13 @@ and you would like to keep a backup of certain files (e.g. ``*.h5``) in
 
         shelephant_hostinfo -iu containerinfo.yaml
 
-    Note:
+    .. tip::
 
-        -   ``-i`` computes the *sha256* checksums, which may not be needed depending on you use.
-        -   Run this command (and the command below) from ``/path/to/backup``.
+        ``-i`` computes the *sha256* checksums, which may not be needed depending on you use.
+
+    .. note::
+
+        Run this command (and the command below) from ``/path/to/backup``.
 
 3.  Update the 'backup':
 
@@ -171,4 +177,6 @@ and you would like to keep a backup of certain files (e.g. ``*.h5``) in
 
         .. code-block:: bash
 
-            shelephant_cp containerinfo.yaml localinfo.yaml
+            shelephant_diff containerinfo.yaml localinfo.yaml
+
+        (You can also use ``shelephant_cp`` to copy. In that case the copy-plan can be based purely on *sha256*.)
