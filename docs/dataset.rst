@@ -556,6 +556,17 @@ Calling
 will now read ``.shelephant/storage/usb.yaml`` and update the list of files according to ``"search"``.
 If ``"search"`` is not specified, only no longer existing files are removed from ``.shelephant/state/usb.yaml``, but nothing is added.
 Furthermore, it will update all metadata ("sha256", "size", "mtime") to the present values.
+
+The lock file is relevant only per storage location.
+It should thus not be part of the dataset's history.
+Therefore, it is suggested to add it to ``.gitignore``:
+
+.. code-block:: bash
+
+    echo "lock.txt" >> .shelephant/.gitignore
+    shelephant git add .gitignore
+    shelephant git commit -m "Ignore lock file"
+
 To propagate this to the central storage we do:
 
 .. code-block:: bash
