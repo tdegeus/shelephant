@@ -51,6 +51,14 @@ shelephant status
     :func: _status_parser
     :prog: shelephant status
 
+shelephant lock
+---------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _lock_parser
+    :prog: shelephant lock
+
 shelephant cp
 -------------
 
@@ -58,3 +66,19 @@ shelephant cp
     :module: shelephant.dataset
     :func: _cp_parser
     :prog: shelephant cp
+
+shelephant mv
+-------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _mv_parser
+    :prog: shelephant mv
+
+shelephant rm
+-------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _rm_parser
+    :prog: shelephant rm
