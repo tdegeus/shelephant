@@ -702,6 +702,7 @@ def _shelephant_main_parser():
         status  Show status of files.
         cp      Copy files from one location to another.
         mv      Move files from one location to another (both local).
+        rm      Remove files from one location.
         lock    Lock as storage location.
         git     Run git command on the database directory (``.shelephant``).
         ======= ================================================================
@@ -715,7 +716,7 @@ def _shelephant_main_parser():
     ):
         pass
 
-    choices = ["init", "add", "remove", "status", "cp", "update", "lock", "git"]
+    choices = ["init", "add", "remove", "status", "cp", "mv", "rm", "update", "lock", "git"]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("command", type=str, choices=choices, help="Command to run.")
@@ -737,6 +738,10 @@ def _shelephant_main():
         dataset.status(sys.argv[2:])
     elif args.command == "cp":
         dataset.cp(sys.argv[2:])
+    elif args.command == "mv":
+        dataset.mv(sys.argv[2:])
+    elif args.command == "rm":
+        dataset.rm(sys.argv[2:])
     elif args.command == "update":
         dataset.update(sys.argv[2:])
     elif args.command == "lock":

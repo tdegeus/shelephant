@@ -497,6 +497,32 @@ class Test_dataset(unittest.TestCase):
                 sym.search = [{"rglob": "*.txt"}]
                 self.assertTrue((s1 + s2).files(False) == sym.read().sort().files(False))
 
+    def test_cp(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            (source1 / "mydir").mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt"])
+                with cwd("mydir"):
+                    create_dummy_files(["c.txt", "d.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset / "mydir"):
+                shelephant.dataset.cp(["source1", "source2", "c.txt", "-f", "-q"])
+
+            self.assertTrue((source1 / "mydir" / "c.txt").exists())
+
     def test_mv(self):
         with tempdir():
             dataset = pathlib.Path("dataset")
@@ -625,6 +651,26 @@ class Test_dataset(unittest.TestCase):
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
+
+    def test_rm(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+
+            dataset.mkdir()
+            source1.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset):
+                shelephant.dataset.rm(["source1", "a.txt", "-f", "-q"])
+
+            self.assertFalse((source1 / "a.txt").exists())
 
     def test_shallow(self):
         with tempdir():
