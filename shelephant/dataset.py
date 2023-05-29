@@ -1220,7 +1220,7 @@ def cp(args: list[str]):
         cli.shelephant_cp(opts, paths)
 
     if not args.dry_run:
-        update(["--quiet", args.destination, *paths])
+        update(["--quiet", args.destination, *args.path])
 
 
 def _mv_parser():
@@ -1288,7 +1288,7 @@ def mv(args: list[str]):
         with search.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
-        update(["--quiet", args.destination, *paths])
+        update(["--quiet", args.destination, *args.path])
 
 
 def _status_parser():
