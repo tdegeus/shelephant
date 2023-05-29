@@ -474,7 +474,7 @@ class Test_shelephant_rm(unittest.TestCase):
             create_dummy_files(files)
             shelephant_dump(files)
             args = [f_dump]
-            shelephant_rm(["-n", "--colors", "none"] + args)
+            shelephant_rm(["-n"] + args)
             shelephant_rm(["-f", "--quiet"] + args)
             self.assertFalse(any([os.path.exists(f) for f in files]))
 
