@@ -413,7 +413,6 @@ def _shelephant_rm_parser():
     )
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
     parser.add_argument("-f", "--force", action="store_true", help="Remove without prompt.")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
@@ -440,7 +439,7 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
     files = source.files(info=False)
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
-    source = source.root
+    source = source._absroot
 
     if len(files) == 0:
         print("Nothing to remove")
