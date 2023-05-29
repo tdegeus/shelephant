@@ -1291,6 +1291,62 @@ def mv(args: list[str]):
         update(["--quiet", args.destination, *args.path])
 
 
+def _rm_parser():
+    """
+    Return parser for :py:func:`shelephant rm`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Remove files from a storage location (local).
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("source", type=str, help="name of the source.")
+    parser.add_argument("path", type=str, nargs="+", help="path(s) to remove.")
+    return parser
+
+
+def rm(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _rm_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    base = sdir.parent
+    paths = [os.path.relpath(path, base) for path in args.path]
+
+    with search.cwd(sdir):
+        source = Location.from_yaml(f"storage/{args.source}.yaml")
+        assert source.ssh is None, "Cannot remove to remote location."
+        opts = [f"storage/{args.source}.yaml"]
+        opts += ["--force"] if args.force else []
+        opts += ["--quiet"] if args.quiet else []
+        opts += ["--dry-run"] if args.dry_run else []
+        cli.shelephant_rm(opts, paths)
+
+    if not args.dry_run:
+        with search.cwd(sdir):
+            f = f"storage/{args.source}.yaml"
+            Location.from_yaml(f).remove(paths).overwrite_yaml(f)
+
 def _status_parser():
     """
     Return parser for :py:func:`shelephant status`.
