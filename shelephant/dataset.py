@@ -1347,6 +1347,7 @@ def rm(args: list[str]):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
 
+
 def _status_parser():
     """
     Return parser for :py:func:`shelephant status`.
