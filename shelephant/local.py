@@ -1,4 +1,5 @@
 import os
+import pathlib
 import shutil
 
 import numpy as np
@@ -58,7 +59,10 @@ def copy(
     """
 
     for file in tqdm.tqdm(files, disable=not progress):
-        shutil.copy2(os.path.join(source_dir, file), os.path.join(dest_dir, file))
+        s = os.path.join(source_dir, file)
+        d = os.path.join(dest_dir, file)
+        pathlib.Path(d).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(s, d)
 
 
 def diff(
