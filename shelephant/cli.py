@@ -15,8 +15,12 @@ from . import dataset
 from . import local
 from . import output
 from . import rsync
+from . import scp
+from . import search
+from . import ssh
 from . import yaml
 from ._version import version
+from .external import exec_cmd
 
 # set filename defaults
 f_hostinfo = "shelephant_hostinfo.yaml"
@@ -416,6 +420,7 @@ def _shelephant_rm_parser():
     parser.add_argument("-f", "--force", action="store_true", help="Remove without prompt.")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("--verbose", action="store_true", help="Print commands (only SSH remote).")
     parser.add_argument("-v", "--version", action="version", version=version)
     parser.add_argument("source", type=pathlib.Path, help="Source information.")
     return parser
@@ -435,11 +440,10 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
     assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run."
 
     source = dataset.Location.from_yaml(args.source)
-    assert source.ssh is None, "Cannot remove from remote."
     files = source.files(info=False)
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
-    source = source._absroot
+    sourcepath = source._absroot
 
     if len(files) == 0:
         print("Nothing to remove")
@@ -453,7 +457,19 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
         if not click.confirm("Proceed?"):
             raise OSError("Cancelled")
 
-    local.remove(source, files, progress=not args.quiet)
+    if source.ssh is None:
+        return local.remove(sourcepath, files, progress=not args.quiet)
+
+    with ssh.tempdir(source.ssh) as remote, search.tempdir():
+        files = [str(sourcepath / i) for i in files]
+        pathlib.Path("remove.txt").write_text("\n".join(files))
+        shutil.copy(pathlib.Path(__file__).parent / "_remove.py", "script.py")
+        hostpath = f'{source.ssh:s}:"{str(remote):s}"'
+        scp.copy(".", hostpath, ["script.py", "remove.txt"], progress=False, verbose=args.verbose)
+        exec_cmd(
+            f'ssh {source.ssh:s} "cd {str(remote)} && {source.python} script.py"',
+            verbose=args.verbose,
+        )
 
 
 def _shelephant_hostinfo_parser():

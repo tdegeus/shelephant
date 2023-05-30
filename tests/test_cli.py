@@ -487,6 +487,36 @@ class Test_shelephant_rm(unittest.TestCase):
         ret = _plain(sio.getvalue())
         self.assertEqual(ret, expect)
 
+    def test_ssh(self):
+        """
+        shelephant_rm <sourceinfo.yaml>
+        """
+        if not has_ssh:
+            raise unittest.SkipTest("'ssh localhost' does not work")
+
+        with tempdir(), shelephant.ssh.tempdir("localhost") as remote, contextlib.redirect_stdout(
+            io.StringIO()
+        ) as sio:
+            with cwd(remote):
+                files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
+                create_dummy_files(files)
+                shelephant_dump(files)
+
+            shelephant_hostinfo([str(remote), "--ssh", "localhost", "-d"])
+            args = [f_hostinfo]
+            shelephant_rm(["-n"] + args)
+            shelephant_rm(["-f", "--quiet"] + args)
+            self.assertFalse(any([os.path.exists(remote / f) for f in files]))
+
+        expect = [
+            "rm foo.txt",
+            "rm bar.txt",
+            "rm more.txt",
+            "rm even_more.txt",
+        ]
+        ret = _plain(sio.getvalue())
+        self.assertEqual(ret, expect)
+
 
 class Test_shelephant_diff(unittest.TestCase):
     def test_output_sha256(self):
