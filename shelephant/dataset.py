@@ -11,7 +11,7 @@ import prettytable
 import tqdm
 
 from . import cli
-from . import info
+from . import compute_hash
 from . import scp
 from . import search
 from . import ssh
@@ -531,18 +531,18 @@ class Location:
 
         if self.ssh is None:
             files = [self._absroot / f for f in paths]
-            size, mtime, hash = info.getinfo(files, sha256=sha256, progress=progress)
+            size, mtime, csum = compute_hash.compute_sha256(files, sha256=sha256, progress=progress)
             return (
                 np.array(size, dtype=np.int64),
                 np.array(mtime, dtype=np.float64),
-                np.array(hash, dtype="U64"),
+                np.array(csum, dtype="U64"),
             )
 
         with ssh.tempdir(self.ssh) as remote, search.tempdir():
             files = [str(self.root / i) for i in paths]
             pathlib.Path("files.txt").write_text("\n".join(files))
             pathlib.Path("sha256.txt").write_text("")
-            shutil.copy(pathlib.Path(__file__).parent / "info.py", "script.py")
+            shutil.copy(pathlib.Path(__file__).parent / "compute_hash.py", "script.py")
 
             extra = ["sha256.txt"] if sha256 else []
             hostpath = f'{self.ssh:s}:"{str(remote):s}"'
@@ -564,11 +564,11 @@ class Location:
                 dtype=np.float64,
             )
             if sha256:
-                hash = np.array(pathlib.Path("sha256.txt").read_text().splitlines(), dtype="U64")
+                csum = np.array(pathlib.Path("sha256.txt").read_text().splitlines(), dtype="U64")
             else:
-                hash = []
+                csum = []
 
-        return size, mtime, hash
+        return size, mtime, csum
 
     def check_changes(
         self, paths: list[pathlib.Path] = None, progress: bool = False, verbose: bool = False
@@ -642,9 +642,9 @@ class Location:
                 index = index[:i]
                 files = files[:i]
 
-        size, mtime, hash = self._get_info(files, True, progress, verbose)
+        size, mtime, csum = self._get_info(files, True, progress, verbose)
         self._has_info[index] = True
-        self._sha256[index] = hash
+        self._sha256[index] = csum
         self._size[index] = size
         self._mtime[index] = mtime
         return self
@@ -1510,6 +1510,48 @@ def status(args: list[str]):
         out.add_row(row)
 
     print(out.get_string())
+
+
+def _info_parser():
+    """
+    Return parser for :py:func:`shelephant info`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Show global information about dataset.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument(
+        "--basedir", action="store_true", help="Print basedir (that contain '.shelephant')."
+    )
+    return parser
+
+
+def info(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _info_parser()
+    args = parser.parse_args(args)
+
+    if args.basedir:
+        print(_search_upwards_dir(".shelephant").parent)
+        return
 
 
 def git(args: list[str]):

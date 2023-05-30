@@ -51,6 +51,14 @@ shelephant status
     :func: _status_parser
     :prog: shelephant status
 
+shelephant info
+-----------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _info_parser
+    :prog: shelephant info
+
 shelephant lock
 ---------------
 

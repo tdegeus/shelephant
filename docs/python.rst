@@ -70,7 +70,7 @@ File information
 
 .. autosummary::
 
-    shelephant.info.getinfo
+    shelephant.compute_hash.compute_sha256
 
 File operations
 ---------------
