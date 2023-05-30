@@ -1193,7 +1193,7 @@ def _cp_parser():
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
     parser.add_argument("source", type=str, help="name of the source.")
     parser.add_argument("destination", type=str, help="name of the destination.")
-    parser.add_argument("path", type=str, nargs="+", help="path(s) to copy.")
+    parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to copy.")
     return parser
 
 
@@ -1207,6 +1207,7 @@ def cp(args: list[str]):
     parser = _cp_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
@@ -1220,7 +1221,7 @@ def cp(args: list[str]):
         cli.shelephant_cp(opts, paths)
 
     if not args.dry_run:
-        update(["--quiet", args.destination, *args.path])
+        update(["--quiet", args.destination] + list(map(str, args.path)))
 
 
 def _mv_parser():
@@ -1256,7 +1257,7 @@ def _mv_parser():
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
     parser.add_argument("source", type=str, help="name of the source.")
     parser.add_argument("destination", type=str, help="name of the destination.")
-    parser.add_argument("path", type=str, nargs="+", help="path(s) to copy.")
+    parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to copy.")
     return parser
 
 
@@ -1270,6 +1271,7 @@ def mv(args: list[str]):
     parser = _mv_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
@@ -1288,7 +1290,7 @@ def mv(args: list[str]):
         with search.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
-        update(["--quiet", args.destination, *args.path])
+        update(["--quiet", args.destination] + list(map(str, args.path)))
 
 
 def _rm_parser():
@@ -1316,7 +1318,7 @@ def _rm_parser():
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
     parser.add_argument("source", type=str, help="name of the source.")
-    parser.add_argument("path", type=str, nargs="+", help="path(s) to remove.")
+    parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to remove.")
     return parser
 
 
@@ -1330,12 +1332,11 @@ def rm(args: list[str]):
     parser = _rm_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
     with search.cwd(sdir):
-        source = Location.from_yaml(f"storage/{args.source}.yaml")
-        assert source.ssh is None, "Cannot remove to remote location."
         opts = [f"storage/{args.source}.yaml"]
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
@@ -1346,6 +1347,7 @@ def rm(args: list[str]):
         with search.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
+            update([])
 
 
 def _status_parser():
