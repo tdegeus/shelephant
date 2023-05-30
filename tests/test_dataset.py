@@ -196,12 +196,10 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
 
             with cwd(dataset):
                 self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo"])
@@ -277,12 +275,8 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source1")
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
 
             for s in [source1, source2]:
                 with cwd(s):
@@ -332,12 +326,10 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "dead-link")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "dead-link")
+                for f in ["b.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "dead-link")
 
             with cwd(dataset):
                 self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo", "-q"])
@@ -412,12 +404,8 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source1")
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
 
             for s in [source1, source2]:
                 with cwd(s):
@@ -479,12 +467,11 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "mount")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "mount")
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "mount")
 
             with cwd(dataset):
                 self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo", "-q"])
@@ -719,13 +706,12 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(pathlib.Path(os.path.realpath("a.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("b.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("c.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("d.txt")).parent.name, "source1")
-                self.assertEqual(pathlib.Path(os.path.realpath("e.txt")).parent.name, "source2")
-                self.assertEqual(pathlib.Path(os.path.realpath("f.txt")).parent.name, "source2")
-                self.assertEqual(pathlib.Path(os.path.realpath("g.txt")).parent.name, "source3")
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
+                for f in ["g.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source3")
 
     def test_unavailable(self):
         with tempdir():
@@ -789,13 +775,11 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset):
                 for f in ["b.txt", "c.txt", "d.txt", "h.txt"]:
-                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "source1")
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
                 for f in ["e.txt", "k.txt"]:
-                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "source2")
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
                 for f in ["a.txt", "g.txt"]:
-                    self.assertIn(
-                        pathlib.Path(os.path.realpath(f)).parent.name, ["unavailable", "dead-link"]
-                    )
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source3")
 
     def test_prefix(self):
         with tempdir():
