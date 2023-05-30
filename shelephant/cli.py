@@ -700,6 +700,7 @@ def _shelephant_main_parser():
         remove  Remove storage location from dataset.
         update  Update dataset.
         status  Show status of files.
+        info    Show global information about dataset.
         cp      Copy files from one location to another.
         mv      Move files from one location to another (both local).
         rm      Remove files from one location.
@@ -716,7 +717,7 @@ def _shelephant_main_parser():
     ):
         pass
 
-    choices = ["init", "add", "remove", "status", "cp", "mv", "rm", "update", "lock", "git"]
+    choices = ["init", "add", "remove", "status", "cp", "mv", "rm", "info", "update", "lock", "git"]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("command", type=str, choices=choices, help="Command to run.")
@@ -736,6 +737,8 @@ def _shelephant_main():
         dataset.remove(sys.argv[2:])
     elif args.command == "status":
         dataset.status(sys.argv[2:])
+    elif args.command == "info":
+        dataset.info(sys.argv[2:])
     elif args.command == "cp":
         dataset.cp(sys.argv[2:])
     elif args.command == "mv":
