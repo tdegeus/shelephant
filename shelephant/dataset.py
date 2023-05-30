@@ -1179,7 +1179,6 @@ def _cp_parser():
 
             The copied files are added to the database of the destination.
             There is no check that this fits ``dump`` and ``search`` settings.
-            If it does not you need to run ``shelephant update`` manually.
         """
     )
 
@@ -1237,13 +1236,12 @@ def _mv_parser():
 
     desc = textwrap.dedent(
         """
-        Move files to other storage location.
+        Move files from one storage location to another.
 
         .. note::
 
             The copied files are added to the database of the destination.
             There is no check that this fits ``dump`` and ``search`` settings.
-            If it does not you need to run ``shelephant update`` manually.
         """
     )
 
@@ -1306,7 +1304,11 @@ def _rm_parser():
 
     desc = textwrap.dedent(
         """
-        Remove files from a storage location (local).
+        Remove files from a storage location.
+
+        .. warning::
+
+            This remove the actual data (and the link, if there is no alternative source left).
         """
     )
 
