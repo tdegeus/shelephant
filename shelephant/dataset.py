@@ -1109,6 +1109,7 @@ def update(args: list[str]):
         storage = yaml.read("storage.yaml")
         storage.remove("here")
         files = {}
+        # - link to first available
         for name in storage[::-1]:
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
             prefix = loc.prefix if loc.prefix is not None else pathlib.Path(".")
@@ -1116,9 +1117,14 @@ def update(args: list[str]):
                 for f in loc.files(info=False):
                     if (loc._absroot / f).is_file():
                         files[prefix / pathlib.Path(f)] = pathlib.Path("data") / name
-            else:
+        # - unlinked files: link to first unavailable
+        for name in storage[::-1]:
+            loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
+            prefix = loc.prefix if loc.prefix is not None else pathlib.Path(".")
+            if not loc.isavailable(mount=True):
                 for f in loc.files(info=False):
-                    files[prefix / pathlib.Path(f)] = "unavailable"
+                    if prefix / pathlib.Path(f) not in files:
+                        files[prefix / pathlib.Path(f)] = pathlib.Path("data") / name
 
         add_links = []
         rm_links = []
