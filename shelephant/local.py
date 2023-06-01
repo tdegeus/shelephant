@@ -40,7 +40,10 @@ def move(
     """
 
     for file in tqdm.tqdm(files, disable=not progress):
-        os.replace(os.path.join(source_dir, file), os.path.join(dest_dir, file))
+        s = os.path.join(source_dir, file)
+        d = os.path.join(dest_dir, file)
+        pathlib.Path(d).parent.mkdir(parents=True, exist_ok=True)
+        os.replace(s, d)
 
 
 def copy(
