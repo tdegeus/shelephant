@@ -305,13 +305,13 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
 
     if len(files) == 0:
         print("Nothing to copy" if len(equal) == 0 else "All files equal")
-        return
+        return []
 
     if not args.force:
         status["=="] = equal
         output.copyplan(status, colors=args.colors)
         if args.dry_run:
-            return
+            return []
         if not click.confirm("Proceed?"):
             raise OSError("Cancelled")
 
@@ -319,6 +319,8 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
         rsync.copy(sourcepath, destpath, files, progress=not args.quiet)
     else:
         local.copy(sourcepath, destpath, files, progress=not args.quiet)
+
+    return files
 
 
 def _shelephant_mv_parser():
