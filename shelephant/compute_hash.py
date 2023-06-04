@@ -29,11 +29,21 @@ def compute_sha256(
 
     if not sha256:
         for filename in tqdm(files, disable=not progress):
+            if not os.path.exists(filename):
+                ret_size.append(-1)
+                ret_mtime.append(-1)
+                ret_hash.append("")
+                continue
             ret_size.append(os.path.getsize(filename))
             ret_mtime.append(os.path.getmtime(filename))
 
     elif sys.version_info >= (3, 11):
         for filename in tqdm(files, disable=not progress):
+            if not os.path.exists(filename):
+                ret_size.append(-1)
+                ret_mtime.append(-1)
+                ret_hash.append("")
+                continue
             ret_size.append(os.path.getsize(filename))
             ret_mtime.append(os.path.getmtime(filename))
             with open(filename, "rb", buffering=0) as f:
@@ -41,6 +51,11 @@ def compute_sha256(
 
     else:
         for filename in tqdm(files, disable=not progress):
+            if not os.path.exists(filename):
+                ret_size.append(-1)
+                ret_mtime.append(-1)
+                ret_hash.append("")
+                continue
             ret_size.append(os.path.getsize(filename))
             ret_mtime.append(os.path.getmtime(filename))
             h = hashlib.sha256()

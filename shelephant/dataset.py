@@ -594,12 +594,27 @@ class Location:
 
         paths, index = self._getindex(paths)
         size, mtime, _ = self._get_info(paths, False, progress, verbose)
-        rm = np.logical_or(self._size[index] != size, self._mtime[index] != mtime)
-        self._has_info[index[rm]] = False
+
+        changed = np.logical_or(self._size[index] != size, self._mtime[index] != mtime)
+        self._has_info[index[changed]] = False
         keep = ~self._has_info[index]
         self._size[index[keep]] = size[keep]
         self._mtime[index[keep]] = mtime[keep]
+
+        removed = mtime < 0
+        if np.any(removed):
+            return self.remove(paths[removed])
+
         return self
+
+    def remove_info(self, paths: list[pathlib.Path] = None):
+        """
+        Remove sha256/size/mtime for a list of files.
+
+        :param paths: List of paths to remove.
+        """
+        paths, index = self._getindex(paths)
+        self._has_info[index] = False
 
     def getinfo(
         self,
@@ -647,6 +662,11 @@ class Location:
         self._sha256[index] = csum
         self._size[index] = size
         self._mtime[index] = mtime
+
+        removed = mtime < 0
+        if np.any(removed):
+            return self.remove(paths[removed])
+
         return self
 
     def diff(self, other) -> dict:
@@ -1002,6 +1022,7 @@ def _update_parser():
         default=1e10,
         help="Chunk size for computing checksums (bytes).",
     )
+    parser.add_argument("--force", action="store_true", help="Force update of path(s).")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("name", type=str, nargs="?", help="Update storage location(s).")
     parser.add_argument(
@@ -1024,6 +1045,8 @@ def update(args: list[str]):
     paths = [os.path.relpath(path, base) for path in args.path]
     paths = np.unique(paths) if len(paths) > 0 else None
     lock = None if not (sdir / "lock.txt").exists() else (sdir / "lock.txt").read_text().strip()
+    if args.force:
+        assert paths is not None, "--force can only be used with path(s)"
 
     if args.name is None:
         args.name = []
@@ -1079,8 +1102,19 @@ def update(args: list[str]):
                 continue
 
             # compute sha256/size/mtime of files that changed since the last update
-            loc.check_changes(paths=paths, verbose=args.verbose)
+            n = loc._files.size
+            if args.force:
+                loc.remove_info(paths=paths)
+            else:
+                loc.check_changes(paths=paths, verbose=args.verbose)
+
             if loc.has_info():
+                if loc._files.size < n:
+                    if lock is not None:
+                        f = f"storage/{name}.yaml"
+                        Location.from_yaml(f).copy_files(loc).overwrite_yaml(f)
+                    else:
+                        loc.overwrite_yaml(f"storage/{name}.yaml")
                 continue
 
             off = np.sum(loc._size[loc._has_info])
@@ -1223,10 +1257,12 @@ def cp(args: list[str]):
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
         opts += ["--dry-run"] if args.dry_run else []
-        cli.shelephant_cp(opts, paths)
+        changed = cli.shelephant_cp(opts, paths)
 
-    if not args.dry_run:
-        update(["--quiet", args.destination] + list(map(str, args.path)))
+    if not args.dry_run and len(changed) > 0:
+        _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
+        changed = np.array(args.path)[j]
+        update(["--quiet", "--force", args.destination] + list(map(str, changed)))
 
 
 def _mv_parser():
@@ -1294,7 +1330,7 @@ def mv(args: list[str]):
         with search.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
-        update(["--quiet", args.destination] + list(map(str, args.path)))
+        update(["--quiet", "--force", args.destination] + list(map(str, args.path)))
 
 
 def _rm_parser():
