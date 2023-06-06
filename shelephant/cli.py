@@ -710,9 +710,9 @@ def _shelephant_main_parser():
         """
         Available commands:
 
-        ======= ================================================================
+        ======= ======================================================================
         command description
-        ======= ================================================================
+        ======= ======================================================================
         init    Initialize a new dataset.
         add     Add storage location to dataset.
         remove  Remove storage location from dataset.
@@ -722,9 +722,10 @@ def _shelephant_main_parser():
         cp      Copy files from one location to another.
         mv      Move files from one location to another (both local).
         rm      Remove files from one location.
+        pwd     Print equivalent directory in the storage location.
         lock    Lock as storage location.
         git     Run git command on the database directory (``.shelephant``).
-        ======= ================================================================
+        ======= ======================================================================
         """
     )
 
@@ -735,7 +736,20 @@ def _shelephant_main_parser():
     ):
         pass
 
-    choices = ["init", "add", "remove", "status", "cp", "mv", "rm", "info", "update", "lock", "git"]
+    choices = [
+        "init",
+        "add",
+        "remove",
+        "status",
+        "cp",
+        "mv",
+        "rm",
+        "pwd",
+        "info",
+        "update",
+        "lock",
+        "git",
+    ]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("command", type=str, choices=choices, help="Command to run.")
@@ -763,6 +777,8 @@ def _shelephant_main():
         dataset.mv(sys.argv[2:])
     elif args.command == "rm":
         dataset.rm(sys.argv[2:])
+    elif args.command == "pwd":
+        dataset.pwd(sys.argv[2:])
     elif args.command == "update":
         dataset.update(sys.argv[2:])
     elif args.command == "lock":
