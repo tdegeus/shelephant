@@ -385,7 +385,6 @@ class Location:
         -   ``root`` if ``ssh`` is not set.
         -   ``ssh:"root"`` if ``ssh`` is set.
         """
-
         if self.ssh is None:
             return str(self._absroot)
 
@@ -1143,7 +1142,7 @@ def update(args: list[str]):
         if lock is not None:
             return
 
-        storage = yaml.read("storage.yaml")
+        storage = yaml.read(sdir / "storage.yaml")
         storage.remove("here")
         files = {}
         # - link to first available
@@ -1252,6 +1251,9 @@ def cp(args: list[str]):
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.source in storage, f"Unknown storage location {args.source}"
+    assert args.destination in storage, f"Unknown storage location {args.destination}"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
@@ -1318,6 +1320,9 @@ def mv(args: list[str]):
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.source in storage, f"Unknown storage location {args.source}"
+    assert args.destination in storage, f"Unknown storage location {args.destination}"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
@@ -1383,6 +1388,8 @@ def rm(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.source in storage, f"Unknown storage location {args.source}"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
@@ -1468,7 +1475,7 @@ def status(args: list[str]):
 
     with search.cwd(sdir):
         symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
-        storage = yaml.read("storage.yaml")
+        storage = yaml.read(sdir / "storage.yaml")
         storage.remove("here")
         extra = Location.from_yaml("storage/here.yaml").files(info=False)
 
