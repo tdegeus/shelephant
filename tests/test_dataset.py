@@ -145,7 +145,7 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.pwd(["source1"])
-            self.assertEqual(sio.getvalue().strip(), "../source1")
+            self.assertEqual(sio.getvalue().strip(), os.path.join("..", "source1"))
 
     def test_status_partial(self):
         with tempdir():

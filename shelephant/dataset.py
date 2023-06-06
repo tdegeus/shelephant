@@ -1428,6 +1428,7 @@ def _pwd_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--base", action="store_true", help="Print the base directory.")
     parser.add_argument("--abspath", action="store_true", help="Print absolute path.")
     parser.add_argument("source", type=str, help="name of the source.")
     return parser
@@ -1448,15 +1449,26 @@ def pwd(args: list[str]):
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
 
+    cwd = pathlib.Path.cwd()
+    post = os.path.relpath(cwd, sdir / "..")
+
     with search.cwd(sdir):
         f = f"storage/{args.source}.yaml"
-        root = Location.from_yaml(f).root
-        root = sdir / ".shelephant" / root
+        loc = Location.from_yaml(f)
+        prefix = loc.prefix
+        root = sdir / "storage" / loc.root
+
+    if prefix is not None:
+        common = os.path.commonprefix([prefix, post])
+        post = post[len(common) :]
+
+    if args.base:
+        post = ""
 
     if args.abspath:
-        print(os.path.normpath(root))
+        print(os.path.normpath(root / post))
     else:
-        print(os.path.relpath(root, os.getcwd()))
+        print(os.path.relpath(root / post, os.getcwd()))
 
 
 def _status_parser():
