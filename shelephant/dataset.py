@@ -1407,6 +1407,70 @@ def rm(args: list[str]):
             update([])
 
 
+def _pwd_parser():
+    """
+    Return parser for :py:func:`shelephant pwd`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Change the current working directory to a storage location.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--base", action="store_true", help="Print the base directory.")
+    parser.add_argument("--abspath", action="store_true", help="Print absolute path.")
+    parser.add_argument("source", type=str, help="name of the source.")
+    return parser
+
+
+def pwd(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _pwd_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not a shelephant dataset"
+    assert not (sdir / "lock.txt").exists(), "not available from storage location"
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.source in storage, f"Unknown storage location {args.source}"
+
+    cwd = pathlib.Path.cwd()
+    post = os.path.relpath(cwd, sdir / "..")
+
+    with search.cwd(sdir):
+        f = f"storage/{args.source}.yaml"
+        loc = Location.from_yaml(f)
+        prefix = loc.prefix
+        root = sdir / "storage" / loc.root
+
+    if prefix is not None:
+        common = os.path.commonprefix([prefix, post])
+        post = post[len(common) :]
+
+    if args.base:
+        post = ""
+
+    if args.abspath:
+        print(os.path.normpath(root / post))
+    else:
+        print(os.path.relpath(root / post, os.getcwd()))
+
+
 def _status_parser():
     """
     Return parser for :py:func:`shelephant status`.

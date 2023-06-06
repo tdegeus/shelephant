@@ -122,6 +122,31 @@ class Test_Location(unittest.TestCase):
 
 
 class Test_dataset(unittest.TestCase):
+    def test_pwd(self):
+        with tempdir():
+            base = pathlib.Path.cwd()
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+
+            dataset.mkdir()
+            source1.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.pwd(["source1", "--abs"])
+            self.assertEqual(sio.getvalue().strip(), str((base / "source1").absolute()))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.pwd(["source1"])
+            self.assertEqual(sio.getvalue().strip(), os.path.join("..", "source1"))
+
     def test_status_partial(self):
         with tempdir():
             dataset = pathlib.Path("dataset")
