@@ -9,7 +9,7 @@ description = "Simple dataset management"
 dynamic = ["version"]
 name = "shelephant"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 
 [project.scripts]
 shelephant = "shelephant.cli:_shelephant_main"
