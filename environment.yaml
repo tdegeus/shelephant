@@ -6,7 +6,7 @@ dependencies:
 - numpy >=1.15.0
 - pre-commit
 - prettytable
-- python
+- python >=3.10
 - pyyaml
 - setuptools_scm
 - sphinx
