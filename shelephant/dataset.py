@@ -1194,6 +1194,11 @@ def update(args: list[str]):
                 print("Local files conflicting with dataset. No links are created for these files:")
                 print("\n".join(map(str, unmanage)))
 
+            # remove directories that are empty after removing old links
+            for d in {i.parent for i in rm_links}:
+                if not os.listdir(d):
+                    d.rmdir()
+
             store = [{"path": str(i), "storage": str(files[i])} for i in sorted(files.keys())]
             yaml.overwrite(".shelephant/symlinks.yaml", store)
 

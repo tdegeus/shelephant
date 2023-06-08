@@ -963,6 +963,29 @@ class Test_dataset(unittest.TestCase):
                 sym.read().getinfo()
                 self.assertTrue(s1 + s2 == sym)
 
+    def test_remove_empty(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                d1 = pathlib.Path("mydir")
+                d1.mkdir(parents=True, exist_ok=True)
+                create_dummy_files(["a.txt", "b.txt"])
+                with cwd(d1):
+                    create_dummy_files(["c.txt", "d.txt"], slice(2, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.rm(["source1", "mydir/c.txt", "mydir/d.txt", "-q", "-f"])
+                self.assertFalse(d1.exists())
+
     def test_status(self):
         with tempdir():
             dataset = pathlib.Path("dataset")
