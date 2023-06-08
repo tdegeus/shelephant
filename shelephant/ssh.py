@@ -1,8 +1,55 @@
 import pathlib
+import re
 import subprocess
 from contextlib import contextmanager
 
 from .external import exec_cmd
+
+
+def _shelephant_cachdir(hostname: str, python: str = "python3") -> str:
+    """
+    Return the path to the shelephant cache directory on a remote host.
+    """
+
+    script = [
+        "from platformdirs import user_cache_dir",
+        "from pathlib import Path",
+        "d = user_cache_dir('shelephant', 'tdegeus')",
+        "Path(d).mkdir(exist_ok=True)",
+        "print(d)",
+    ]
+    cmd = [
+        "shelephant --version || echo 0",
+        f"{python:s} -c \\\"{';'.join(script):s}\\\" || mktemp -d",
+    ]
+
+    cmd = ";".join(cmd)
+    cmd = f'ssh {hostname:s} "{cmd:s}"'
+    ret = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True).decode("utf-8")
+    return ret.strip().splitlines()
+
+
+@contextmanager
+def _cachedir(hostname: str, cache_dir: str):
+    """
+    Do nothing if the cache directory is a shelephant cache directory.
+    Otherwise, remove the cache directory on exit.
+
+        with _cachedir(hostname, cache_dir) as cachdir_tempdir:
+            print(cachdir_tempdir)
+    """
+
+    try:
+        if re.match(r".*shelephant.*", str(cache_dir)):
+            rm = None
+            yield pathlib.Path(cache_dir)
+        else:
+            rm = cache_dir
+            yield pathlib.Path(cache_dir.strip())
+    finally:
+        if rm is not None:
+            cmd = f"ssh {hostname:s} rm -rf {cache_dir:s}"
+            exec_cmd(cmd, verbose=False)
 
 
 def has_keys_set(hostname: str) -> bool:
@@ -78,3 +125,5 @@ def tempdir(hostname: str):
     finally:
         cmd = f"ssh {hostname:s} rm -rf {tempdir:s}"
         exec_cmd(cmd, verbose=False)
+
+
