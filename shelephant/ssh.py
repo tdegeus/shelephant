@@ -124,5 +124,3 @@ def tempdir(hostname: str):
     finally:
         cmd = f"ssh {hostname:s} rm -rf {tempdir:s}"
         exec_cmd(cmd, verbose=False)
-
-

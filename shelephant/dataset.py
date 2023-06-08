@@ -2,23 +2,23 @@ import argparse
 import json
 import os
 import pathlib
-import packaging
 import re
 import shutil
 import textwrap
 from copy import deepcopy
 
 import numpy as np
+import packaging
 import prettytable
 import tqdm
 from platformdirs import user_cache_dir
 
 from . import cli
 from . import compute_hash
+from . import rsync
 from . import scp
 from . import search
 from . import ssh
-from . import rsync
 from . import yaml
 from ._version import version
 from .external import exec_cmd
