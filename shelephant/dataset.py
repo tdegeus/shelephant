@@ -1821,10 +1821,9 @@ def gitignore(args: list[str]):
 
     with search.cwd(sdir):
         symlinks = yaml.read("symlinks.yaml", [])
-        symlinks = [i["path"] for i in symlinks]
+        symlinks = [i["path"] for i in symlinks] + [".shelephant"]
 
-    if len(symlinks) > 0:
-        ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
+    ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
     path.write_text(ignore.strip())
 
 
