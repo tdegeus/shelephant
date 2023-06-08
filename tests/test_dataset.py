@@ -1045,6 +1045,7 @@ class Test_dataset(unittest.TestCase):
 
             expect = [
                 "# <shelephant>",
+                ".shelephant",
                 "a.txt",
                 "b.txt",
                 "# </shelephant>",
@@ -1063,6 +1064,7 @@ class Test_dataset(unittest.TestCase):
                 "__pycache__",
                 "",
                 "# <shelephant>",
+                ".shelephant",
                 "a.txt",
                 "b.txt",
                 "# </shelephant>",
