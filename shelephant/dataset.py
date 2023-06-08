@@ -8,7 +8,6 @@ import textwrap
 from copy import deepcopy
 
 import numpy as np
-import packaging
 import prettytable
 import tqdm
 from platformdirs import user_cache_dir
