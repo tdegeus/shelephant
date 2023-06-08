@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import pathlib
+import re
 import shutil
 import textwrap
 from copy import deepcopy
@@ -1676,6 +1677,136 @@ def info(args: list[str]):
     if args.basedir:
         print(_search_upwards_dir(".shelephant").parent)
         return
+
+
+def _find_matching(
+    text: str,
+    opening: str,
+    closing: str,
+) -> dict:
+    r"""
+    Find matching 'brackets'.
+
+    :param text: The string to consider.
+    :param opening: The opening bracket (e.g. "(", "[", "{").
+    :param closing: The closing bracket (e.g. ")", "]", "}").
+    :return: Dictionary with ``{index_opening: index_closing}``
+    """
+
+    opening = [i.span()[0] for i in re.finditer(opening, text)]
+    closing = [i.span()[1] for i in re.finditer(closing, text)]
+
+    if len(opening) == 0:
+        return {}
+
+    if len(opening) > len(closing):
+        raise IndexError("Unmatching opening...closing found")
+
+    opening = np.array(opening, dtype=int)
+    closing = np.array(closing, dtype=int) * -1
+    brackets = np.concatenate([opening, closing])
+    brackets = brackets[np.argsort(np.abs(brackets))]
+
+    ret = {}
+    stack = []
+
+    for i in brackets:
+        if i >= 0:
+            stack.append(i)
+        else:
+            if len(stack) == 0:
+                raise IndexError(f"No closing {closing} at: {i:d}")
+            j = stack.pop()
+            ret[j] = -1 * i
+
+    if len(stack) > 0:
+        i = stack.pop()
+        raise IndexError(f"No opening {opening} at: {i:d}")
+
+    return ret
+
+
+def _linenumbers(text: str) -> list[int]:
+    """
+    Return the line-number of each character in ``text``.
+
+    :param text: The text to consider.
+    :return: List of line-numbers.
+    """
+    lineno = np.empty(len(text), dtype=int)
+    i = 0
+    line = 0
+    for line, match in enumerate(re.finditer(r"\n", text)):
+        lineno[i : match.span()[0]] = line
+        i = match.span()[0]
+        lineno[i] = line
+        i += 1
+    lineno[i:] = line + 1
+    lineno = np.append(lineno, line + 2)
+    return lineno
+
+
+def _gitignore_parser():
+    """
+    Return parser for :py:func:`shelephant gitignore`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Add all symbolic links at ``.shelephant`` to dataset's ``.gitignore``.
+        Note that this is not ``.shelephant/.gitignore`` but the one in the dataset's root.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def gitignore(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _gitignore_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not a shelephant dataset"
+    path = sdir / ".." / ".gitignore"
+
+    if path.exists():
+        ignore = path.read_text()
+        brackets = _find_matching(ignore, re.escape("# <shelephant>"), re.escape("# </shelephant>"))
+        if len(brackets) > 0:
+            assert len(brackets) == 1, "Multiple shelephant sections found"
+            brackets = [(key, value) for key, value in brackets.items()][0]
+            lineno = _linenumbers(ignore)
+            ignore = ignore.splitlines()
+            ignore = (
+                "\n".join(ignore[: lineno[brackets[0]]]).rstrip()
+                + "\n"
+                + "\n".join(ignore[lineno[brackets[1]] + 1 :]).lstrip()
+            )
+    else:
+        ignore = ""
+
+    with search.cwd(sdir):
+        symlinks = yaml.read("symlinks.yaml", [])
+        symlinks = [i["path"] for i in symlinks]
+
+    if len(symlinks) > 0:
+        ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
+    path.write_text(ignore.strip())
 
 
 def git(args: list[str]):

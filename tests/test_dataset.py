@@ -999,6 +999,54 @@ class Test_dataset(unittest.TestCase):
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
 
+    def test_gitignore(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+
+            dataset.mkdir()
+            source1.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset):
+                shelephant.dataset.gitignore([])
+                shelephant.dataset.gitignore([])
+                shelephant.dataset.gitignore([])
+                text = pathlib.Path(".gitignore").read_text().splitlines()
+
+            expect = [
+                "# <shelephant>",
+                "a.txt",
+                "b.txt",
+                "# </shelephant>",
+            ]
+
+            self.assertEqual(text, expect)
+
+            with cwd(dataset):
+                pathlib.Path(".gitignore").write_text("__pycache__")
+                shelephant.dataset.gitignore([])
+                shelephant.dataset.gitignore([])
+                shelephant.dataset.gitignore([])
+                text = pathlib.Path(".gitignore").read_text().splitlines()
+
+            expect = [
+                "__pycache__",
+                "",
+                "# <shelephant>",
+                "a.txt",
+                "b.txt",
+                "# </shelephant>",
+            ]
+
+            self.assertEqual(text, expect)
+
 
 if __name__ == "__main__":
     unittest.main()
