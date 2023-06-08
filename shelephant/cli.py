@@ -710,22 +710,23 @@ def _shelephant_main_parser():
         """
         Available commands:
 
-        ======= ======================================================================
-        command description
-        ======= ======================================================================
-        init    Initialize a new dataset.
-        add     Add storage location to dataset.
-        remove  Remove storage location from dataset.
-        update  Update dataset.
-        status  Show status of files.
-        info    Show global information about dataset.
-        cp      Copy files from one location to another.
-        mv      Move files from one location to another (both local).
-        rm      Remove files from one location.
-        pwd     Print equivalent directory in the storage location.
-        lock    Lock as storage location.
-        git     Run git command on the database directory (``.shelephant``).
-        ======= ======================================================================
+        =========== ======================================================================
+        command     description
+        =========== ======================================================================
+        init        Initialize a new dataset.
+        add         Add storage location to dataset.
+        remove      Remove storage location from dataset.
+        update      Update dataset.
+        status      Show status of files.
+        info        Show global information about dataset.
+        lock        Lock as storage location.
+        cp          Copy files from one location to another.
+        mv          Move files from one location to another (both local).
+        rm          Remove files from one location.
+        pwd         Print equivalent directory in the storage location.
+        git         Run git command on the database directory (``.shelephant``).
+        gitignore   Add all symbolic links at ``.shelephant`` to dataset's ``.gitignore``.
+        =========== ======================================================================
         """
     )
 
@@ -740,15 +741,16 @@ def _shelephant_main_parser():
         "init",
         "add",
         "remove",
+        "update",
         "status",
+        "info",
+        "lock",
         "cp",
         "mv",
         "rm",
         "pwd",
-        "info",
-        "update",
-        "lock",
         "git",
+        "gitignore",
     ]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
@@ -767,6 +769,8 @@ def _shelephant_main():
         dataset.add(sys.argv[2:])
     elif args.command == "remove":
         dataset.remove(sys.argv[2:])
+    elif args.command == "update":
+        dataset.update(sys.argv[2:])
     elif args.command == "status":
         dataset.status(sys.argv[2:])
     elif args.command == "info":
@@ -779,12 +783,12 @@ def _shelephant_main():
         dataset.rm(sys.argv[2:])
     elif args.command == "pwd":
         dataset.pwd(sys.argv[2:])
-    elif args.command == "update":
-        dataset.update(sys.argv[2:])
     elif args.command == "lock":
         dataset.lock(sys.argv[2:])
     elif args.command == "git":
         dataset.git(sys.argv[2:])
+    elif args.command == "gitignore":
+        dataset.gitignore(sys.argv[2:])
     else:
         raise ValueError(f"Unknown command '{sys.argv[1]}'.")
 

@@ -90,3 +90,19 @@ shelephant rm
     :module: shelephant.dataset
     :func: _rm_parser
     :prog: shelephant rm
+
+shelephant pwd
+--------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _pwd_parser
+    :prog: shelephant pwd
+
+shelephant gitignore
+--------------------
+
+.. argparse::
+    :module: shelephant.dataset
+    :func: _gitignore_parser
+    :prog: shelephant gitignore
