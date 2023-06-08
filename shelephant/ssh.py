@@ -8,7 +8,11 @@ from .external import exec_cmd
 
 def _shelephant_cachdir(hostname: str, python: str = "python3") -> str:
     """
-    Return the path to the shelephant cache directory on a remote host.
+    Return the path to the shelephant cache directory or a tempdir on a remote host.
+
+    :param hostname: Hostname.
+    :param python: Python executable (on remote).
+    :return: Path to the shelephant cache directory or a tempdir on a remote host.
     """
 
     script = [
@@ -18,15 +22,10 @@ def _shelephant_cachdir(hostname: str, python: str = "python3") -> str:
         "Path(d).mkdir(exist_ok=True)",
         "print(d)",
     ]
-    cmd = [
-        "shelephant --version || echo 0",
-        f"{python:s} -c \\\"{';'.join(script):s}\\\" || mktemp -d",
-    ]
-
-    cmd = ";".join(cmd)
+    cmd = f"{python:s} -c \\\"{';'.join(script):s}\\\" || mktemp -d"
     cmd = f'ssh {hostname:s} "{cmd:s}"'
     ret = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True).decode("utf-8")
-    return ret.strip().splitlines()
+    return ret.strip().splitlines()[0]
 
 
 @contextmanager

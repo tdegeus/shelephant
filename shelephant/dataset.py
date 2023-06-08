@@ -492,7 +492,7 @@ class Location:
             )
 
         # search on SSH remote host for files (the sha256/size/mtime of 'new' files is set to None)
-        ver, cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
+        cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
         with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
             shutil.copy(pathlib.Path(__file__).parent / "search.py", "script.py")
             with open("settings.json", "w") as f:
@@ -547,7 +547,7 @@ class Location:
                 np.array(csum, dtype="U64"),
             )
 
-        ver, cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
+        cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
         with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
             files = [str(self.root / i) for i in paths]
             pathlib.Path("files.txt").write_text("\n".join(files))
