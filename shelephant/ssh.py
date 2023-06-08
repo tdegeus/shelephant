@@ -1,8 +1,54 @@
 import pathlib
+import re
 import subprocess
 from contextlib import contextmanager
 
 from .external import exec_cmd
+
+
+def _shelephant_cachdir(hostname: str, python: str = "python3") -> str:
+    """
+    Return the path to the shelephant cache directory or a tempdir on a remote host.
+
+    :param hostname: Hostname.
+    :param python: Python executable (on remote).
+    :return: Path to the shelephant cache directory or a tempdir on a remote host.
+    """
+
+    script = [
+        "from platformdirs import user_cache_dir",
+        "from pathlib import Path",
+        "d = user_cache_dir('shelephant', 'tdegeus')",
+        "Path(d).mkdir(exist_ok=True)",
+        "print(d)",
+    ]
+    cmd = f"{python:s} -c \\\"{';'.join(script):s}\\\" || mktemp -d"
+    cmd = f'ssh {hostname:s} "{cmd:s}"'
+    ret = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True).decode("utf-8")
+    return ret.strip().splitlines()[0]
+
+
+@contextmanager
+def _cachedir(hostname: str, cache_dir: str):
+    """
+    Do nothing if the cache directory is a shelephant cache directory.
+    Otherwise, remove the cache directory on exit.
+
+        with _cachedir(hostname, cache_dir) as cachdir_tempdir:
+            print(cachdir_tempdir)
+    """
+
+    try:
+        if re.match(r".*shelephant.*", str(cache_dir)):
+            rm = None
+            yield pathlib.Path(cache_dir)
+        else:
+            rm = cache_dir
+            yield pathlib.Path(cache_dir.strip())
+    finally:
+        if rm is not None:
+            cmd = f"ssh {hostname:s} rm -rf {cache_dir:s}"
+            exec_cmd(cmd, verbose=False)
 
 
 def has_keys_set(hostname: str) -> bool:

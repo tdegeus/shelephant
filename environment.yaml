@@ -4,6 +4,7 @@ dependencies:
 - click
 - furo
 - numpy >=1.15.0
+- platformdirs
 - pre-commit
 - prettytable
 - python >=3.10

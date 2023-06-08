@@ -10,15 +10,22 @@ from copy import deepcopy
 import numpy as np
 import prettytable
 import tqdm
+from platformdirs import user_cache_dir
 
 from . import cli
 from . import compute_hash
+from . import rsync
 from . import scp
 from . import search
 from . import ssh
 from . import yaml
 from ._version import version
 from .external import exec_cmd
+
+if shutil.which("rsync") is not None:
+    _copyfunc = rsync.copy
+else:
+    _copyfunc = scp.copy
 
 
 def _force_absolute_path(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path:
@@ -484,18 +491,19 @@ class Location:
             )
 
         # search on SSH remote host for files (the sha256/size/mtime of 'new' files is set to None)
-        with ssh.tempdir(self.ssh) as remote, search.tempdir():
+        cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
+        with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
             shutil.copy(pathlib.Path(__file__).parent / "search.py", "script.py")
             with open("settings.json", "w") as f:
                 json.dump(self.search, f)
 
             host = f'{self.ssh:s}:"{str(remote):s}"'
-            scp.copy(".", host, ["script.py", "settings.json"], progress=False, verbose=verbose)
+            _copyfunc(".", host, ["script.py", "settings.json"], progress=False, verbose=verbose)
             exec_cmd(
                 f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py {str(self.root)}"',
                 verbose=verbose,
             )
-            scp.copy(host, ".", ["files.txt"], progress=False, verbose=verbose)
+            _copyfunc(host, ".", ["files.txt"], progress=False, verbose=verbose)
             return self._prune(sorted(pathlib.Path("files.txt").read_text().splitlines()))
 
     def has_info(self) -> bool:
@@ -538,7 +546,8 @@ class Location:
                 np.array(csum, dtype="U64"),
             )
 
-        with ssh.tempdir(self.ssh) as remote, search.tempdir():
+        cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
+        with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
             files = [str(self.root / i) for i in paths]
             pathlib.Path("files.txt").write_text("\n".join(files))
             pathlib.Path("sha256.txt").write_text("")
@@ -546,13 +555,13 @@ class Location:
 
             extra = ["sha256.txt"] if sha256 else []
             hostpath = f'{self.ssh:s}:"{str(remote):s}"'
-            scp.copy(
+            _copyfunc(
                 ".", hostpath, extra + ["script.py", "files.txt"], progress=False, verbose=verbose
             )
             exec_cmd(
                 f'ssh {self.ssh:s} "cd {str(remote)} && {self.python} script.py"', verbose=verbose
             )
-            scp.copy(
+            _copyfunc(
                 hostpath, ".", extra + ["size.txt", "mtime.txt"], progress=False, verbose=verbose
             )
             size = np.array(
@@ -1663,6 +1672,7 @@ def _info_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--cachedir", action="store_true", help="Print cachedir.")
     parser.add_argument(
         "--basedir", action="store_true", help="Print basedir (that contain '.shelephant')."
     )
@@ -1678,6 +1688,10 @@ def info(args: list[str]):
 
     parser = _info_parser()
     args = parser.parse_args(args)
+
+    if args.cachedir:
+        print(user_cache_dir("shelephant", "tdegeus"))
+        return
 
     if args.basedir:
         print(_search_upwards_dir(".shelephant").parent)

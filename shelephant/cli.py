@@ -539,6 +539,7 @@ def _shelephant_hostinfo_parser():
     )
     parser.add_argument("-i", "--info", action="store_true", help="Add information (sha256, size).")
     parser.add_argument("-f", "--force", action="store_true", help="Force overwrite output.")
+    parser.add_argument("--verbose", action="store_true", help="Print commands (only SSH remote).")
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("path", type=pathlib.Path, help="Path to remote directory.")
     return parser
@@ -566,9 +567,9 @@ def shelephant_hostinfo(args: list[str]):
         if args.dump:
             loc.dump = args.dump
 
-    loc.read()
+    loc.read(verbose=args.verbose)
     if args.info:
-        loc.getinfo()
+        loc.getinfo(verbose=args.verbose)
     loc.to_yaml(args.output, force=args.force)
 
 
