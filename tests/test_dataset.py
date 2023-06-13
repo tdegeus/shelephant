@@ -716,7 +716,7 @@ class Test_dataset(unittest.TestCase):
             self.assertEqual(ret, expect)
 
             with cwd(dataset):
-                self.assertEqual(os.path.realpath("c.txt"), os.path.abspath("c.txt"))
+                self.assertFalse(pathlib.Path("c.txt").is_symlink())
 
     def test_shallow(self):
         with tempdir():
