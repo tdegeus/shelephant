@@ -261,7 +261,10 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     Command-line tool, see ``--help``.
 
     :param args: Command-line arguments (should be all strings).
-    :param paths: Paths to copy (if not given, all files in source are copied).
+    :param paths:
+        Paths to copy.
+        If ``None``: read from ``args.source``.
+        If ``list``: copy these paths, filtered by paths that are not in ``args.source``.
     """
 
     parser = _shelephant_cp_parser()
@@ -279,11 +282,26 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
 
     source = dataset.Location.from_yaml(args.source)
     files = source.files(info=False)
-    if paths is not None:
+    pre = None
+    if paths is None:
+        assert source.prefix is None, "Cannot use prefix in this context."
+    else:
+        if source.prefix is not None:
+            paths = [os.path.relpath(path, source.prefix) for path in paths]
+            assert not any([path.startswith("..") for path in paths]), "Paths must be in source."
+            pre = source.prefix
         files = np.intersect1d(files, paths).tolist()
+        # if dest.prefix is not None:
+        #     pre = dest.prefix
+        #     files = [os.path.relpath(path, pre) for path in files]
+        #     source.root /= pre
+        #     source._absroot /= pre
     equal = []
     sourcepath = source.hostpath
     destpath = dest.hostpath
+    print("sourcepath = ", sourcepath)
+    print("destpath = ", destpath)
+    print("files = ", files)
 
     if source.ssh is not None or dest.ssh is not None:
         assert "rsync" in args.mode, "'rsync' required for ssh."
@@ -309,6 +327,9 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
 
     if not args.force:
         status["=="] = equal
+        if pre is not None:
+            for key in status:
+                status[key] = [os.path.join(pre, path) for path in status[key]]
         output.copyplan(status, colors=args.colors)
         if args.dry_run:
             return []
@@ -320,7 +341,7 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     else:
         local.copy(sourcepath, destpath, files, progress=not args.quiet)
 
-    return files
+    return [os.path.join(pre, path) for path in files]
 
 
 def _shelephant_mv_parser():

@@ -906,6 +906,54 @@ class Test_dataset(unittest.TestCase):
                     pathlib.Path(os.path.realpath("f.txt")).parent.parent.name, "source2"
                 )
 
+    def test_prefix_cp(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            prefix = pathlib.Path("prefix")
+            mydir = pathlib.Path("mydir")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+
+            with cwd(source1):
+                mydir.mkdir()
+                with cwd(mydir):
+                    files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                    create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--prefix", str(prefix), "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--prefix", str(prefix / mydir), "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / mydir / "a.txt") + " source1 == ==",
+                str(prefix / mydir / "b.txt") + " source1 == ==",
+                str(prefix / mydir / "c.txt") + " source1 == x",
+                str(prefix / mydir / "d.txt") + " source1 == x",
+                str(prefix / mydir / "e.txt") + " source2 x ==",
+                str(prefix / mydir / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(["source1", "source2", str(prefix / mydir / "c.txt"), str(prefix / mydir / "d.txt"), "-q"])
+                shelephant.dataset.cp(["source2", "source1", str(prefix / mydir / "e.txt"), str(prefix / mydir / "f.txt"), "-q"])
+
+
+
+
     def test_hidden(self):
         with tempdir():
             dataset = pathlib.Path("dataset")
