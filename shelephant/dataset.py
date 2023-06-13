@@ -870,15 +870,16 @@ def _add_parser():
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
+    opts = dict(type=str, action="append", default=[])
     parser.add_argument("name", type=str, help="Name of the storage location.")
     parser.add_argument("root", type=pathlib.Path, nargs="?", help="Path to the storage location.")
     parser.add_argument("--ssh", type=str, help="SSH host (e.g. user@host).")
     parser.add_argument("--mount", type=pathlib.Path, help="Optional mount location for SSH host.")
     parser.add_argument("--prefix", type=pathlib.Path, help="Add prefix to all files.")
-    parser.add_argument("--rglob", type=str, help="Search pattern for ``Path(root).rglob(...)``.")
-    parser.add_argument("--glob", type=str, help="Search pattern for ``Path(root).glob(...)``.")
-    parser.add_argument("--exec", type=str, help="Command to run from ``root``.")
-    parser.add_argument("--skip", type=str, action="append", help="Pattern to skip (Python regex).")
+    parser.add_argument("--rglob", **opts, help="Search pattern for ``Path(root).rglob(...)``.")
+    parser.add_argument("--glob", **opts, help="Search pattern for ``Path(root).glob(...)``.")
+    parser.add_argument("--exec", **opts, help="Command to run from ``root``.")
+    parser.add_argument("--skip", **opts, help="Pattern to skip (Python regex).")
     parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("--version", action="version", version=version)
@@ -917,14 +918,14 @@ def add(args: list[str]):
         loc = Location(root=args.root, ssh=args.ssh, mount=args.mount, prefix=args.prefix)
         s = []
         d = {}
-        if args.skip is not None:
+        if len(args.skip) > 0:
             d["skip"] = args.skip
-        if args.rglob:
-            s.append({"rglob": args.rglob, **d})
-        if args.glob:
-            s.append({"glob": args.glob, **d})
-        if args.exec:
-            s.append({"exec": args.exec, **d})
+        for i in args.rglob:
+            s.append({"rglob": i, **d})
+        for i in args.glob:
+            s.append({"glob": i, **d})
+        for i in args.exec:
+            s.append({"exec": i, **d})
         if len(s) > 0:
             loc.search = s
 
