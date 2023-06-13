@@ -279,6 +279,8 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
 
     source = dataset.Location.from_yaml(args.source)
     files = source.files(info=False)
+    assert source.prefix is None, "prefix not supported."
+    assert dest.prefix is None, "prefix not supported."
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
     equal = []
@@ -372,8 +374,9 @@ def shelephant_mv(args: list[str], paths: list[str] = None):
     assert not args.force if args.dry_run else True, "Cannot use --force with --dry-run."
 
     source = dataset.Location.from_yaml(args.source)
-    assert source.ssh is None, "Cannot move from remote."
     files = source.files(info=False)
+    assert source.ssh is None, "Cannot move from remote."
+    assert source.prefix is None, "prefix not supported."
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
     sourcepath = source._absroot
@@ -443,6 +446,7 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
 
     source = dataset.Location.from_yaml(args.source)
     files = source.files(info=False)
+    assert source.prefix is None, "prefix not supported."
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
     sourcepath = source._absroot
