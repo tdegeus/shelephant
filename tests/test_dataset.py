@@ -684,6 +684,40 @@ class Test_dataset(unittest.TestCase):
 
             self.assertFalse((source1 / "a.txt").exists())
 
+    def test_unmanage(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+
+            dataset.mkdir()
+            source1.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset):
+                create_dummy_files(["c.txt"], slice(2, None, None))
+
+            with cwd(source1):
+                create_dummy_files(["c.txt"], slice(3, None, None))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.update(["source1", "--quiet"])
+
+            expect = [
+                "Local files conflicting with dataset. No links are created for these files:",
+                "c.txt",
+            ]
+            ret = _plain(sio.getvalue())
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                self.assertEqual(os.path.realpath("c.txt"), os.path.abspath("c.txt"))
+
     def test_shallow(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

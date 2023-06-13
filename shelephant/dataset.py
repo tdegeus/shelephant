@@ -1197,7 +1197,7 @@ def update(args: list[str]):
                 if f.is_file():
                     unmanage.append(f)
             for f in unmanage:
-                add_links.pop(f)
+                add_links.remove(f)
                 files.pop(f)
 
             if len(unmanage) > 0:
