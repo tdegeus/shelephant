@@ -1026,6 +1026,7 @@ def _update_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--clean", action="store_true", help="Clean database entry with symlinks.")
     parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
     parser.add_argument(
@@ -1078,6 +1079,13 @@ def update(args: list[str]):
     with search.cwd(sdir):
         symlinks = yaml.read("symlinks.yaml", [])
         symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
+
+        if args.clean:
+            with search.cwd(base):
+                for path in list(symlinks.keys()):
+                    print(path, path.is_symlink())
+                    if not path.is_symlink():
+                        symlinks.pop(path)
 
         # update files and info
 
