@@ -898,8 +898,8 @@ def add(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
-    assert args.name != "all", "all is a reserved name"
-    assert args.name != "any", "any is a reserved name"
+    for forbidden in ["all", "any", "_src", "_dst"]:
+        assert args.name != forbidden, f'"{forbidden}" is a reserved name'
 
     if args.name == "here":
         assert args.root is None, "root is not allowed"
