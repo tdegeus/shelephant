@@ -379,7 +379,7 @@ def shelephant_mv(args: list[str], paths: list[str] = None):
     assert source.prefix is None, "prefix not supported."
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
-    sourcepath = source._absroot
+    sourcepath = source.hostpath
     destpath = args.dest
     status = local.diff(sourcepath, destpath, files)
     assert status.pop("<-", []) == [], "Cannot move from destination to source"
@@ -449,7 +449,6 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
     assert source.prefix is None, "prefix not supported."
     if paths is not None:
         files = np.intersect1d(files, paths).tolist()
-    sourcepath = source._absroot
 
     if len(files) == 0:
         print("Nothing to remove")
@@ -464,10 +463,10 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
             raise OSError("Cancelled")
 
     if source.ssh is None:
-        return local.remove(sourcepath, files, progress=not args.quiet)
+        return local.remove(source.hostpath, files, progress=not args.quiet)
 
     with ssh.tempdir(source.ssh) as remote, search.tempdir():
-        files = [str(sourcepath / i) for i in files]
+        files = [str(source.root / i) for i in files]
         pathlib.Path("remove.txt").write_text("\n".join(files))
         shutil.copy(pathlib.Path(__file__).parent / "_remove.py", "script.py")
         hostpath = f'{source.ssh:s}:"{str(remote):s}"'
