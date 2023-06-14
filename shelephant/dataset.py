@@ -1094,7 +1094,6 @@ def update(args: list[str]):
         if args.clean:
             with search.cwd(base):
                 for path in list(symlinks.keys()):
-                    print(path, path.is_symlink())
                     if not path.is_symlink():
                         symlinks.pop(path)
 
