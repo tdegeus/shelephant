@@ -1523,6 +1523,12 @@ def _status_parser():
             .. code-block:: bash
 
                 shelephant cp source dest $(shelephant status --copies 1 --list)
+
+            or to copy in batches of 100:
+
+            .. code-block:: bash
+
+                shelephant status --copies 1 --print0 | xargs -n 100 -0 shelephant cp source dest $@
         """
     )
 
