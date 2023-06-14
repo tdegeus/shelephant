@@ -152,9 +152,7 @@ def shelephant_dump(args: list[str]):
         assert args.root is None, "Root inferred from --search."
         assert not args.command, "Cannot use both --search and --command."
         loc = dataset.Location.from_yaml(args.search)
-        loc.read()
-        if args.info:
-            loc.getinfo()
+        loc.read(getinfo=args.info)
         root = loc.root
         files = loc.files(info=args.info)
     else:
