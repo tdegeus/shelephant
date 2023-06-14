@@ -1529,6 +1529,12 @@ def _status_parser():
             .. code-block:: bash
 
                 shelephant status --copies 1 --print0 | xargs -n 100 -0 shelephant cp source dest $@
+
+            The latter you can also do with the ``--nout`` (``-n``) option of ``shelephant status``:
+
+            .. code-block:: bash
+
+                shelephant cp source dest $(shelephant status --copies 1 --list -n 100)
         """
     )
 
@@ -1549,6 +1555,7 @@ def _status_parser():
     parser.add_argument("--unknown", action="store_true", help="Show files with unknown sha256.")
     parser.add_argument("--list", action="store_true", help="Print list of files (no table).")
     parser.add_argument("--print0", action="store_true", help="Print list of files (no table).")
+    parser.add_argument("-n", "--nout", type=int, help="Maximal number of output arguments.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
     parser.add_argument("--in-use", type=str, help="Select storage location in use.")
     parser.add_argument(
@@ -1660,6 +1667,9 @@ def status(args: list[str]):
 
     if not args.relative_to_base:
         data[:, 0] = [os.path.relpath(i, cwd) for i in data[:, 0]]
+
+    if args.nout is not None:
+        data = data[: args.nout, ...]
 
     if args.print0:
         print("\0".join(data[:, 0]))
