@@ -1514,6 +1514,15 @@ def _status_parser():
     desc = textwrap.dedent(
         """
         Status of the storage locations.
+
+        .. tip::
+
+            Use ``--list`` or ``--print0`` to get a list of files instead of a table.
+            Use for example as:
+
+            .. code-block:: bash
+
+                shelephant cp source dest $(shelephant status --copies 1 --list)
         """
     )
 
@@ -1532,10 +1541,10 @@ def _status_parser():
     parser.add_argument("--ne", action="store_true", help="Show files with unequal copies.")
     parser.add_argument("--na", action="store_true", help="Show files unavailable somewhere.")
     parser.add_argument("--unknown", action="store_true", help="Show files with unknown sha256.")
+    parser.add_argument("--list", action="store_true", help="Print list of files (no table).")
+    parser.add_argument("--print0", action="store_true", help="Print list of files (no table).")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
     parser.add_argument("--in-use", type=str, help="Select storage location in use.")
-    parser.add_argument("--output", type=pathlib.Path, help="Dump to YAML file.")
-    parser.add_argument("--copy", type=str, nargs=2, help="Copy file selection.")
     parser.add_argument(
         "-b",
         "--relative-to-base",
@@ -1565,12 +1574,6 @@ def status(args: list[str]):
     base = sdir.parent
     cwd = os.path.relpath(pathlib.Path.cwd(), base)
     paths = [os.path.relpath(path, base) for path in args.path]
-
-    if args.output is not None:
-        raise NotImplementedError
-
-    if args.copy is not None:
-        raise NotImplementedError
 
     with search.cwd(sdir):
         symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
@@ -1651,6 +1654,14 @@ def status(args: list[str]):
 
     if not args.relative_to_base:
         data[:, 0] = [os.path.relpath(i, cwd) for i in data[:, 0]]
+
+    if args.print0:
+        print("\0".join(data[:, 0]))
+        return
+
+    if args.list:
+        print("\n".join(data[:, 0]))
+        return
 
     out = prettytable.PrettyTable()
     if args.table == "PLAIN_COLUMNS":
