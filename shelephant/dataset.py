@@ -685,7 +685,7 @@ class Location:
 
         removed = mtime < 0
         if np.any(removed):
-            return self.remove(paths[removed])
+            return self.remove(paths[index[removed]])
 
         return self
 
