@@ -456,20 +456,11 @@ class Location:
         k[i] = False
         return self._slice(k)
 
-    def read(self, verbose: bool = False):
+    def _read_impl(self, verbose: bool):
         """
-        Read files from location.
-
-        -   If ``dump`` is set, read from dump file.
-            This overwrites the database
-            (sha256/size/mtime will only be available if they are in the YAML file).
-
-        -   If ``search`` is set, search for files.
-            This preserves sha256/size/mtime if paths are already in the database
-            (there is no check that they are still accurate).
-
-        :param verbose: Print progress (only relevant if ``ssh`` is set).
+        See :meth:`read`.
         """
+
         if self.dump is None and self.search is None:
             return self
 
@@ -505,6 +496,26 @@ class Location:
             )
             _copyfunc(host, ".", ["files.txt"], progress=False, verbose=verbose)
             return self._prune(sorted(pathlib.Path("files.txt").read_text().splitlines()))
+
+    def read(self, verbose: bool = False, getinfo: bool = False):
+        """
+        Read files from location.
+
+        -   If ``dump`` is set, read from dump file.
+            This overwrites the database
+            (sha256/size/mtime will only be available if they are in the YAML file).
+
+        -   If ``search`` is set, search for files.
+            This preserves sha256/size/mtime if paths are already in the database
+            (there is no check that they are still accurate).
+
+        :param verbose: Print progress (only relevant if ``ssh`` is set).
+        :param getinfo: Get sha256/size/mtime (calls ``getinfo``).
+        """
+        if getinfo:
+            return self._read_impl(verbose).getinfo(verbose=verbose)
+
+        return self._read_impl(verbose)
 
     def has_info(self) -> bool:
         """
