@@ -1818,8 +1818,12 @@ def _gitignore_parser():
 
     desc = textwrap.dedent(
         """
-        Add all symbolic links at ``.shelephant`` to dataset's ``.gitignore``.
-        Note that this is not ``.shelephant/.gitignore`` but the one in the dataset's root.
+        Add all symbolic links managed to the dataset's root ``.gitignore``.
+
+        .. note::
+
+            This is the ``/path/to/dataset/.gitignore`` file, not
+            ``/path/to/dataset/.shelephant/.gitignore``.
         """
     )
 
@@ -1866,8 +1870,7 @@ def gitignore(args: list[str]):
         ignore = ""
 
     with search.cwd(sdir):
-        symlinks = yaml.read("symlinks.yaml", [])
-        symlinks = [".shelephant"] + [i["path"] for i in symlinks]
+        symlinks = [i["path"] for i in yaml.read("symlinks.yaml", [])]
 
     ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
     path.write_text(ignore.strip())
