@@ -75,6 +75,20 @@ def _page(text: str):
     subprocess.run(pager_cmd, input=text.encode("utf-8"))
 
 
+def autoprint(text: str):
+    """
+    Print text to stdout.
+    If the text is longer than the terminal height, it will be piped to a pager.
+    """
+    if sys.stdout.isatty():
+        nlines = len(text.splitlines())
+        _, term_lines = shutil.get_terminal_size()
+        if nlines > term_lines:
+            return _page(text)
+
+    print(text)
+
+
 def copyplan(
     status: dict[list[str]],
     colors: str = "none",
@@ -147,11 +161,4 @@ def copyplan(
     if not display:
         return sio.getvalue()
 
-    output = sio.getvalue()
-    if sys.stdout.isatty():
-        nlines = len(output.splitlines())
-        _, term_lines = shutil.get_terminal_size()
-        if nlines > term_lines:
-            return _page(output)
-
-    print(output)
+    autoprint(sio.getvalue())

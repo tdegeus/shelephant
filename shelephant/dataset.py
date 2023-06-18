@@ -14,6 +14,7 @@ from platformdirs import user_cache_dir
 
 from . import cli
 from . import compute_hash
+from . import output
 from . import rsync
 from . import scp
 from . import search
@@ -1694,7 +1695,7 @@ def status(args: list[str]):
     for row in data:
         out.add_row(row)
 
-    print(out.get_string())
+    output.autoprint(out.get_string())
 
 
 def _info_parser():
