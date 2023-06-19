@@ -322,11 +322,12 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     dest._add_suffix(suffix_dest)
     sourcepath = source.hostpath
     destpath = dest.hostpath
+    paths = [] if paths is None else paths
 
     if suffix_source != pathlib.Path(""):
         files = [os.path.relpath(p, suffix_source) for p in files]
 
-    if paths is not None:
+    if len(paths) > 0:
         if (common_prefix / deepest) != pathlib.Path(""):
             strip = common_prefix / deepest
             paths = [os.path.relpath(p, strip) for p in paths]

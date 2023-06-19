@@ -535,6 +535,32 @@ class Test_dataset(unittest.TestCase):
 
             self.assertTrue((source1 / "mydir" / "c.txt").exists())
 
+    def test_cp_clone(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt", "c.txt", "d.txt"])
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset):
+                shelephant.dataset.cp(["source1", "source2", ".", "-f", "-q"])
+
+            self.assertTrue((source2 / "a.txt").exists())
+            self.assertTrue((source2 / "b.txt").exists())
+            self.assertTrue((source2 / "c.txt").exists())
+            self.assertTrue((source2 / "d.txt").exists())
+
     def test_mv(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

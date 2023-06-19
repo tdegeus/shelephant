@@ -1296,6 +1296,10 @@ def _cp_parser():
         """
         Copy files between storage locations.
 
+        .. tip::
+
+            To make a clone call ``shelephant cp source destination .`` from the dataset's root.
+
         .. note::
 
             The copied files are added to the database of the destination.
@@ -1329,7 +1333,6 @@ def cp(args: list[str]):
 
     :param args: Command-line arguments (should be all strings).
     """
-
     parser = _cp_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
@@ -1340,6 +1343,7 @@ def cp(args: list[str]):
     assert args.source in storage, f"Unknown storage location {args.source}"
     assert args.destination in storage, f"Unknown storage location {args.destination}"
     base = sdir.parent
+    args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
 
     with search.cwd(sdir):
@@ -1351,8 +1355,9 @@ def cp(args: list[str]):
         changed = cli.shelephant_cp(opts, paths)
 
     if not args.dry_run and len(changed) > 0:
-        _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
-        changed = np.array(args.path)[j]
+        if len(paths) > 0:
+            _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
+            changed = np.array(args.path)[j]
         update(["--quiet", "--force", args.destination] + list(map(str, changed)))
 
 
