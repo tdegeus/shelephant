@@ -1616,6 +1616,13 @@ def _status_parser():
         "--in-use", type=str, help="Select storage location in use (use 'none' for unavailable)."
     )
     parser.add_argument(
+        "--on",
+        type=str,
+        action="append",
+        default=[],
+        help="Limit to files available on storage location.",
+    )
+    parser.add_argument(
         "-b",
         "--relative-to-base",
         action="store_true",
@@ -1707,6 +1714,16 @@ def status(args: list[str]):
     e[:, 0] = extra
     e[:, 1] = "here"
     data = np.vstack((data, e))
+
+    if len(args.on) > 0:
+        keep = np.zeros((len(data)), dtype=bool)
+        for name in args.on:
+            if name == "here":
+                keep = np.logical_or(keep, data[:, 1] == "here")
+            else:
+                iname = -(len(storage) - np.argmax(np.equal(storage, name)))
+                keep = np.logical_or(keep, np.not_equal(data[:, iname], "x"))
+        data = data[keep, :]
 
     if args.min_copies is not None:
         data = data[np.sum(data[:, 2:] == "==", axis=1) >= args.min_copies]

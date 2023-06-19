@@ -1199,6 +1199,40 @@ class Test_dataset(unittest.TestCase):
 
             self.assertEqual(text, expect)
 
+    def test_status_on(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt", "c.txt", "d.txt"])
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(4, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS", "--on", "source1"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
     def test_removed(self):
         with tempdir():
             dataset = pathlib.Path("dataset")
