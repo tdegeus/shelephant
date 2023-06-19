@@ -848,7 +848,7 @@ class Test_dataset(unittest.TestCase):
             expect = [
                 "a.txt ---- x x ?",
                 "b.txt source1 == == ==",
-                "c.txt source1 1 2 x",
+                "c.txt source1 2 1 x",
                 "d.txt source1 == x x",
                 "e.txt source2 x == x",
                 "g.txt ---- x x ?",
@@ -1078,6 +1078,48 @@ class Test_dataset(unittest.TestCase):
                 "d.txt source1 ==",
                 os.path.join("foo", "e.txt") + " source1 ==",
                 os.path.join("foo", "f.txt") + " source1 ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+    def test_status_duplicates(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            source3 = pathlib.Path("source3")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+            source3.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt", "c.txt", "d.txt"])
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["c.txt", "d.txt"], slice(4, None, None))
+
+            with cwd(source3):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["c.txt"], slice(4, None, None))
+                create_dummy_files(["d.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source3", "../source3", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == == ==",
+                "b.txt source1 == == ==",
+                "c.txt source1 2 1 1",
+                "d.txt source1 3 2 1",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
