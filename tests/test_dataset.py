@@ -1104,6 +1104,381 @@ class Test_dataset(unittest.TestCase):
 
             self.assertEqual(text, expect)
 
+    def test_removed(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(source1):
+                os.remove("c.txt")
+                os.remove("d.txt")
+
+            with cwd(source2):
+                os.remove("e.txt")
+                os.remove("f.txt")
+
+            with cwd(dataset):
+                shelephant.dataset.update(["all"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+    def test_prefix_cp_source(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            prefix = pathlib.Path("prefix")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                prefix.mkdir()
+                with cwd(prefix):
+                    create_dummy_files(["a.txt", "b.txt"])
+                    create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(
+                    ["source1", "../source1", "--prefix", str(prefix), "--rglob", "*.txt", "-q"]
+                )
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == x",
+                str(prefix / "d.txt") + " source1 == x",
+                str(prefix / "e.txt") + " source2 x ==",
+                str(prefix / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source1",
+                        "source2",
+                        str(prefix / "c.txt"),
+                        str(prefix / "d.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source2):
+                self.assertTrue(os.path.isfile(prefix / "c.txt"))
+                self.assertTrue(os.path.isfile(prefix / "d.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == ==",
+                str(prefix / "d.txt") + " source1 == ==",
+                str(prefix / "e.txt") + " source2 x ==",
+                str(prefix / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source2",
+                        "source1",
+                        str(prefix / "e.txt"),
+                        str(prefix / "f.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source1):
+                self.assertTrue(os.path.isfile("e.txt"))
+                self.assertTrue(os.path.isfile("f.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == ==",
+                str(prefix / "d.txt") + " source1 == ==",
+                str(prefix / "e.txt") + " source1 == ==",
+                str(prefix / "f.txt") + " source1 == ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+    def test_prefix_cp_dest(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            prefix = pathlib.Path("prefix")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+
+            with cwd(source1):
+                prefix.mkdir()
+                with cwd(prefix):
+                    files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                    create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    ["source2", "../source2", "--prefix", str(prefix), "--rglob", "*.txt", "-q"]
+                )
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == x",
+                str(prefix / "d.txt") + " source1 == x",
+                str(prefix / "e.txt") + " source2 x ==",
+                str(prefix / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source1",
+                        "source2",
+                        str(prefix / "c.txt"),
+                        str(prefix / "d.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source2):
+                self.assertTrue(os.path.isfile("c.txt"))
+                self.assertTrue(os.path.isfile("d.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == ==",
+                str(prefix / "d.txt") + " source1 == ==",
+                str(prefix / "e.txt") + " source2 x ==",
+                str(prefix / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source2",
+                        "source1",
+                        str(prefix / "e.txt"),
+                        str(prefix / "f.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source1):
+                self.assertTrue(os.path.isfile(prefix / "e.txt"))
+                self.assertTrue(os.path.isfile(prefix / "f.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / "a.txt") + " source1 == ==",
+                str(prefix / "b.txt") + " source1 == ==",
+                str(prefix / "c.txt") + " source1 == ==",
+                str(prefix / "d.txt") + " source1 == ==",
+                str(prefix / "e.txt") + " source1 == ==",
+                str(prefix / "f.txt") + " source1 == ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+    def test_prefix_cp_both(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+            prefix = pathlib.Path("prefix")
+            mydir = pathlib.Path("mydir")
+
+            dataset.mkdir()
+            source1.mkdir(parents=True)
+            source2.mkdir(parents=True)
+
+            with cwd(source1):
+                mydir.mkdir()
+                with cwd(mydir):
+                    files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                    create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(
+                    ["source1", "../source1", "--prefix", str(prefix), "--rglob", "*.txt", "-q"]
+                )
+                shelephant.dataset.add(
+                    [
+                        "source2",
+                        "../source2",
+                        "--prefix",
+                        str(prefix / mydir),
+                        "--rglob",
+                        "*.txt",
+                        "-q",
+                    ]
+                )
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / mydir / "a.txt") + " source1 == ==",
+                str(prefix / mydir / "b.txt") + " source1 == ==",
+                str(prefix / mydir / "c.txt") + " source1 == x",
+                str(prefix / mydir / "d.txt") + " source1 == x",
+                str(prefix / mydir / "e.txt") + " source2 x ==",
+                str(prefix / mydir / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source1",
+                        "source2",
+                        str(prefix / mydir / "c.txt"),
+                        str(prefix / mydir / "d.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source2):
+                self.assertTrue(os.path.isfile("c.txt"))
+                self.assertTrue(os.path.isfile("d.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / mydir / "a.txt") + " source1 == ==",
+                str(prefix / mydir / "b.txt") + " source1 == ==",
+                str(prefix / mydir / "c.txt") + " source1 == ==",
+                str(prefix / mydir / "d.txt") + " source1 == ==",
+                str(prefix / mydir / "e.txt") + " source2 x ==",
+                str(prefix / mydir / "f.txt") + " source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "source2",
+                        "source1",
+                        str(prefix / mydir / "e.txt"),
+                        str(prefix / mydir / "f.txt"),
+                        "-q",
+                        "--force",
+                    ]
+                )
+
+            with cwd(source1):
+                self.assertTrue(os.path.isfile(mydir / "e.txt"))
+                self.assertTrue(os.path.isfile(mydir / "f.txt"))
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                str(prefix / mydir / "a.txt") + " source1 == ==",
+                str(prefix / mydir / "b.txt") + " source1 == ==",
+                str(prefix / mydir / "c.txt") + " source1 == ==",
+                str(prefix / mydir / "d.txt") + " source1 == ==",
+                str(prefix / mydir / "e.txt") + " source1 == ==",
+                str(prefix / mydir / "f.txt") + " source1 == ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
 
 if __name__ == "__main__":
     unittest.main()

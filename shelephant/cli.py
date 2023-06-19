@@ -258,6 +258,44 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     """
     Command-line tool, see ``--help``.
 
+    .. note::
+
+        For input from dataset (``paths is not None``) the storage locations can have a prefix.
+        ``paths`` is a lost of paths relative to the root of the dataset.
+        For example::
+
+            foo/bar/a.txt
+            foo/bar/b.txt
+
+        Consider that
+
+        -   ``source1`` only stores files and folders in ``foo`` .
+        -   ``source2`` only stores files and folders in ``foo/bar``.
+
+        Then::
+
+            shelephant_cp(["source1.yml", "source2.yml"], paths=["foo/bar/a.txt", "foo/bar/b.txt"])
+
+        will effectively run a copy of::
+
+            copy(
+                sourcepath="/path/to/root/of/source1/bar",
+                destpath="/path/to/root/of/source2",
+                files=["a.txt", "b.txt"],
+            )
+
+        And::
+
+            shelephant_cp(["source2.yml", "source1.yml"], paths=["foo/bar/a.txt", "foo/bar/b.txt"])
+
+        will effectively run a copy of::
+
+            copy(
+                sourcepath="/path/to/root/of/source2",
+                destpath="/path/to/root/of/source1/bar",
+                files=["a.txt", "b.txt"],
+            )
+
     :param args: Command-line arguments (should be all strings).
     :param paths: Paths to copy (if not given, all files in source are copied).
     """
@@ -277,13 +315,23 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
 
     source = dataset.Location.from_yaml(args.source)
     files = source.files(info=False)
-    assert source.prefix is None, "prefix not supported."
-    assert dest.prefix is None, "prefix not supported."
-    if paths is not None:
-        files = np.intersect1d(files, paths).tolist()
     equal = []
+    strip = None
+    common_prefix, suffix_source, suffix_dest, deepest = dataset._compute_suffix(source, dest)
+    source._add_suffix(suffix_source)
+    dest._add_suffix(suffix_dest)
     sourcepath = source.hostpath
     destpath = dest.hostpath
+
+    if suffix_source != pathlib.Path(""):
+        files = [os.path.relpath(p, suffix_source) for p in files]
+
+    if paths is not None:
+        if (common_prefix / deepest) != pathlib.Path(""):
+            strip = common_prefix / deepest
+            paths = [os.path.relpath(p, strip) for p in paths]
+            assert not any(p.startswith("..") for p in paths), "Paths not in tree."
+        files = np.intersect1d(files, paths)
 
     if source.ssh is not None or dest.ssh is not None:
         assert "rsync" in args.mode, "'rsync' required for ssh."
@@ -320,7 +368,10 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     else:
         local.copy(sourcepath, destpath, files, progress=not args.quiet)
 
-    return files
+    if strip is None:
+        return files
+
+    return list(map(str, [strip / i for i in files]))
 
 
 def _shelephant_mv_parser():

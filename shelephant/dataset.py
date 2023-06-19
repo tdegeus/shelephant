@@ -115,6 +115,16 @@ class Location:
 
         assert np.unique(self._files).size == self._files.size, "duplicate filenames"
 
+    def _add_suffix(self, suffix: pathlib.Path):
+        """
+        Add a path "suffix" to the root.
+
+        :param suffix: Path to add to the root.
+        """
+        self.root = self.root / suffix
+        self._absroot = self._absroot / suffix
+        return self
+
     def _slice(self, keep):
         """
         Slice list of files and info.
@@ -533,6 +543,9 @@ class Location:
         :param paths: List of paths.
         :return: ``paths`` (sorted) and their indices in ``self._files``.
         """
+        if self.prefix is not None:
+            paths = [os.path.relpath(p, self.prefix) for p in paths]
+
         paths = np.sort(paths)
         sorter = np.argsort(self._files)
         index = sorter[np.searchsorted(self._files[sorter], paths)]
@@ -656,7 +669,6 @@ class Location:
         :param progress: Show progress bar (only relevant if ``ssh`` is not set).
         :param verbose: Show verbose output (only relevant if ``ssh`` is set).
         """
-
         if paths is None:
             paths = self._files
             index = np.arange(self._files.size)
@@ -686,7 +698,7 @@ class Location:
 
         removed = mtime < 0
         if np.any(removed):
-            return self.remove(paths[index[removed]])
+            return self.remove(files[removed])
 
         return self
 
@@ -737,6 +749,40 @@ class Location:
                 ret["?="].append(file)
 
         return ret
+
+
+def _compute_suffix(a: Location, b: Location) -> pathlib.Path:
+    """
+    Compute the suffix to put to each location.
+
+    :param a: First location.
+    :param b: Second location.
+    :return:
+
+        - ``common_prefix``: the common prefix shared by both locations.
+        - ``a_suffix``: the suffix to put to the first location.
+        - ``b_suffix``: the suffix to put to the second location.
+        - ``deepest``: the deepest of the two prefixes.
+    """
+    a = a.prefix if a.prefix is not None else pathlib.Path("")
+    b = b.prefix if b.prefix is not None else pathlib.Path("")
+    a = a.parts
+    b = b.parts
+
+    if len(a) > len(b):
+        assert a[: len(b)] == b, "Locations are not in the same directory tree."
+        c = a[: len(b)]
+        a = a[len(b) :]
+        d = a
+        b = []
+    else:
+        assert b[: len(a)] == a, "Locations are not in the same directory tree."
+        c = b[: len(a)]
+        b = b[len(a) :]
+        d = b
+        a = []
+
+    return pathlib.Path(*c), pathlib.Path(*b), pathlib.Path(*a), pathlib.Path(*d)
 
 
 # https://stackoverflow.com/a/68994012/2646505
@@ -1119,10 +1165,14 @@ def update(args: list[str]):
             if paths is None:
                 loc.read(verbose=args.verbose)
             else:
-                _, i, _ = np.intersect1d(paths, loc._files, return_indices=True, assume_unique=True)
-                k = np.ones(paths.size, dtype=bool)
+                if loc.prefix is not None:
+                    p = np.array([os.path.relpath(i, loc.prefix) for i in paths])
+                else:
+                    p = paths
+                _, i, _ = np.intersect1d(p, loc._files, return_indices=True, assume_unique=True)
+                k = np.ones(p.size, dtype=bool)
                 k[i] = False
-                loc._append(paths[k])
+                loc._append(p[k])
 
             if lock is not None:
                 f = f"storage/{name}.yaml"
