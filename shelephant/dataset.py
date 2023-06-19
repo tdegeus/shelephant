@@ -1607,7 +1607,9 @@ def _status_parser():
     parser.add_argument("--print0", action="store_true", help="Print list of files (no table).")
     parser.add_argument("-n", "--nout", type=int, help="Maximal number of output arguments.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
-    parser.add_argument("--in-use", type=str, help="Select storage location in use.")
+    parser.add_argument(
+        "--in-use", type=str, help="Select storage location in use (use 'none' for unavailable)."
+    )
     parser.add_argument(
         "-b",
         "--relative-to-base",
@@ -1638,6 +1640,11 @@ def status(args: list[str]):
     cwd = os.path.relpath(pathlib.Path.cwd(), base)
     paths = [os.path.relpath(path, base) for path in args.path]
 
+    na = "----"
+    if args.in_use is not None:
+        if args.in_use == "none":
+            args.in_use = na
+
     with search.cwd(sdir):
         symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
         storage = yaml.read(sdir / "storage.yaml")
@@ -1646,7 +1653,7 @@ def status(args: list[str]):
 
         sha = "x" * np.ones((len(symlinks), len(storage)), dtype=object)
         mtime = np.inf * np.ones(sha.shape, dtype=np.float64)
-        inuse = "----" * np.ones((len(symlinks)), dtype=object)
+        inuse = na * np.ones((len(symlinks)), dtype=object)
 
         for iname, name in enumerate(storage[::-1]):
             loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
