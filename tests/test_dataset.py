@@ -845,7 +845,7 @@ class Test_dataset(unittest.TestCase):
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
-            expect_a = [
+            expect = [
                 "a.txt ---- x x ?",
                 "b.txt source1 == == ==",
                 "c.txt source1 2 1 x",
@@ -855,18 +855,8 @@ class Test_dataset(unittest.TestCase):
                 "h.txt source1 == x x",
                 "k.txt source2 x == x",
             ]
-            expect_b = [
-                "a.txt ---- x x ?",
-                "b.txt source1 == == ==",
-                "c.txt source1 1 2 x",
-                "d.txt source1 == x x",
-                "e.txt source2 x == x",
-                "g.txt ---- x x ?",
-                "h.txt source1 == x x",
-                "k.txt source2 x == x",
-            ]
             ret = _plain(sio.getvalue())[1:]
-            self.assertIn(ret, [expect_a, expect_b])
+            self.assertEqual(ret, expect)
 
             with cwd(dataset):
                 for f in ["b.txt", "c.txt", "d.txt", "h.txt"]:
