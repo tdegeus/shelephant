@@ -1695,9 +1695,11 @@ def status(args: list[str]):
         info = np.logical_and(_sha != "x", _sha != "?")
         _mtime = mtime[i, :]
         _mtime[~info] = 0
-        label = np.argsort(_mtime[forward])
-        label = 1 + np.max(label) - label
-        _sha[info] = np.array(list(map(str, label[backward][info])), dtype=object)
+        label = np.empty(forward.size, dtype=int)
+        label[np.argsort(_mtime[forward])] = np.arange(forward.size)
+        label = label[backward][info]
+        label = label - np.min(label) + 1
+        _sha[info] = np.array(list(map(str, label)), dtype=object)
         sha[i, :] = _sha
 
     data = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
