@@ -1694,11 +1694,10 @@ def status(args: list[str]):
 
         info = np.logical_and(_sha != "x", _sha != "?")
         _mtime = mtime[i, :]
-        _mtime[~info] = 0
+        _mtime[~info] = np.inf
         label = np.empty(forward.size, dtype=int)
-        label[np.argsort(_mtime[forward])] = np.arange(forward.size)
+        label[np.argsort(_mtime[forward])] = np.arange(1, forward.size + 1)
         label = label[backward][info]
-        label = label - np.min(label) + 1
         _sha[info] = np.array(list(map(str, label)), dtype=object)
         sha[i, :] = _sha
 
