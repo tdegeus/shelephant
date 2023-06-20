@@ -1090,7 +1090,7 @@ def _update_parser():
     parser.add_argument(
         "--chunk",
         type=lambda x: int(float(x)),
-        default=1e10,
+        default=3e10,
         help="Chunk size for computing checksums (bytes).",
     )
     parser.add_argument("--force", action="store_true", help="Force update of path(s).")
