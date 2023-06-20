@@ -1112,6 +1112,21 @@ class Test_dataset(unittest.TestCase):
                 shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(["source3", "../source3", "--rglob", "*.txt", "-q"])
 
+            # make test robust against filesystems with low mtime resolution
+            with cwd(dataset / ".shelephant" / "storage"):
+                loc = shelephant.dataset.Location.from_yaml("source1.yaml")
+                loc._mtime[np.argwhere(np.equal(loc._files, "d.txt")).ravel()[0]] = 3
+                loc.to_yaml("source1.yaml", force=True)
+
+                loc = shelephant.dataset.Location.from_yaml("source2.yaml")
+                loc._mtime[np.argwhere(np.equal(loc._files, "d.txt")).ravel()[0]] = 2
+                loc.to_yaml("source2.yaml", force=True)
+
+                loc = shelephant.dataset.Location.from_yaml("source3.yaml")
+                loc._mtime[np.argwhere(np.equal(loc._files, "c.txt")).ravel()[0]] += 1e6
+                loc._mtime[np.argwhere(np.equal(loc._files, "d.txt")).ravel()[0]] = 1
+                loc.to_yaml("source3.yaml", force=True)
+
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
                 shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
 
