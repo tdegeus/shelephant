@@ -1681,7 +1681,7 @@ def status(args: list[str]):
 
     for i in range(sha.shape[0]):
         _sha = sha[i, :]
-        unique = np.unique(_sha)
+        unique, forward, backward = np.unique(_sha, return_index=True, return_inverse=True)
         info = np.logical_and(unique != "x", unique != "?")
 
         if np.sum(info) == 0:
@@ -1695,8 +1695,10 @@ def status(args: list[str]):
         info = np.logical_and(_sha != "x", _sha != "?")
         _mtime = mtime[i, :]
         _mtime[~info] = np.inf
-        sorter = np.array(list(map(str, 1 + np.argsort(_mtime))), dtype=object)
-        _sha[info] = sorter[info]
+        label = np.empty(forward.size, dtype=int)
+        label[np.argsort(_mtime[forward])] = np.arange(1, forward.size + 1)
+        label = label[backward][info]
+        _sha[info] = np.array(list(map(str, label)), dtype=object)
         sha[i, :] = _sha
 
     data = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
