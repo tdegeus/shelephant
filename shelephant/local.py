@@ -90,6 +90,9 @@ def diff(
             }
     """
 
+    if len(files) == 0:
+        return {"?=": [], "->": [], "<-": []}
+
     insource = np.array([os.path.exists(os.path.join(source_dir, file)) for file in files])
     indest = np.array([os.path.exists(os.path.join(dest_dir, file)) for file in files])
     files = np.array(files)
