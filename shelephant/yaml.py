@@ -54,13 +54,16 @@ def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list |
     raise OSError(f'"{"/".join(key)}" not in "{filename}"')
 
 
-def dump(filename: str | pathlib.Path, data: list | dict, force: bool = False):
+def dump(
+    filename: str | pathlib.Path, data: list | dict, force: bool = False, width: int = float("inf")
+):
     """
     Dump data to YAML file.
 
     :param filename: The output filename.
     :param data: The data to dump.
     :param force: Do not prompt to overwrite file.
+    :param width: The maximum line-width of the file.
     """
 
     dirname = os.path.dirname(filename)
@@ -77,7 +80,7 @@ def dump(filename: str | pathlib.Path, data: list | dict, force: bool = False):
         os.makedirs(os.path.dirname(filename))
 
     with open(filename, "w") as file:
-        yaml.dump(data, file)
+        yaml.dump(data, file, width=width)
 
 
 def overwrite(filename: str | pathlib.Path, data: list | dict):
