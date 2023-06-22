@@ -104,10 +104,11 @@ def overwrite(filename: str | pathlib.Path, data: list | dict):
     pathlib.Path(filename).write_text(ret)
 
 
-def preview(data: list | dict):
+def preview(data: list | dict, width: int = float("inf")):
     r"""
     Print data formatted as YAML.
 
     :param data: The data to dump.
+    :param width: The maximum line-width of the file.
     """
-    print(yaml.dump(data, default_flow_style=False, default_style=""))
+    print(yaml.dump(data, default_flow_style=False, default_style="", width=width))
