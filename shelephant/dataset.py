@@ -1955,7 +1955,7 @@ def gitignore(args: list[str]):
         symlinks = [i["path"] for i in yaml.read("symlinks.yaml", [])]
 
     ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
-    path.write_text(ignore.strip())
+    path.write_text(ignore.lstrip())
 
 
 def git(args: list[str]):
