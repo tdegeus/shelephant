@@ -1338,13 +1338,17 @@ def cp(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
-    assert args.destination != "here", "Cannot copy to here."
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
     assert args.destination in storage, f"Unknown storage location {args.destination}"
     base = sdir.parent
     args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
+
+    if args.destination == "here":
+        with search.cwd(sdir):
+            symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
+        assert not any([i in symlinks for i in map(str, paths)]), "Cannot copy to a symlinked file"
 
     with search.cwd(sdir):
         opts = [f"storage/{args.source}.yaml", f"storage/{args.destination}.yaml"]
@@ -1358,7 +1362,15 @@ def cp(args: list[str]):
         if len(paths) > 0:
             _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
             changed = np.array(args.path)[j]
-        update(["--quiet", "--force", args.destination] + list(map(str, changed)))
+
+        changed = list(map(str, changed))
+
+        if args.destination == "here":
+            changed = np.array(changed)
+            changed = changed[~np.char.startswith(changed, ".shelephant")].tolist()
+
+        if len(changed) > 0:
+            update(["--quiet", "--force", args.destination] + changed)
 
 
 def _mv_parser():

@@ -258,6 +258,10 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     """
     Command-line tool, see ``--help``.
 
+    :param args: Command-line arguments (should be all strings).
+    :param paths:
+        Instead of reading ``files`` from the source YAML-file, specify a list of paths to copy.
+
     .. note::
 
         For input from dataset (``paths is not None``) the storage locations can have a prefix.
@@ -295,9 +299,6 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
                 destpath="/path/to/root/of/source1/bar",
                 files=["a.txt", "b.txt"],
             )
-
-    :param args: Command-line arguments (should be all strings).
-    :param paths: Paths to copy (if not given, all files in source are copied).
     """
 
     parser = _shelephant_cp_parser()
@@ -314,7 +315,6 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
         dest = dataset.Location(root=args.dest, ssh=args.ssh)
 
     source = dataset.Location.from_yaml(args.source)
-    files = source.files(info=False)
     equal = []
     strip = None
     common_prefix, suffix_source, suffix_dest, deepest = dataset._compute_suffix(source, dest)
@@ -324,15 +324,16 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     destpath = dest.hostpath
     paths = [] if paths is None else paths
 
-    if suffix_source != pathlib.Path(""):
-        files = [os.path.relpath(p, suffix_source) for p in files]
-
     if len(paths) > 0:
         if (common_prefix / deepest) != pathlib.Path(""):
             strip = common_prefix / deepest
             paths = [os.path.relpath(p, strip) for p in paths]
             assert not any(p.startswith("..") for p in paths), "Paths not in tree."
-        files = np.intersect1d(files, paths)
+        files = paths
+    else:
+        files = source.files(info=False)
+        if suffix_source != pathlib.Path(""):
+            files = [os.path.relpath(p, suffix_source) for p in files]
 
     if source.ssh is not None or dest.ssh is not None:
         assert "rsync" in args.mode, "'rsync' required for ssh."

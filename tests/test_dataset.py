@@ -1005,12 +1005,17 @@ class Test_dataset(unittest.TestCase):
                 shutil.copytree("../dataset/.shelephant", ".shelephant", symlinks=True)
                 shelephant.dataset.lock(["source2"])
                 shelephant.dataset.update(["--quiet"])
-                shutil.copy2(
-                    ".shelephant/storage/source2.yaml",
-                    "../dataset/.shelephant/storage/source2.yaml",
-                )
 
             with cwd(dataset):
+                shelephant.dataset.cp(
+                    [
+                        "-f",
+                        "-q",
+                        "source2",
+                        "here",
+                        os.path.join(".shelephant", "storage", "source2.yaml"),
+                    ]
+                )
                 shelephant.dataset.update(["--quiet"])
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
