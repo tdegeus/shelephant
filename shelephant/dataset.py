@@ -849,7 +849,11 @@ def init(args: list[str]):
     opts = {"root": "../.."}
     if args.database:
         opts["search"] = [
-            {"rglob": "*.yaml", "root": ".shelephant", "skip": ["(\\.shelephant)([\\/])(lock\\.txt)"]}
+            {
+                "rglob": "*.yaml",
+                "root": ".shelephant",
+                "skip": ["(\\.shelephant)([\\/])(lock\\.txt)"],
+            }
         ]
         opts["files"] = [
             ".shelephant/storage.yaml",
