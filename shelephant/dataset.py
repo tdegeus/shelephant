@@ -881,7 +881,7 @@ def lock(args: list[str]):
 
     parser = _lock_parser()
     args = parser.parse_args(args)
-    sdir = pathlib.Path(".shelephant")
+    sdir = _search_upwards_dir(".shelephant")
     assert args.name.lower() != "here", "cannot lock 'here'"
     if (sdir / "lock.txt").is_file():
         assert args.name in yaml.read(
@@ -1348,10 +1348,9 @@ def cp(args: list[str]):
     base = sdir.parent
     args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
-    changed = []
     check = [p.startswith(".shelephant") for p in paths]
-    force = any(check)
-    if force:
+    filter_paths = not any(check)
+    if not filter_paths:
         assert all(check), "Cannot mix .shelephant and non-.shelephant paths"
 
     with search.cwd(sdir):
@@ -1360,12 +1359,9 @@ def cp(args: list[str]):
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
         opts += ["--dry-run"] if args.dry_run else []
-        if not force:
-            changed = cli.shelephant_cp(opts, paths=paths)
-        else:
-            cli.shelephant_cp(opts, force_paths=paths)
+        changed = cli.shelephant_cp(opts, paths=paths, filter_paths=filter_paths)
 
-    if not args.dry_run and len(changed) > 0:
+    if not args.dry_run and len(changed) > 0 and filter_paths:
         if len(paths) > 0:
             _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
             changed = np.array(args.path)[j]

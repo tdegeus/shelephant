@@ -254,16 +254,17 @@ def _shelephant_cp_parser():
     return parser
 
 
-def shelephant_cp(args: list[str], paths: list[str] = None, force_paths: list[str] = None):
+def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool = True):
     """
     Command-line tool, see ``--help``.
 
     :param args: Command-line arguments (should be all strings).
     :param paths:
         Instead of reading ``files`` from the source YAML-file, specify a list of paths to copy.
-        Paths that are not in ``files`` of the YAML-file are ignored.
-    :param force_paths:
-        Add paths to copy even if they are not in ``files`` of the YAML-file.
+
+    :param filter_paths:
+        If ``True``, ``paths`` that are not in ``files`` of the YAML-file are ignored.
+        Otherwise all ``paths`` are copied.
 
     .. note::
 
@@ -327,23 +328,19 @@ def shelephant_cp(args: list[str], paths: list[str] = None, force_paths: list[st
     sourcepath = source.hostpath
     destpath = dest.hostpath
     paths = [] if paths is None else paths
-    force_paths = [] if force_paths is None else force_paths
 
     if suffix_source != pathlib.Path(""):
         files = [os.path.relpath(p, suffix_source) for p in files]
 
-    if len(paths) > 0 or len(force_paths) > 0:
+    if len(paths) > 0:
         if (common_prefix / deepest) != pathlib.Path(""):
             strip = common_prefix / deepest
             paths = [os.path.relpath(p, strip) for p in paths]
-            force_paths = [os.path.relpath(p, strip) for p in force_paths]
             assert not any(p.startswith("..") for p in paths), "Paths not in tree."
-            assert not any(p.startswith("..") for p in force_paths), "Paths not in tree."
-        if len(paths) > 0:
+        if filter_paths:
             files = np.intersect1d(files, paths)
         else:
-            files = []
-        files = np.union1d(files, force_paths)
+            files = paths
 
     if source.ssh is not None or dest.ssh is not None:
         assert "rsync" in args.mode, "'rsync' required for ssh."
