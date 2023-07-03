@@ -258,6 +258,11 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
     """
     Command-line tool, see ``--help``.
 
+    :param args: Command-line arguments (should be all strings).
+    :param paths:
+        Instead of reading ``files`` from the source YAML-file, specify a list of paths to copy.
+
+
     .. note::
 
         For input from dataset (``paths is not None``) the storage locations can have a prefix.
@@ -295,9 +300,6 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
                 destpath="/path/to/root/of/source1/bar",
                 files=["a.txt", "b.txt"],
             )
-
-    :param args: Command-line arguments (should be all strings).
-    :param paths: Paths to copy (if not given, all files in source are copied).
     """
 
     parser = _shelephant_cp_parser()

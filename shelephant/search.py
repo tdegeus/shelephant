@@ -58,36 +58,38 @@ def _check_skip(path: str, skip: list[str]) -> bool:
     return False
 
 
-def _search_rglob(rglob: str, skip: list[str] = []) -> list[pathlib.Path]:
+def _search_rglob(rglob: str, root: str = ".", skip: list[str] = []) -> list[pathlib.Path]:
     """
     Search for files using ``rglob``.
 
     :param rglob: The pattern to search for.
+    :param root: The root directory to search in.
     :param skip: A list of regex to skip.
     :return: A list of paths.
     """
     if isinstance(skip, str):
         skip = [skip]
     ret = []
-    for path in pathlib.Path(".").rglob(rglob):
+    for path in pathlib.Path(root).rglob(rglob):
         if _check_skip(str(path), skip):
             continue
         ret.append(path)
     return ret
 
 
-def _search_glob(glob: str, skip: list[str] = []) -> list[pathlib.Path]:
+def _search_glob(glob: str, root: str = ".", skip: list[str] = []) -> list[pathlib.Path]:
     """
     Search for files using ``glob``.
 
     :param glob: The pattern to search for.
+    :param root: The root directory to search in.
     :param skip: A list of regex to skip.
     :return: A list of paths.
     """
     if isinstance(skip, str):
         skip = [skip]
     ret = []
-    for path in pathlib.Path(".").glob(glob):
+    for path in pathlib.Path(root).glob(glob):
         if _check_skip(str(path), skip):
             continue
         ret.append(path)
@@ -138,7 +140,7 @@ def search(*settings: dict, root: pathlib.Path = pathlib.Path(".")) -> list[path
                 ret += _search_glob(**setting)
             else:
                 raise ValueError(f"Unknown search setting: {setting}")
-        return ret
+        return list(set(ret))
 
 
 if __name__ == "__main__":
