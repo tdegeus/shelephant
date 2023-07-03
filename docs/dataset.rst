@@ -523,27 +523,13 @@ You can also update the database of a storage location on the storage location i
 This is useful to speedup updating a large database on a remote host, or for example if you have limited connectivity to a remote host or if you want to close the connection while computing checksums.
 The simplest you can do is:
 
-1.  Add to ``.shelephant/storage/here.yaml``
-
-    .. code-block:: yaml
-
-        search:
-        - rglob: '*.yaml'
-          root: .shelephant
-
-2.  Run
-
-    .. code-block:: bash
-
-        shelephant update here
-
-3.  Copy the database entry of a storage location:
+1.  Copy the database entry of a storage location:
 
     .. code-block:: bash
 
         shelephant cp here remote .shelephant/storage/remote.yaml
 
-4.  **On the storage location:**
+2.  **On the storage location:**
 
     a.  Run
 
@@ -557,7 +543,7 @@ The simplest you can do is:
 
             shelephant update
 
-5.  Receive the updates (from the dataset root):
+3.  Receive the updates (from the dataset root):
 
     .. code-block:: bash
 

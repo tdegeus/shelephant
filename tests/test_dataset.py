@@ -994,7 +994,7 @@ class Test_dataset(unittest.TestCase):
 
             path = os.path.join(".shelephant", "storage", "source2.yaml")
             with cwd(dataset):
-                shelephant.dataset.init(["--database"])
+                shelephant.dataset.init([])
                 shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(
                     [
@@ -1002,10 +1002,8 @@ class Test_dataset(unittest.TestCase):
                         "../source2",
                         "--rglob",
                         "*.txt",
-                        "--rglob",
-                        "*.yaml",
                         "--skip",
-                        "(\\.shelephant)([\\/])(lock\\.txt)",
+                        r"[\.]?(shelephant)(.*)",
                         "-q",
                     ]
                 )

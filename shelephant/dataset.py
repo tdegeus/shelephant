@@ -824,7 +824,6 @@ def _init_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
-    parser.add_argument("--database", action="store_true", help="Add search for database in 'here'")
     parser.add_argument("--version", action="version", version=version)
     return parser
 
@@ -846,21 +845,7 @@ def init(args: list[str]):
     (sdir / "unavailable").symlink_to("dead-link")
     (sdir / "symlinks.yaml").write_text("")
     yaml.dump(sdir / "storage.yaml", ["here"])
-    opts = {"root": "../.."}
-    if args.database:
-        opts["search"] = [
-            {
-                "rglob": "*.yaml",
-                "root": ".shelephant",
-                "skip": ["(\\.shelephant)([\\/])(lock\\.txt)"],
-            }
-        ]
-        opts["files"] = [
-            ".shelephant/storage.yaml",
-            ".shelephant/here.yaml",
-            ".shelephant/symlinks.yaml",
-        ]
-    yaml.dump(sdir / "storage" / "here.yaml", opts)
+    yaml.dump(sdir / "storage" / "here.yaml", {"root": "../.."})
 
 
 def _lock_parser():
@@ -1018,7 +1003,6 @@ def add(args: list[str]):
             else:
                 pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
-        update(["here"])
         opts = [args.name]
         if args.shallow:
             opts.append("--shallow")
@@ -1261,10 +1245,6 @@ def update(args: list[str]):
                 for f in loc.files(info=False):
                     if prefix / pathlib.Path(f) not in files:
                         files[prefix / pathlib.Path(f)] = pathlib.Path("data") / name
-        # - remove database files
-        files.pop(pathlib.Path(".shelephant") / "symlinks.yaml", None)
-        for name in storage + ["here"]:
-            files.pop(pathlib.Path(".shelephant") / "storage" / f"{name}.yaml", None)
 
         add_links = []
         rm_links = []
@@ -1368,6 +1348,11 @@ def cp(args: list[str]):
     base = sdir.parent
     args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
+    changed = []
+    check = [p.startswith(".shelephant") for p in paths]
+    force = any(check)
+    if force:
+        assert all(check), "Cannot mix .shelephant and non-.shelephant paths"
 
     with search.cwd(sdir):
         opts = [f"storage/{args.source}.yaml", f"storage/{args.destination}.yaml"]
@@ -1375,7 +1360,10 @@ def cp(args: list[str]):
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
         opts += ["--dry-run"] if args.dry_run else []
-        changed = cli.shelephant_cp(opts, paths)
+        if not force:
+            changed = cli.shelephant_cp(opts, paths=paths)
+        else:
+            cli.shelephant_cp(opts, force_paths=paths)
 
     if not args.dry_run and len(changed) > 0:
         if len(paths) > 0:
@@ -1635,7 +1623,6 @@ def _status_parser():
     parser.add_argument("--print0", action="store_true", help="Print list of files (no table).")
     parser.add_argument("-n", "--nout", type=int, help="Maximal number of output arguments.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
-    parser.add_argument("--database", action="store_true", help="Show files in '.shelephant'.")
     parser.add_argument(
         "--in-use", type=str, help="Select storage location in use (use 'none' for unavailable)."
     )
@@ -1686,8 +1673,6 @@ def status(args: list[str]):
         storage = yaml.read(sdir / "storage.yaml")
         storage.remove("here")
         extra = Location.from_yaml("storage/here.yaml").files(info=False)
-        if not args.database:
-            extra = [i for i in extra if not i.startswith(".shelephant")]
 
         sha = "x" * np.ones((len(symlinks), len(storage)), dtype=object)
         mtime = np.inf * np.ones(sha.shape, dtype=np.float64)
