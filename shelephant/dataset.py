@@ -459,7 +459,6 @@ class Location:
 
         :param paths: List of paths to remove.
         """
-
         _, i, _ = np.intersect1d(
             self._files, np.unique(list(map(str, paths))), return_indices=True, assume_unique=True
         )
@@ -471,7 +470,6 @@ class Location:
         """
         See :meth:`read`.
         """
-
         if self.dump is None and self.search is None:
             return self
 
@@ -826,6 +824,7 @@ def _init_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("--database", action="store_true", help="Add search for database in 'here'")
     parser.add_argument("--version", action="version", version=version)
     return parser
 
@@ -847,7 +846,17 @@ def init(args: list[str]):
     (sdir / "unavailable").symlink_to("dead-link")
     (sdir / "symlinks.yaml").write_text("")
     yaml.dump(sdir / "storage.yaml", ["here"])
-    yaml.dump(sdir / "storage" / "here.yaml", {"root": "../.."})
+    opts = {"root": "../.."}
+    if args.database:
+        opts["search"] = [
+            {"rglob": "*.yaml", "root": ".shelephant", "skip": ["(\\.shelephant)([\\/])(lock\\.txt)"]}
+        ]
+        opts["files"] = [
+            ".shelephant/storage.yaml",
+            ".shelephant/here.yaml",
+            ".shelephant/symlinks.yaml",
+        ]
+    yaml.dump(sdir / "storage" / "here.yaml", opts)
 
 
 def _lock_parser():
@@ -884,7 +893,11 @@ def lock(args: list[str]):
     parser = _lock_parser()
     args = parser.parse_args(args)
     sdir = pathlib.Path(".shelephant")
-    assert args.name in yaml.read(sdir / "storage.yaml"), f"storage location '{args.name}' unknown"
+    assert args.name.lower() != "here", "cannot lock 'here'"
+    if (sdir / "lock.txt").is_file():
+        assert args.name in yaml.read(
+            sdir / "storage.yaml"
+        ), f"storage location '{args.name}' unknown"
     (sdir / "lock.txt").write_text(args.name)
 
 
@@ -1001,6 +1014,7 @@ def add(args: list[str]):
             else:
                 pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
 
+        update(["here"])
         opts = [args.name]
         if args.shallow:
             opts.append("--shallow")
@@ -1128,27 +1142,29 @@ def update(args: list[str]):
     else:
         assert lock is None, "cannot update all locations from storage location"
         assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
-        assert args.name != "here" or paths is None, "cannot specify paths for 'here'"
         args.name = [args.name]
 
     if lock is not None:
+        assert lock != "here"
         args.name = [lock]
 
     with search.cwd(sdir):
-        symlinks = yaml.read("symlinks.yaml", [])
-        symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
+        # read existing symlinks
 
-        if args.clean:
-            with search.cwd(base):
-                for path in list(symlinks.keys()):
-                    if not path.is_symlink():
-                        symlinks.pop(path)
+        if lock is None:
+            symlinks = yaml.read("symlinks.yaml", [])
+            symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
+            if args.clean:
+                with search.cwd(base):
+                    for path in list(symlinks.keys()):
+                        if not path.is_symlink():
+                            symlinks.pop(path)
 
         # update files and info
 
         for name in args.name:
             # "here": search for files that are not managed by shelephant
-            if name == "here" and paths is None:
+            if name == "here":
                 f = "storage/here.yaml"
                 Location.from_yaml(f).read().remove(list(symlinks.keys())).to_yaml(f, force=True)
                 continue
@@ -1241,6 +1257,10 @@ def update(args: list[str]):
                 for f in loc.files(info=False):
                     if prefix / pathlib.Path(f) not in files:
                         files[prefix / pathlib.Path(f)] = pathlib.Path("data") / name
+        # - remove database files
+        files.pop(pathlib.Path(".shelephant") / "symlinks.yaml", None)
+        for name in storage + ["here"]:
+            files.pop(pathlib.Path(".shelephant") / "storage" / f"{name}.yaml", None)
 
         add_links = []
         rm_links = []
@@ -1338,7 +1358,6 @@ def cp(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
-    assert args.destination != "here", "Cannot copy to here."
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
     assert args.destination in storage, f"Unknown storage location {args.destination}"
@@ -1612,6 +1631,7 @@ def _status_parser():
     parser.add_argument("--print0", action="store_true", help="Print list of files (no table).")
     parser.add_argument("-n", "--nout", type=int, help="Maximal number of output arguments.")
     parser.add_argument("--table", type=str, default="SINGLE_BORDER", help="Select print style.")
+    parser.add_argument("--database", action="store_true", help="Show files in '.shelephant'.")
     parser.add_argument(
         "--in-use", type=str, help="Select storage location in use (use 'none' for unavailable)."
     )
@@ -1662,6 +1682,8 @@ def status(args: list[str]):
         storage = yaml.read(sdir / "storage.yaml")
         storage.remove("here")
         extra = Location.from_yaml("storage/here.yaml").files(info=False)
+        if not args.database:
+            extra = [i for i in extra if not i.startswith(".shelephant")]
 
         sha = "x" * np.ones((len(symlinks), len(storage)), dtype=object)
         mtime = np.inf * np.ones(sha.shape, dtype=np.float64)
@@ -1710,7 +1732,7 @@ def status(args: list[str]):
 
     data = np.hstack((np.array([symlinks]).T, inuse.reshape(-1, 1), sha))
 
-    e = "x" * np.ones((len(extra), data.shape[1]), dtype=object)
+    e = "?" * np.ones((len(extra), data.shape[1]), dtype=object)
     e[:, 0] = extra
     e[:, 1] = "here"
     data = np.vstack((data, e))

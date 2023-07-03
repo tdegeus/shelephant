@@ -3,7 +3,6 @@ import io
 import os
 import pathlib
 import re
-import shutil
 import unittest
 
 import numpy as np
@@ -658,8 +657,8 @@ class Test_dataset(unittest.TestCase):
                 "b.txt source1 == x",
                 "e.txt source2 x ==",
                 "f.txt source2 x ==",
-                "c.txt here x x",
-                "d.txt here x x",
+                "c.txt here ? ?",
+                "d.txt here ? ?",
             ]
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
@@ -993,24 +992,33 @@ class Test_dataset(unittest.TestCase):
             with cwd(source2):
                 s2 = create_dummy_files(["a.txt", "b.txt"])
 
+            path = os.path.join(".shelephant", "storage", "source2.yaml")
             with cwd(dataset):
-                shelephant.dataset.init([])
+                shelephant.dataset.init(["--database"])
                 shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
                 shelephant.dataset.add(
-                    ["source2", "../source2", "--rglob", "*.txt", "--skip", r"\.shelephant.*", "-q"]
+                    [
+                        "source2",
+                        "../source2",
+                        "--rglob",
+                        "*.txt",
+                        "--rglob",
+                        "*.yaml",
+                        "--skip",
+                        "(\\.shelephant)([\\/])(lock\\.txt)",
+                        "-q",
+                    ]
                 )
+                shelephant.dataset.cp(["-fq", "here", "source2", path])
 
             with cwd(source2):
                 s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
-                shutil.copytree("../dataset/.shelephant", ".shelephant", symlinks=True)
                 shelephant.dataset.lock(["source2"])
                 shelephant.dataset.update(["--quiet"])
-                shutil.copy2(
-                    ".shelephant/storage/source2.yaml",
-                    "../dataset/.shelephant/storage/source2.yaml",
-                )
 
             with cwd(dataset):
+                path = os.path.join(".shelephant", "storage", "source2.yaml")
+                shelephant.dataset.cp(["-fq", "source2", "here", path])
                 shelephant.dataset.update(["--quiet"])
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
