@@ -107,6 +107,18 @@ Details
 .. automodule:: shelephant
     :members:
 
+cli
+:::
+
+.. automodule:: shelephant.cli
+    :members:
+
+compute_hash
+::::::::::::
+
+.. automodule:: shelephant.compute_hash
+    :members:
+
 convert
 :::::::
 
@@ -117,12 +129,6 @@ dataset
 :::::::
 
 .. autoclass:: shelephant.dataset.Location
-    :members:
-
-info
-::::
-
-.. automodule:: shelephant.info
     :members:
 
 local

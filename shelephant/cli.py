@@ -242,7 +242,7 @@ def _shelephant_cp_parser():
     parser.add_argument(
         "--mode",
         type=str,
-        help="Use 'sha256', 'rsync', and/or 'basic'.",
+        help="Use 'sha256', 'rsync', and/or 'basic' to compare files.",
         default="sha256,rsync" if shutil.which("rsync") is not None else "sha256,basic",
     )
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
@@ -254,9 +254,19 @@ def _shelephant_cp_parser():
     return parser
 
 
-def shelephant_cp(args: list[str], paths: list[str] = None):
+def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool = True):
     """
     Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    :param paths:
+        Instead of reading ``files`` from the source YAML-file, specify a list of paths to copy.
+
+    :param filter_paths:
+        If ``True``, ``paths`` that are not in ``files`` of the YAML-file are ignored.
+        If ``False`` all ``paths`` are copied: requires ``paths`` to exist on the source.
+
+    :return: List of changed files.
 
     .. note::
 
@@ -295,9 +305,6 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
                 destpath="/path/to/root/of/source1/bar",
                 files=["a.txt", "b.txt"],
             )
-
-    :param args: Command-line arguments (should be all strings).
-    :param paths: Paths to copy (if not given, all files in source are copied).
     """
 
     parser = _shelephant_cp_parser()
@@ -332,7 +339,10 @@ def shelephant_cp(args: list[str], paths: list[str] = None):
             strip = common_prefix / deepest
             paths = [os.path.relpath(p, strip) for p in paths]
             assert not any(p.startswith("..") for p in paths), "Paths not in tree."
-        files = np.intersect1d(files, paths)
+        if filter_paths:
+            files = np.intersect1d(files, paths)
+        else:
+            files = paths
 
     if source.ssh is not None or dest.ssh is not None:
         assert "rsync" in args.mode, "'rsync' required for ssh."

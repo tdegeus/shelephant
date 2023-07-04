@@ -94,7 +94,7 @@ This will:
                 - rglob: '*.h5'
                   skip: ['\..*, 'bak.*']
                 - rglob: '*.yaml'
-                  skip: ['\..*, 'bak.*', 'shelephant.*']
+                  skip: ['\..*, 'bak.*', '[\.]?(shelephant)(.*)']
 
     .. note::
 
@@ -515,6 +515,45 @@ For the latter do
 
 This will create the symbolic links to the relevant locations in ``/local/mount``, but it will compute the checksums directly on the remote host.
 The additional benefit is that if the mount is unavailable, the behaviour is the same as for any SSH host.
+
+Updates on remote
+-----------------
+
+You can also update the database of a storage location on the storage location itself.
+This is useful to speedup updating a large database on a remote host, or for example if you have limited connectivity to a remote host or if you want to close the connection while computing checksums.
+The simplest you can do is:
+
+1.  Copy the database entry of a storage location:
+
+    .. code-block:: bash
+
+        shelephant cp here remote -ex .shelephant/storage/remote.yaml
+
+    .. note::
+
+        -   ``-e`` (``--exists``) is needed if ``.shelephant/storage/remote.yaml`` is not part of the dataset (recommended).
+        -   ``-x`` (``--no-update``) if then needed to prevent ``.shelephant/storage/remote.yaml`` being added to the dataset (recommended).
+
+2.  **On the storage location:**
+
+    a.  Run
+
+        .. code-block:: bash
+
+            shelephant lock remote
+
+    b.  Run (whenever you need):
+
+        .. code-block:: bash
+
+            shelephant update
+
+3.  Receive the updates (from the dataset root):
+
+    .. code-block:: bash
+
+        shelephant cp remote here -ex .shelephant/storage/remote.yaml
+        shelephant update
 
 Updates with git
 ----------------
