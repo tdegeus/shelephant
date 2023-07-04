@@ -882,9 +882,9 @@ def lock(args: list[str]):
     parser = _lock_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not a shelephant dataset"
     assert args.name.lower() != "here", "cannot lock 'here'"
-    if (sdir / "lock.txt").is_file():
-        assert args.name in yaml.read(sdir / "storage.yaml"), f"storage location unknown"
+    assert (sdir / "storage" / f"{args.name}.yaml").is_file(), "storage location not found"
     (sdir / "lock.txt").write_text(args.name)
 
 
