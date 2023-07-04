@@ -884,9 +884,7 @@ def lock(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert args.name.lower() != "here", "cannot lock 'here'"
     if (sdir / "lock.txt").is_file():
-        assert args.name in yaml.read(
-            sdir / "storage.yaml"
-        ), f"storage location '{args.name}' unknown"
+        assert args.name in yaml.read(sdir / "storage.yaml"), f"storage location unknown"
     (sdir / "lock.txt").write_text(args.name)
 
 
@@ -1087,7 +1085,7 @@ def _update_parser():
 
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument("--clean", action="store_true", help="Clean database entry with symlinks.")
-    parser.add_argument("--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument("-s", "--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
     parser.add_argument(
         "--chunk",
@@ -1298,7 +1296,18 @@ def _cp_parser():
 
     desc = textwrap.dedent(
         """
-        Copy files between storage locations.
+        Copy files between storage locations and update the database.
+        To ensure database integrity, the database is updated with the checksums of the copied files
+        on the destination. Use:
+
+            -   ``-s``, ``--shallow`` to add only the paths to the database.
+            -   ``-x``, ``--no-update`` to skip the database update.
+
+        .. note::
+
+            The paths that you specify are reduced to only the paths known to exist on the source.
+            If you know that the paths exist, but they are not part of the database
+            (or it is outdated), you can use ``-e``, ``--exists`` to avoid the filter.
 
         .. tip::
 
@@ -1325,6 +1334,15 @@ def _cp_parser():
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument("-x", "--no-update", action="store_true", help="No database update.")
+    parser.add_argument("-e", "--exists", action="store_true", help="All paths exists on source.")
+    parser.add_argument("-s", "--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        help="Use 'sha256', 'rsync', and/or 'basic' to compare files.",
+        default="sha256,rsync" if shutil.which("rsync") is not None else "sha256,basic",
+    )
     parser.add_argument("source", type=str, help="name of the source.")
     parser.add_argument("destination", type=str, help="name of the destination.")
     parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to copy.")
@@ -1348,24 +1366,23 @@ def cp(args: list[str]):
     base = sdir.parent
     args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
-    check = [p.startswith(".shelephant") for p in paths]
-    filter_paths = not any(check)
-    if not filter_paths:
-        assert all(check), "Cannot mix .shelephant and non-.shelephant paths"
 
     with search.cwd(sdir):
         opts = [f"storage/{args.source}.yaml", f"storage/{args.destination}.yaml"]
         opts += ["--colors", args.colors]
+        opts += ["--mode", args.mode]
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
         opts += ["--dry-run"] if args.dry_run else []
-        changed = cli.shelephant_cp(opts, paths=paths, filter_paths=filter_paths)
+        changed = cli.shelephant_cp(opts, paths=paths, filter_paths=not args.exists)
 
-    if not args.dry_run and len(changed) > 0 and filter_paths:
+    if not args.dry_run and len(changed) > 0 and not args.no_update:
         if len(paths) > 0:
             _, j, _ = np.intersect1d(paths, changed, return_indices=True, assume_unique=True)
             changed = np.array(args.path)[j]
-        update(["--quiet", "--force", args.destination] + list(map(str, changed)))
+        opts = ["--quiet", "--force", args.destination]
+        opts += ["--shallow"] if args.shallow else []
+        update(opts + list(map(str, changed)))
 
 
 def _mv_parser():

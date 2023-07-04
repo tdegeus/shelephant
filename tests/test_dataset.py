@@ -1007,7 +1007,7 @@ class Test_dataset(unittest.TestCase):
                         "-q",
                     ]
                 )
-                shelephant.dataset.cp(["-fq", "here", "source2", path])
+                shelephant.dataset.cp(["-ex", "-fq", "here", "source2", path])
 
             with cwd(source2):
                 s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
@@ -1016,7 +1016,7 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(dataset):
                 path = os.path.join(".shelephant", "storage", "source2.yaml")
-                shelephant.dataset.cp(["-fq", "source2", "here", path])
+                shelephant.dataset.cp(["-ex", "-fq", "source2", "here", path])
                 shelephant.dataset.update(["--quiet"])
 
             with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:

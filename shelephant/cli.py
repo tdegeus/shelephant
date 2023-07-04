@@ -242,7 +242,7 @@ def _shelephant_cp_parser():
     parser.add_argument(
         "--mode",
         type=str,
-        help="Use 'sha256', 'rsync', and/or 'basic'.",
+        help="Use 'sha256', 'rsync', and/or 'basic' to compare files.",
         default="sha256,rsync" if shutil.which("rsync") is not None else "sha256,basic",
     )
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
@@ -264,7 +264,9 @@ def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool =
 
     :param filter_paths:
         If ``True``, ``paths`` that are not in ``files`` of the YAML-file are ignored.
-        Otherwise all ``paths`` are copied.
+        If ``False`` all ``paths`` are copied: requires ``paths`` to exist on the source.
+
+    :return: List of changed files.
 
     .. note::
 

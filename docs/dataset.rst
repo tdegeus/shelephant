@@ -94,7 +94,7 @@ This will:
                 - rglob: '*.h5'
                   skip: ['\..*, 'bak.*']
                 - rglob: '*.yaml'
-                  skip: ['\..*, 'bak.*', 'shelephant.*']
+                  skip: ['\..*, 'bak.*', '[\.]?(shelephant)(.*)']
 
     .. note::
 
@@ -527,7 +527,12 @@ The simplest you can do is:
 
     .. code-block:: bash
 
-        shelephant cp here remote .shelephant/storage/remote.yaml
+        shelephant cp here remote -ex .shelephant/storage/remote.yaml
+
+    .. note::
+
+        -   ``-e`` (``--exists``) is needed if ``.shelephant/storage/remote.yaml`` is not part of the dataset (recommended).
+        -   ``-x`` (``--no-update``) if then needed to prevent ``.shelephant/storage/remote.yaml`` being added to the dataset (recommended).
 
 2.  **On the storage location:**
 
@@ -547,7 +552,7 @@ The simplest you can do is:
 
     .. code-block:: bash
 
-        shelephant cp remote here .shelephant/storage/remote.yaml
+        shelephant cp remote here -ex .shelephant/storage/remote.yaml
         shelephant update
 
 Updates with git
