@@ -1128,6 +1128,7 @@ def update(args: list[str]):
     else:
         assert lock is None, "cannot update all locations from storage location"
         assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
+        assert args.name != "here" or paths is None, "cannot specify paths for 'here'"
         args.name = [args.name]
 
     if lock is not None:
