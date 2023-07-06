@@ -33,8 +33,8 @@ def _force_absolute_path(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path
     """
     Force a path to be absolute.
 
-    :param root: The root directory.
-    :param path: The path that may be absolute or relative.
+    :param root: A base directory.
+    :param path: The path that may be absolute or relative to ``root``.
     :return: The absolute ``path``.
     """
     if path.is_absolute():
@@ -48,7 +48,7 @@ class Location:
 
     Attributes:
 
-    *   :py:attr:`Location.root`: The root directory.
+    *   :py:attr:`Location.root`: The base directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
     *   :py:attr:`Location.prefix` (optional): Prefix to add to all paths.
     *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
@@ -1829,6 +1829,7 @@ def _info_parser():
     parser.add_argument(
         "--basedir", action="store_true", help="Print basedir (that contain '.shelephant')."
     )
+    parser.add_argument("-l", "--location", type=str, help="Name of the storage locations.")
     return parser
 
 
@@ -1841,6 +1842,26 @@ def info(args: list[str]):
 
     parser = _info_parser()
     args = parser.parse_args(args)
+
+    if args.location:
+        sdir = _search_upwards_dir(".shelephant")
+        assert sdir is not None, "Not a shelephant dataset"
+        with search.cwd(sdir):
+            loc = Location.from_yaml(f"storage/{args.location}.yaml")
+
+        out = prettytable.PrettyTable()
+        out.set_style(prettytable.SINGLE_BORDER)
+        out.field_names = ["key", "value"]
+        out.align["path"] = "l"
+        out.align["value"] = "l"
+        out.add_row(["root", loc.root])
+        if loc.prefix is not None:
+            out.add_row(["prefix", loc.prefix])
+        if loc.ssh is not None:
+            out.add_row(["ssh", loc.ssh])
+
+        output.autoprint(out.get_string())
+        return
 
     if args.cachedir:
         print(user_cache_dir("shelephant", "tdegeus"))
