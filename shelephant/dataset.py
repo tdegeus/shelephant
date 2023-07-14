@@ -33,8 +33,8 @@ def _force_absolute_path(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path
     """
     Force a path to be absolute.
 
-    :param root: The root directory.
-    :param path: The path that may be absolute or relative.
+    :param root: A base directory.
+    :param path: The path that may be absolute or relative to ``root``.
     :return: The absolute ``path``.
     """
     if path.is_absolute():
@@ -48,7 +48,7 @@ class Location:
 
     Attributes:
 
-    *   :py:attr:`Location.root`: The root directory.
+    *   :py:attr:`Location.root`: The base directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
     *   :py:attr:`Location.prefix` (optional): Prefix to add to all paths.
     *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
@@ -882,7 +882,7 @@ def lock(args: list[str]):
     parser = _lock_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert args.name.lower() != "here", "cannot lock 'here'"
     assert (sdir / "storage" / f"{args.name}.yaml").is_file(), "storage location not found"
     (sdir / "lock.txt").write_text(args.name)
@@ -954,7 +954,7 @@ def add(args: list[str]):
     parser = _add_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.name != "all", "all is a reserved name"
     assert args.name != "any", "any is a reserved name"
@@ -1049,7 +1049,7 @@ def remove(args: list[str]):
     parser = _remove_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
 
     storage = yaml.read(sdir / "storage.yaml")
@@ -1112,7 +1112,7 @@ def update(args: list[str]):
     parser = _update_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
     paths = np.unique(paths) if len(paths) > 0 else None
@@ -1359,7 +1359,7 @@ def cp(args: list[str]):
     parser = _cp_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1432,7 +1432,7 @@ def mv(args: list[str]):
     parser = _mv_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
     storage = yaml.read(sdir / "storage.yaml")
@@ -1501,7 +1501,7 @@ def rm(args: list[str]):
     parser = _rm_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1559,7 +1559,7 @@ def pwd(args: list[str]):
     parser = _pwd_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "not available from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1672,7 +1672,7 @@ def status(args: list[str]):
     parser = _status_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     base = sdir.parent
     cwd = os.path.relpath(pathlib.Path.cwd(), base)
     paths = [os.path.relpath(path, base) for path in args.path]
@@ -1825,10 +1825,11 @@ def _info_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
-    parser.add_argument("--cachedir", action="store_true", help="Print cachedir.")
+    parser.add_argument("--cachedir", action="store_true", help="Print cache-dir and quit.")
     parser.add_argument(
-        "--basedir", action="store_true", help="Print basedir (that contain '.shelephant')."
+        "--basedir", action="store_true", help="Print basedir (containing '.shelephant') and quit."
     )
+    parser.add_argument("location", type=str, nargs="*", help="Name of the storage location(s).")
     return parser
 
 
@@ -1843,12 +1844,39 @@ def info(args: list[str]):
     args = parser.parse_args(args)
 
     if args.cachedir:
-        print(user_cache_dir("shelephant", "tdegeus"))
+        print(user_cache_dir("shelephant", os.getlogin()))
         return
 
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not in a shelephant dataset"
+
     if args.basedir:
-        print(_search_upwards_dir(".shelephant").parent)
+        print(sdir.parent)
         return
+
+    locations = yaml.read(sdir / "storage.yaml")
+    if len(args.location) == 0:
+        args.location = locations
+    else:
+        assert all([i in locations for i in args.location]), "Unknown storage location(s)"
+
+    ret = ""
+    for i, location in enumerate(args.location):
+        loc = Location.from_yaml(sdir / "storage" / f"{location}.yaml")
+        out = prettytable.PrettyTable()
+        out.set_style(prettytable.SINGLE_BORDER)
+        out.field_names = ["name", location]
+        out.align = "l"
+        out.add_row(["root", loc.root])
+        if loc.prefix is not None:
+            out.add_row(["prefix", loc.prefix])
+        if loc.ssh is not None:
+            out.add_row(["ssh", loc.ssh])
+        ret += out.get_string()
+        if i < len(args.location) - 1:
+            ret += "\n"
+
+    output.autoprint(ret)
 
 
 def _find_matching(
@@ -1957,7 +1985,7 @@ def gitignore(args: list[str]):
     parser = _gitignore_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     path = sdir / ".." / ".gitignore"
 
     if path.exists():
