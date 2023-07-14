@@ -1825,11 +1825,11 @@ def _info_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
-    parser.add_argument("--cachedir", action="store_true", help="Print cachedir.")
+    parser.add_argument("--cachedir", action="store_true", help="Print cache-dir and quit.")
     parser.add_argument(
-        "--basedir", action="store_true", help="Print basedir (that contain '.shelephant')."
+        "--basedir", action="store_true", help="Print basedir (containing '.shelephant') and quit."
     )
-    parser.add_argument("-l", "--location", type=str, help="Name of the storage locations.")
+    parser.add_argument("location", type=str, nargs="*", help="Name of the storage location(s).")
     return parser
 
 
@@ -1843,33 +1843,40 @@ def info(args: list[str]):
     parser = _info_parser()
     args = parser.parse_args(args)
 
-    if args.location:
-        sdir = _search_upwards_dir(".shelephant")
-        assert sdir is not None, "Not a shelephant dataset"
-        with search.cwd(sdir):
-            loc = Location.from_yaml(f"storage/{args.location}.yaml")
+    if args.cachedir:
+        print(user_cache_dir("shelephant", os.getlogin()))
+        return
 
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not in a shelephant dataset"
+
+    if args.basedir:
+        print(sdir.parent)
+        return
+
+    locations = yaml.read(sdir / "storage.yaml")
+    if len(args.location) == 0:
+        args.location = locations
+    else:
+        assert all([i in locations for i in args.location]), "Unknown storage location(s)"
+
+    ret = ""
+    for i, location in enumerate(args.location):
+        loc = Location.from_yaml(sdir / "storage" / f"{location}.yaml")
         out = prettytable.PrettyTable()
         out.set_style(prettytable.SINGLE_BORDER)
-        out.field_names = ["key", "value"]
-        out.align["path"] = "l"
-        out.align["value"] = "l"
+        out.field_names = ["name", location]
+        out.align = "l"
         out.add_row(["root", loc.root])
         if loc.prefix is not None:
             out.add_row(["prefix", loc.prefix])
         if loc.ssh is not None:
             out.add_row(["ssh", loc.ssh])
+        ret += out.get_string()
+        if i < len(args.location) - 1:
+            ret += "\n"
 
-        output.autoprint(out.get_string())
-        return
-
-    if args.cachedir:
-        print(user_cache_dir("shelephant", "tdegeus"))
-        return
-
-    if args.basedir:
-        print(_search_upwards_dir(".shelephant").parent)
-        return
+    output.autoprint(ret)
 
 
 def _find_matching(
