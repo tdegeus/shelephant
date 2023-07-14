@@ -882,7 +882,7 @@ def lock(args: list[str]):
     parser = _lock_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert args.name.lower() != "here", "cannot lock 'here'"
     assert (sdir / "storage" / f"{args.name}.yaml").is_file(), "storage location not found"
     (sdir / "lock.txt").write_text(args.name)
@@ -954,7 +954,7 @@ def add(args: list[str]):
     parser = _add_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.name != "all", "all is a reserved name"
     assert args.name != "any", "any is a reserved name"
@@ -1049,7 +1049,7 @@ def remove(args: list[str]):
     parser = _remove_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
 
     storage = yaml.read(sdir / "storage.yaml")
@@ -1112,7 +1112,7 @@ def update(args: list[str]):
     parser = _update_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
     paths = np.unique(paths) if len(paths) > 0 else None
@@ -1359,7 +1359,7 @@ def cp(args: list[str]):
     parser = _cp_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1432,7 +1432,7 @@ def mv(args: list[str]):
     parser = _mv_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     assert args.destination != "here", "Cannot copy to here."
     storage = yaml.read(sdir / "storage.yaml")
@@ -1501,7 +1501,7 @@ def rm(args: list[str]):
     parser = _rm_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "cannot remove location from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1559,7 +1559,7 @@ def pwd(args: list[str]):
     parser = _pwd_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     assert not (sdir / "lock.txt").exists(), "not available from storage location"
     storage = yaml.read(sdir / "storage.yaml")
     assert args.source in storage, f"Unknown storage location {args.source}"
@@ -1672,7 +1672,7 @@ def status(args: list[str]):
     parser = _status_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     base = sdir.parent
     cwd = os.path.relpath(pathlib.Path.cwd(), base)
     paths = [os.path.relpath(path, base) for path in args.path]
@@ -1985,7 +1985,7 @@ def gitignore(args: list[str]):
     parser = _gitignore_parser()
     args = parser.parse_args(args)
     sdir = _search_upwards_dir(".shelephant")
-    assert sdir is not None, "Not a shelephant dataset"
+    assert sdir is not None, "Not in a shelephant dataset"
     path = sdir / ".." / ".gitignore"
 
     if path.exists():
