@@ -888,6 +888,57 @@ def lock(args: list[str]):
     (sdir / "lock.txt").write_text(args.name)
 
 
+def _create_symlink_data(
+    sdir: pathlib.Path,
+    name: str,
+    root: str,
+    ssh: str = None,
+    mount: str = None,
+    remove: bool = False,
+):
+    """
+    Create or refresh symlink in ``.shelephant/data/<name>``.
+
+    :param sdir: Path to ``.shelephant`` directory.
+    :param name: Name of the storage location.
+    :param root: Root of the storage location.
+    :param ssh: SSH host of the storage location.
+    :param mount: Mount of the storage location.
+    :param remove: Remove existing symlink.
+    """
+    with search.cwd(sdir):
+        if remove:
+            if (sdir / "data" / name).is_symlink():
+                (sdir / "data" / name).unlink()
+
+        if root.is_absolute() and not ssh:
+            pathlib.Path(f"data/{name}").symlink_to(root)
+        elif ssh is not None and mount is not None:
+            pathlib.Path(f"data/{name}").symlink_to(mount)
+        elif not ssh:
+            pathlib.Path(f"data/{name}").symlink_to(root)
+        else:
+            pathlib.Path(f"data/{name}").symlink_to(pathlib.Path("..") / "unavailable")
+
+        storage = yaml.read("storage.yaml")
+        if name not in storage:
+            storage.append(name)
+            yaml.overwrite("storage.yaml", storage)
+
+
+def _auto_symlink_data(sdir: pathlib.Path, name: str, remove: bool = False):
+    """
+    Call :py:func:`_create_symlink_data` with data read from ``.shelephant/storage/{name}.yaml``.
+
+    :param sdir: Path to ``.shelephant`` directory.
+    :param name: Name of the storage location.
+    :param remove: Remove existing symlink.
+    """
+    with search.cwd(sdir):
+        loc = Location.from_yaml(pathlib.Path("storage") / f"{name}.yaml")
+        _create_symlink_data(sdir, name, loc.root, loc.ssh, loc._mount, remove)
+
+
 def _add_parser():
     """
     Return parser for :py:func:`shelephant add`.
@@ -989,24 +1040,15 @@ def add(args: list[str]):
 
         loc.overwrite_yaml(f"storage/{args.name}.yaml")
 
-        if args.name != "here":
-            yaml.overwrite("storage.yaml", storage + [args.name])
+    if args.name != "here":
+        _create_symlink_data(sdir, args.name, args.root, args.ssh, args.mount)
 
-            if args.root.is_absolute() and not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
-            elif args.ssh is not None and args.mount is not None:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.mount)
-            elif not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
-            else:
-                pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
-
-        opts = [args.name]
-        if args.shallow:
-            opts.append("--shallow")
-        if args.quiet:
-            opts.append("--quiet")
-        update(opts)
+    opts = [args.name]
+    if args.shallow:
+        opts.append("--shallow")
+    if args.quiet:
+        opts.append("--quiet")
+    update(opts)
 
 
 def _remove_parser():
@@ -1084,6 +1126,11 @@ def _update_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument(
+        "--base-link",
+        action="store_true",
+        help="Update link .shelephant/data/{name} based on .shelephant/storage/{name}.yaml.",
+    )
     parser.add_argument("--clean", action="store_true", help="Clean database entry with symlinks.")
     parser.add_argument("-s", "--shallow", action="store_true", help="Do not compute checksums.")
     parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
@@ -1127,8 +1174,10 @@ def update(args: list[str]):
         args.name = yaml.read(sdir / "storage.yaml")
     else:
         assert lock is None, "cannot update all locations from storage location"
-        assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
         assert args.name != "here" or paths is None, "cannot specify paths for 'here'"
+        if args.base_link:
+            _auto_symlink_data(sdir, args.name, remove=True)
+        assert args.name in yaml.read(sdir / "storage.yaml"), f"'{args.name}' is not a location"
         args.name = [args.name]
 
     if lock is not None:

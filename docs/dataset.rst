@@ -179,6 +179,17 @@ This will:
             - path: mydir/b.h5
               storage: laptop
 
+.. note::
+
+    If you manually add ``.shelephant/storage/{name}.yaml`` be sure to call:
+
+    .. code-block:: bash
+
+        shelephant update --base-link {name}
+
+    to update the internal link ``.shelephant/data/{name}`` to the data.
+    This command will also add ``{name}`` to the end of ``.shelephant/storage.yaml`` if needed (manually update the order if needed).
+
 Adding secondary storage
 ------------------------
 
