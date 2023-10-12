@@ -888,6 +888,29 @@ def lock(args: list[str]):
     (sdir / "lock.txt").write_text(args.name)
 
 
+def _create_symlink_data(
+    sdir: pathlib.Path, name: str, root: str, ssh: str = None, mount: str = None
+):
+    """
+    Create or refresh symlink in ``.shelephant/data/<name>``.
+
+    :param sdir: Path to ``.shelephant`` directory.
+    :param name: Name of the storage location.
+    :param root: Root of the storage location.
+    :param ssh: SSH host of the storage location.
+    :param mount: Mount of the storage location.
+    """
+    with search.cwd(sdir):
+        if root.is_absolute() and not ssh:
+            pathlib.Path(f"data/{name}").symlink_to(root)
+        elif ssh is not None and mount is not None:
+            pathlib.Path(f"data/{name}").symlink_to(mount)
+        elif not ssh:
+            pathlib.Path(f"data/{name}").symlink_to(root)
+        else:
+            pathlib.Path(f"data/{name}").symlink_to(pathlib.Path("..") / "unavailable")
+
+
 def _add_parser():
     """
     Return parser for :py:func:`shelephant add`.
@@ -992,21 +1015,14 @@ def add(args: list[str]):
         if args.name != "here":
             yaml.overwrite("storage.yaml", storage + [args.name])
 
-            if args.root.is_absolute() and not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
-            elif args.ssh is not None and args.mount is not None:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.mount)
-            elif not args.ssh:
-                pathlib.Path(f"data/{args.name}").symlink_to(args.root)
-            else:
-                pathlib.Path(f"data/{args.name}").symlink_to(pathlib.Path("..") / "unavailable")
+    _create_symlink_data(sdir, args.name, args.root, args.ssh, args.mount)
 
-        opts = [args.name]
-        if args.shallow:
-            opts.append("--shallow")
-        if args.quiet:
-            opts.append("--quiet")
-        update(opts)
+    opts = [args.name]
+    if args.shallow:
+        opts.append("--shallow")
+    if args.quiet:
+        opts.append("--quiet")
+    update(opts)
 
 
 def _remove_parser():
