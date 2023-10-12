@@ -200,7 +200,7 @@ def shelephant_dump(args: list[str]):
 
     if args.append:
         main = yaml.read(args.output)
-        assert type(main) == list, 'Can only append a "flat" file'
+        assert isinstance(main, list), 'Can only append a "flat" file'
         files = main + files
         args.force = True
 

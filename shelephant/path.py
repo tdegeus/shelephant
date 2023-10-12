@@ -55,7 +55,7 @@ def dirnames(files: list[str], return_unique: bool = True) -> list[str]:
     :return: List of dirnames.
     """
 
-    if type(files) == str:
+    if isinstance(files, str):
         files = [files]
 
     ret = [os.path.dirname(filename) for filename in files]
@@ -75,7 +75,7 @@ def makedirs(dirnames: list[str], force: bool = False):
     :param force: Create directories without prompt.
     """
 
-    if type(dirnames) == str:
+    if isinstance(dirnames, str):
         dirnames = [dirnames]
 
     dirnames = [dirname for dirname in dirnames if len(dirname) > 0]

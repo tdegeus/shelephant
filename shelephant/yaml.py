@@ -43,12 +43,12 @@ def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list |
 
     data = read(filename)
 
-    if type(data) == dict:
+    if isinstance(data, dict):
         return convert.get(data, key)
 
     key = convert.split_key(key)
 
-    if type(data) == list and len(key) == 0:
+    if isinstance(data, list) and len(key) == 0:
         return data
 
     raise OSError(f'"{"/".join(key)}" not in "{filename}"')

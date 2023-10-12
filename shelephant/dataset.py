@@ -95,13 +95,13 @@ class Location:
         if ssh is not None:
             assert self.root.is_absolute(), "root must be absolute path when using ssh"
 
-        if type(files) == list:
+        if isinstance(files, list):
             self._files = np.array(files)
             self._clear_all_info()
-        elif type(files) == str:
+        elif isinstance(files, str):
             self._files = np.array([files])
             self._clear_all_info()
-        elif type(files) == dict:
+        elif isinstance(files, dict):
             self._files = np.array(list(files.keys()))
             self._clear_all_info()
             for i, file in enumerate(self._files):
@@ -210,7 +210,7 @@ class Location:
         mtime = []
 
         for item in files:
-            if type(item) == str:
+            if isinstance(item, str):
                 fs.append(item)
                 has_info.append(False)
                 sha256.append("0" * 64)
@@ -301,7 +301,7 @@ class Location:
 
         path = pathlib.Path(path)
         data = yaml.read(path)
-        if type(data) == list:
+        if isinstance(data, list):
             data = {"files": data}
 
         ret = cls(
