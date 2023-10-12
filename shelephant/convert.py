@@ -68,10 +68,10 @@ def split_key(key: str) -> list[str]:
     :return: A list of key components.
     """
 
-    if type(key) == list:
+    if isinstance(key, list):
         return key
 
-    if type(key) == str:
+    if isinstance(key, str):
         return key.split("/")
 
     raise OSError(f"'{key}' cannot be split")
@@ -94,7 +94,7 @@ def get(data: dict[dict], key: str | list[str]) -> dict | list | str | int | flo
         The read item.
     """
 
-    assert type(data) == dict
+    assert isinstance(data, dict)
     key = split_key(key)
 
     if len(key) > 0:
