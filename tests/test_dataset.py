@@ -445,10 +445,12 @@ class Test_dataset(unittest.TestCase):
         with tempdir(), shelephant.ssh.tempdir("localhost") as source2:
             dataset = pathlib.Path("dataset")
             source1 = pathlib.Path("source1")
+            source2 /= "lh"
             mount = pathlib.Path("mount")
 
             dataset.mkdir()
             source1.mkdir()
+            source2.mkdir()
             mount.symlink_to(source2)
 
             with cwd(source1):
@@ -469,7 +471,7 @@ class Test_dataset(unittest.TestCase):
                         "--ssh",
                         "localhost",
                         "--mount",
-                        str(mount),
+                        "../mount",
                         "--rglob",
                         "*.txt",
                         "-q",
@@ -495,7 +497,8 @@ class Test_dataset(unittest.TestCase):
                     self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
                 for f in ["e.txt", "f.txt"]:
                     self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
-                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "mount")
+                    self.assertEqual(pathlib.Path(f).readlink().parent.readlink().name, "mount")
+                    self.assertEqual(pathlib.Path(os.path.realpath(f)).parent.name, "lh")
 
             with cwd(dataset):
                 self.assertRaises(AssertionError, shelephant.dataset.add, ["source2", "foo", "-q"])
