@@ -471,7 +471,7 @@ class Test_dataset(unittest.TestCase):
                         "--ssh",
                         "localhost",
                         "--mount",
-                        str(mount),
+                        "../mount",
                         "--rglob",
                         "*.txt",
                         "-q",

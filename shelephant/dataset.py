@@ -321,6 +321,8 @@ class Location:
         )
         if not ret._absroot_is_mount:
             ret._absroot = _force_absolute_path(path.parent, ret.root)
+        else:
+            ret._absroot = _force_absolute_path(path.parent, ret.mount)
         ret.dump = data.get("dump", None)
         ret.search = data.get("search", None)
         ret._overwrite_dataset_from_dict(data.get("files", []))
