@@ -50,6 +50,7 @@ class Location:
 
     *   :py:attr:`Location.root`: The base directory.
     *   :py:attr:`Location.ssh` (optional): ``[user@]host``
+    *   :py:attr:`Location.hostpath`.
     *   :py:attr:`Location.prefix` (optional): Prefix to add to all paths.
     *   :py:attr:`Location.python` (optional): The python executable on the ``ssh`` host.
     *   :py:attr:`Location.dump` (optional): Location of "dump" file -- file with list of files.
