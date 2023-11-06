@@ -1904,6 +1904,11 @@ def info(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not in a shelephant dataset"
 
+    def _convert_path(path: pathlib.Path) -> str:
+        if os.path.isabs(path):
+            return path
+        return os.path.relpath((sdir / "storage" / path).resolve())
+
     if args.basedir:
         print(sdir.parent)
         return
@@ -1921,7 +1926,7 @@ def info(args: list[str]):
         out.set_style(prettytable.SINGLE_BORDER)
         out.field_names = ["name", location]
         out.align = "l"
-        out.add_row(["root", loc.root])
+        out.add_row(["root", _convert_path(loc.root)])
         if loc.prefix is not None:
             out.add_row(["prefix", loc.prefix])
         if loc.ssh is not None:
