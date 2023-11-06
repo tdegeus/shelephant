@@ -14,9 +14,9 @@ import prettytable
 from . import dataset
 from . import local
 from . import output
+from . import path as mypathlib
 from . import rsync
 from . import scp
-from . import search
 from . import ssh
 from . import yaml
 from ._version import version
@@ -525,7 +525,7 @@ def shelephant_rm(args: list[str], paths: list[str] = None):
     if source.ssh is None:
         return local.remove(source.hostpath, files, progress=not args.quiet)
 
-    with ssh.tempdir(source.ssh) as remote, search.tempdir():
+    with ssh.tempdir(source.ssh) as remote, mypathlib.tempdir():
         files = [str(source.root / i) for i in files]
         pathlib.Path("remove.txt").write_text("\n".join(files))
         shutil.copy(pathlib.Path(__file__).parent / "_remove.py", "script.py")

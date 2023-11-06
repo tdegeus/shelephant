@@ -4,8 +4,8 @@ import unittest
 
 import shelephant
 from shelephant._tests import create_dummy_files
-from shelephant.search import cwd
-from shelephant.search import tempdir
+from shelephant.path import cwd
+from shelephant.path import tempdir
 
 has_rsync = shutil.which("rsync") is not None
 
