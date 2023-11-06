@@ -57,6 +57,7 @@ class Location:
     *   :py:attr:`Location.search` (optional):
         Commands to search for files, see :py:func:`shelephant.search.search`.
     *   :py:func:`Location.files`: List of files (with properties).
+    *   :py:attr:`Location.description`: Description of the location.
 
     Initialize:
 
@@ -76,6 +77,7 @@ class Location:
         mount: pathlib.Path = None,
         prefix: pathlib.Path = None,
         files: list[str] = [],
+        description: str = None,
     ) -> None:
         """
         :param root: The root directory (may be relative, unless on remote SSH host).
@@ -83,6 +85,7 @@ class Location:
         :param mount: Mount location for SSH host.
         :param prefix: Prefix to add to all paths.
         :param files: List of files.
+        :param description: Description of the location.
         """
         self.root = pathlib.Path(root)
         if mount is None:
@@ -98,6 +101,7 @@ class Location:
         self.python = "python3"
         self.dump = None
         self.search = None
+        self.description = description
 
         assert not self._absroot_is_mount or self.ssh is not None, "needs ssh to use mount"
 
@@ -318,6 +322,7 @@ class Location:
             ssh=data.get("ssh", None),
             prefix=data.get("prefix", None),
             mount=data.get("mount", None),
+            description=data.get("description", None),
         )
         if not ret._absroot_is_mount:
             ret._absroot = _force_absolute_path(path.parent, ret.root)
@@ -374,6 +379,9 @@ class Location:
 
         if len(self._files) > 0:
             ret["files"] = self.files(info=True)
+
+        if self.description is not None:
+            ret["description"] = self.description
 
         return ret
 
@@ -1931,6 +1939,8 @@ def info(args: list[str]):
             out.add_row(["prefix", loc.prefix])
         if loc.ssh is not None:
             out.add_row(["ssh", loc.ssh])
+        if loc.description is not None:
+            out.add_row(["description", loc.description])
         ret += out.get_string()
         if i < len(args.location) - 1:
             ret += "\n"
