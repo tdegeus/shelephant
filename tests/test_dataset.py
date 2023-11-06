@@ -219,6 +219,20 @@ class Test_dataset(unittest.TestCase):
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
 
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.diff(["--colors", "none", "source1", "source2"])
+
+            expect = [
+                "e.txt <- e.txt",
+                "f.txt <- f.txt",
+                "c.txt -> c.txt",
+                "d.txt -> d.txt",
+                "a.txt == a.txt",
+                "b.txt == b.txt",
+            ]
+            ret = _plain(sio.getvalue())
+            self.assertEqual(ret, expect)
+
             with cwd(dataset):
                 for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
                     self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
