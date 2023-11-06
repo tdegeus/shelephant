@@ -802,19 +802,19 @@ def _shelephant_main_parser():
         pass
 
     choices = [
-        "init",
-        "add",
-        "remove",
-        "update",
         "status",
         "info",
-        "lock",
+        "update",
         "cp",
         "mv",
         "rm",
         "pwd",
-        "git",
         "gitignore",
+        "add",
+        "remove",
+        "lock",
+        "git",
+        "init",
     ]
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
     parser.add_argument("--version", action="version", version=version)
@@ -827,18 +827,12 @@ def _shelephant_main():
     parser = _shelephant_main_parser()
     args = parser.parse_args([sys.argv[1]])
 
-    if args.command == "init":
-        dataset.init(sys.argv[2:])
-    elif args.command == "add":
-        dataset.add(sys.argv[2:])
-    elif args.command == "remove":
-        dataset.remove(sys.argv[2:])
-    elif args.command == "update":
-        dataset.update(sys.argv[2:])
-    elif args.command == "status":
+    if args.command == "status":
         dataset.status(sys.argv[2:])
     elif args.command == "info":
         dataset.info(sys.argv[2:])
+    elif args.command == "update":
+        dataset.update(sys.argv[2:])
     elif args.command == "cp":
         dataset.cp(sys.argv[2:])
     elif args.command == "mv":
@@ -847,12 +841,18 @@ def _shelephant_main():
         dataset.rm(sys.argv[2:])
     elif args.command == "pwd":
         dataset.pwd(sys.argv[2:])
+    elif args.command == "gitignore":
+        dataset.gitignore(sys.argv[2:])
+    elif args.command == "add":
+        dataset.add(sys.argv[2:])
+    elif args.command == "remove":
+        dataset.remove(sys.argv[2:])
     elif args.command == "lock":
         dataset.lock(sys.argv[2:])
     elif args.command == "git":
         dataset.git(sys.argv[2:])
-    elif args.command == "gitignore":
-        dataset.gitignore(sys.argv[2:])
+    elif args.command == "init":
+        dataset.init(sys.argv[2:])
     else:
         raise ValueError(f"Unknown command '{sys.argv[1]}'.")
 
