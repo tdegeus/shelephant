@@ -4,34 +4,17 @@ import pathlib
 import re
 import subprocess
 import sys
-import tempfile
 from contextlib import contextmanager
 
 
+# note: a local function is needed
+# remote read copies this file as it is (and not "path.py")
 @contextmanager
-def tempdir():
-    """
-    Set the cwd to a temporary directory::
-
-        with tempdir("foo"):
-            # Do something in foo
-    """
-
-    origin = pathlib.Path().absolute()
-    with tempfile.TemporaryDirectory() as dirname:
-        try:
-            os.chdir(dirname)
-            yield
-        finally:
-            os.chdir(origin)
-
-
-@contextmanager
-def cwd(dirname: pathlib.Path):
+def _cwd(dirname: pathlib.Path):
     """
     Set the cwd to a specified directory::
 
-        with cwd("foo"):
+        with _cwd("foo"):
             # Do something in foo
 
     :param dirname: The directory to change to.
@@ -129,7 +112,7 @@ def search(*settings: dict, root: pathlib.Path = pathlib.Path(".")) -> list[path
     :param root: The root directory to search in.
     :return: A list of paths.
     """
-    with cwd(root):
+    with _cwd(root):
         ret = []
         for setting in settings:
             if "rglob" in setting:

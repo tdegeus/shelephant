@@ -15,6 +15,7 @@ from platformdirs import user_cache_dir
 from . import cli
 from . import compute_hash
 from . import output
+from . import path as mypathlib
 from . import rsync
 from . import scp
 from . import search
@@ -512,7 +513,7 @@ class Location:
             if self.ssh is None:
                 return self._overwrite_dataset_from_dict(yaml.read(self._absroot / self.dump))
 
-            with search.tempdir():
+            with mypathlib.tempdir():
                 scp.copy(self.hostpath, ".", [self.dump], progress=False)
                 return self._overwrite_dataset_from_dict(yaml.read(self.dump))
 
@@ -524,7 +525,7 @@ class Location:
 
         # search on SSH remote host for files (the sha256/size/mtime of 'new' files is set to None)
         cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
-        with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
+        with ssh._cachedir(self.ssh, cache_dir) as remote, mypathlib.tempdir():
             shutil.copy(pathlib.Path(__file__).parent / "search.py", "script.py")
             with open("settings.json", "w") as f:
                 json.dump(self.search, f)
@@ -602,7 +603,7 @@ class Location:
             )
 
         cache_dir = ssh._shelephant_cachdir(self.ssh, self.python)
-        with ssh._cachedir(self.ssh, cache_dir) as remote, search.tempdir():
+        with ssh._cachedir(self.ssh, cache_dir) as remote, mypathlib.tempdir():
             files = [str(self.root / i) for i in paths]
             pathlib.Path("files.txt").write_text("\n".join(files))
             pathlib.Path("sha256.txt").write_text("")
@@ -936,7 +937,7 @@ def _create_symlink_data(
     if name == "here":
         return
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         mylink = pathlib.Path(f"data/{name}")
         if mylink.is_symlink():
             mylink.unlink()
@@ -1036,7 +1037,7 @@ def add(args: list[str]):
             if not args.mount.is_absolute():
                 args.mount = pathlib.Path(os.path.relpath(args.mount.absolute(), sdir / "storage"))
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         loc = Location(root=args.root, ssh=args.ssh, mount=args.mount, prefix=args.prefix)
         s = []
         d = {}
@@ -1197,14 +1198,14 @@ def update(args: list[str]):
         assert lock != "here"
         args.name = [lock]
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         # read existing symlinks
 
         if lock is None:
             symlinks = yaml.read("symlinks.yaml", [])
             symlinks = {pathlib.Path(i["path"]): pathlib.Path(i["storage"]) for i in symlinks}
             if args.clean:
-                with search.cwd(base):
+                with mypathlib.cwd(base):
                     for path in list(symlinks.keys()):
                         if not path.is_symlink():
                             symlinks.pop(path)
@@ -1321,7 +1322,7 @@ def update(args: list[str]):
             if symlink not in symlinks:
                 add_links.append(symlink)
 
-        with search.cwd(sdir / ".."):
+        with mypathlib.cwd(sdir / ".."):
             for f in rm_links:
                 if f.is_symlink():
                     f.unlink()
@@ -1430,7 +1431,7 @@ def cp(args: list[str]):
     args.path = args.path if args.path != [pathlib.Path(".")] else []
     paths = [os.path.relpath(path, base) for path in args.path]
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         opts = [f"storage/{args.source}.yaml", f"storage/{args.destination}.yaml"]
         opts += ["--colors", args.colors]
         opts += ["--mode", args.mode]
@@ -1503,7 +1504,7 @@ def mv(args: list[str]):
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         dest = Location.from_yaml(f"storage/{args.destination}.yaml")
         assert dest.ssh is None, "Cannot move to remote location."
         opts = [f"storage/{args.source}.yaml", str(dest._absroot)]
@@ -1514,7 +1515,7 @@ def mv(args: list[str]):
         cli.shelephant_mv(opts, paths)
 
     if not args.dry_run:
-        with search.cwd(sdir):
+        with mypathlib.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
         update(["--quiet", "--force", args.destination] + list(map(str, args.path)))
@@ -1570,7 +1571,7 @@ def rm(args: list[str]):
     base = sdir.parent
     paths = [os.path.relpath(path, base) for path in args.path]
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         opts = [f"storage/{args.source}.yaml"]
         opts += ["--force"] if args.force else []
         opts += ["--quiet"] if args.quiet else []
@@ -1578,7 +1579,7 @@ def rm(args: list[str]):
         cli.shelephant_rm(opts, paths)
 
     if not args.dry_run:
-        with search.cwd(sdir):
+        with mypathlib.cwd(sdir):
             f = f"storage/{args.source}.yaml"
             Location.from_yaml(f).remove(paths).overwrite_yaml(f)
             update([])
@@ -1629,7 +1630,7 @@ def pwd(args: list[str]):
     cwd = pathlib.Path.cwd()
     post = os.path.relpath(cwd, sdir / "..")
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         f = f"storage/{args.source}.yaml"
         loc = Location.from_yaml(f)
         prefix = loc.prefix
@@ -1688,7 +1689,7 @@ def diff(args: list[str]):
     sdir = _search_upwards_dir(".shelephant")
     assert sdir is not None, "Not in a shelephant dataset"
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         storage = yaml.read(sdir / "storage.yaml")
         assert args.source in storage, f"Unknown storage location {args.source}"
         assert args.dest in storage, f"Unknown storage location {args.dest}"
@@ -1800,7 +1801,7 @@ def status(args: list[str]):
         if args.in_use == "none":
             args.in_use = na
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         symlinks = np.sort([i["path"] for i in yaml.read("symlinks.yaml", [])])
         storage = yaml.read(sdir / "storage.yaml")
         storage.remove("here")
@@ -2129,7 +2130,7 @@ def gitignore(args: list[str]):
     else:
         ignore = ""
 
-    with search.cwd(sdir):
+    with mypathlib.cwd(sdir):
         symlinks = [i["path"] for i in yaml.read("symlinks.yaml", [])]
 
     ignore += "\n# <shelephant>\n" + "\n".join(symlinks) + "\n# </shelephant>\n"
@@ -2142,5 +2143,5 @@ def git(args: list[str]):
 
     :param args: Command-line arguments (should be all strings).
     """
-    with search.cwd(_search_upwards_dir(".shelephant")):
+    with mypathlib.cwd(_search_upwards_dir(".shelephant")):
         print(exec_cmd(f"git {' '.join(args)}"))

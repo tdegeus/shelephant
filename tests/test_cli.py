@@ -17,8 +17,8 @@ from shelephant.cli import shelephant_hostinfo
 from shelephant.cli import shelephant_mv
 from shelephant.cli import shelephant_parse
 from shelephant.cli import shelephant_rm
-from shelephant.search import cwd
-from shelephant.search import tempdir
+from shelephant.path import cwd
+from shelephant.path import tempdir
 
 has_ssh = shelephant.ssh.has_keys_set("localhost")
 has_rsync = shutil.which("rsync") is not None
