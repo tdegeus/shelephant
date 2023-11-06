@@ -162,3 +162,99 @@ def copyplan(
         return sio.getvalue()
 
     autoprint(sio.getvalue())
+
+
+def diff(
+    status: dict[list[str]],
+    colors: str = "none",
+    display: bool = True,
+    max_align: int = 80,
+) -> str:
+    """
+    Print copy plan.
+
+    :param status:
+        Dictionary of status. E.g.::
+
+            {
+                '==' : ['file4'],
+                '?=' : [],
+                '!=' : ['file3'],
+                '->' : ['file1', 'file2'],
+                '<-' : [],
+            }
+
+    :param colors: Color theme name, see :py:func:`theme`.
+    :param display: Display output (``False``: return as string).
+    :param max_align: Maximum width of the first column.
+    :return: Output string (if ``display=False``).
+    """
+    color = _theme(colors.lower())
+    sio = io.StringIO()
+
+    skip = status.pop("==", [])
+    right = status.pop("->", [])
+    left = status.pop("<-", [])
+    ne = status.pop("!=", [])
+    na = status.pop("?=", [])
+
+    if len(ne) + len(na) + len(left) + len(right) + len(skip) == 0:
+        return
+
+    width = max(len(file) for file in ne + na + left + right + skip)
+    width = min(width, max_align)
+
+    for file in ne:
+        print(
+            "{:s} {:s} {:s}".format(
+                _format(file, width=width, color=color["overwrite"]),
+                _format("!=", color=color["bright"]),
+                _format(file, color=color["overwrite"]),
+            ),
+            file=sio,
+        )
+
+    for file in na:
+        print(
+            "{:s} {:s} {:s}".format(
+                _format(file, width=width, color=color["overwrite"]),
+                _format("?=", color=color["bright"]),
+                _format(file, color=color["overwrite"]),
+            ),
+            file=sio,
+        )
+
+    for file in left:
+        print(
+            "{:s} {:s} {:s}".format(
+                _format(file, width=width, color=color["new"]),
+                _format("<-", color=color["bright"]),
+                _format(file, color=color["bright"]),
+            ),
+            file=sio,
+        )
+
+    for file in right:
+        print(
+            "{:s} {:s} {:s}".format(
+                _format(file, width=width, color=color["bright"]),
+                _format("->", color=color["bright"]),
+                _format(file, color=color["new"]),
+            ),
+            file=sio,
+        )
+
+    for file in skip:
+        print(
+            "{:s} {:s} {:s}".format(
+                _format(file, width=width, color=color["skip"]),
+                _format("==", color=color["skip"]),
+                _format(file, color=color["skip"]),
+            ),
+            file=sio,
+        )
+
+    if not display:
+        return sio.getvalue()
+
+    autoprint(sio.getvalue())

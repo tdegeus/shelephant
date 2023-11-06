@@ -809,6 +809,7 @@ def _shelephant_main_parser():
         "mv",
         "rm",
         "pwd",
+        "diff",
         "gitignore",
         "add",
         "remove",
@@ -841,6 +842,8 @@ def _shelephant_main():
         dataset.rm(sys.argv[2:])
     elif args.command == "pwd":
         dataset.pwd(sys.argv[2:])
+    elif args.command == "diff":
+        dataset.diff(sys.argv[2:])
     elif args.command == "gitignore":
         dataset.gitignore(sys.argv[2:])
     elif args.command == "add":

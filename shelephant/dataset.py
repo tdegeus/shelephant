@@ -1648,6 +1648,62 @@ def pwd(args: list[str]):
         print(os.path.relpath(root / post, os.getcwd()))
 
 
+def _diff_parser():
+    """
+    Return parser for :py:func:`shelephant diff`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Show differences between two storage locations.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("--pop", type=str, action="append", help='Pop direction (e.g. "==").')
+    parser.add_argument("source", type=str, help="Storage location.")
+    parser.add_argument("dest", type=str, help="Storage location.")
+    return parser
+
+
+def diff(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _diff_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not in a shelephant dataset"
+
+    with search.cwd(sdir):
+        storage = yaml.read(sdir / "storage.yaml")
+        assert args.source in storage, f"Unknown storage location {args.source}"
+        assert args.dest in storage, f"Unknown storage location {args.dest}"
+        source = Location.from_yaml(f"storage/{args.source}.yaml")
+        dest = Location.from_yaml(f"storage/{args.dest}.yaml")
+
+    status = source.diff(dest)
+    if args.pop is not None:
+        for i in args.pop:
+            status.pop(i)
+    for key in status:
+        status[key] = sorted(status[key])
+    output.diff(status, colors=args.colors)
+
+
 def _status_parser():
     """
     Return parser for :py:func:`shelephant status`.
