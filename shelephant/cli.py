@@ -249,6 +249,8 @@ def _shelephant_cp_parser():
     parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
     parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
     parser.add_argument("-v", "--version", action="version", version=version)
+    parser.add_argument("--ignore-prefix", action="store_true", help="Ignore prefix in source/dest")
+    parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
     parser.add_argument("source", type=pathlib.Path, help="Source information.")
     parser.add_argument("dest", type=pathlib.Path, help="Destination directory/information.")
     return parser
@@ -324,7 +326,13 @@ def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool =
     files = source.files(info=False)
     equal = []
     strip = None
-    common_prefix, suffix_source, suffix_dest, deepest = dataset._compute_suffix(source, dest)
+    if args.ignore_prefix:
+        common_prefix = pathlib.Path("")
+        suffix_source = pathlib.Path("")
+        suffix_dest = pathlib.Path("")
+        deepest = pathlib.Path("")
+    else:
+        common_prefix, suffix_source, suffix_dest, deepest = dataset._compute_suffix(source, dest)
     source._add_suffix(suffix_source)
     dest._add_suffix(suffix_dest)
     sourcepath = source.hostpath
@@ -353,7 +361,7 @@ def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool =
         files = np.setdiff1d(files, equal, assume_unique=True).tolist()  # based on sha256
 
     if "rsync" in args.mode:
-        status = rsync.diff(sourcepath, destpath, files)
+        status = rsync.diff(sourcepath, destpath, files, verbose=args.verbose)
         eq = status.pop("==", [])
         [files.remove(file) for file in eq]  # based on rsync criteria
         equal += eq
@@ -375,7 +383,7 @@ def shelephant_cp(args: list[str], paths: list[str] = None, filter_paths: bool =
             raise OSError("Cancelled")
 
     if "rsync" in args.mode:
-        rsync.copy(sourcepath, destpath, files, progress=not args.quiet)
+        rsync.copy(sourcepath, destpath, files, progress=not args.quiet, verbose=args.verbose)
     else:
         local.copy(sourcepath, destpath, files, progress=not args.quiet)
 
@@ -811,6 +819,8 @@ def _shelephant_main_parser():
         "pwd",
         "diff",
         "gitignore",
+        "send_storage",
+        "get_storage",
         "add",
         "remove",
         "lock",
@@ -846,6 +856,10 @@ def _shelephant_main():
         dataset.diff(sys.argv[2:])
     elif args.command == "gitignore":
         dataset.gitignore(sys.argv[2:])
+    elif args.command == "send_storage":
+        dataset.send_storage(sys.argv[2:])
+    elif args.command == "get_storage":
+        dataset.get_storage(sys.argv[2:])
     elif args.command == "add":
         dataset.add(sys.argv[2:])
     elif args.command == "remove":

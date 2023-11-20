@@ -40,6 +40,9 @@ def copy(
         with open(temp_file, "w") as file:
             file.write("\n".join(files))
 
+        if verbose:
+            print("\n".join(files))
+
         # Run without printing output
 
         if not progress:
@@ -107,6 +110,9 @@ def diff(
 
         with open(temp_file, "w") as file:
             file.write("\n".join(files))
+
+        if verbose:
+            print("\n".join(files))
 
         # Run without printing output
 
