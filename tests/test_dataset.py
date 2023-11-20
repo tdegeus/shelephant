@@ -1061,6 +1061,68 @@ class Test_dataset(unittest.TestCase):
             with cwd(source2):
                 s2 = create_dummy_files(["a.txt", "b.txt"])
 
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(
+                    [
+                        "source2",
+                        "../source2",
+                        "--rglob",
+                        "*.txt",
+                        "--skip",
+                        r"[\.]?(shelephant)(.*)",
+                        "-q",
+                    ]
+                )
+                shelephant.dataset.send_storage(["source2", "-fq"])
+
+            with cwd(source2):
+                s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+                shelephant.dataset.lock(["source2"])
+                shelephant.dataset.update(["--quiet"])
+
+            with cwd(dataset):
+                shelephant.dataset.get_storage(["source2", "-fq"])
+                shelephant.dataset.update(["--quiet"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                sym = shelephant.dataset.Location(root=".")
+                sym.search = [{"rglob": "*.txt"}]
+                sym.read().getinfo()
+                self.assertTrue(s1 + s2 == sym)
+
+    def test_lock_manual(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                s1 = create_dummy_files(files)
+
+            with cwd(source2):
+                s2 = create_dummy_files(["a.txt", "b.txt"])
+
             path = os.path.join(".shelephant", "storage", "source2.yaml")
             with cwd(dataset):
                 shelephant.dataset.init([])

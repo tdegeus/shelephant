@@ -921,6 +921,89 @@ def lock(args: list[str]):
     (sdir / "lock.txt").write_text(args.name)
 
 
+def _get_send_storage_parser():
+    """
+    Return parser for :py:func:`shelephant send_storage`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Copy storage YAML file.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        help="Use 'sha256', 'rsync', and/or 'basic' to compare files.",
+        default="rsync" if shutil.which("rsync") is not None else "basic",
+    )
+    parser.add_argument("name", type=str, help="Name of the storage location.")
+    parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("--verbose", action="store_true", help="Verbose commands.")
+    return parser
+
+
+def _get_send_storage_impl(args: list[str], send: bool):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    :param send: Send or get
+    """
+
+    parser = _get_send_storage_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not in a shelephant dataset"
+    assert args.name.lower() != "here", "cannot get_storage 'here'"
+    assert (sdir / "storage" / f"{args.name}.yaml").is_file(), "storage location not found"
+
+    with mypathlib.cwd(sdir):
+        if send:
+            opts = ["storage/here.yaml", f"storage/{args.name}.yaml"]
+        else:
+            opts = [f"storage/{args.name}.yaml", "storage/here.yaml"]
+        opts += ["--ignore-prefix"]
+        opts += ["--colors", args.colors]
+        opts += ["--mode", args.mode]
+        opts += ["--force"] if args.force else []
+        opts += ["--quiet"] if args.quiet else []
+        opts += ["--dry-run"] if args.dry_run else []
+        opts += ["--verbose"] if args.verbose else []
+        cli.shelephant_cp(opts, paths=[f".shelephant/storage/{args.name}.yaml"], filter_paths=False)
+
+
+def send_storage(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+    return _get_send_storage_impl(args, send=True)
+
+
+def get_storage(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+    return _get_send_storage_impl(args, send=False)
+
+
 def _create_symlink_data(
     sdir: pathlib.Path,
     name: str,
