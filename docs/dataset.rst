@@ -20,7 +20,7 @@ There are methods to copy or move files to or between the "storage" locations.
 
     The two key reasons to use this tool are:
 
-    1.  To keep an overview of a the dataset's structure also if some storage locations may not be available part of the time.
+    1.  To keep an overview of the dataset's structure also if some storage locations may not be available part of the time.
 
     2.  To keep a track of where multiple copies of files are and to get an overview of which copies might be outdated.
         In addition, you can easily 'enforce' multiple copies.
@@ -538,16 +538,13 @@ The simplest you can do is:
 
     .. code-block:: bash
 
-        shelephant cp here remote -ex .shelephant/storage/remote.yaml
+        shelephant send_storage remote
 
-    .. note::
-
-        -   ``-e`` (``--exists``) is needed if ``.shelephant/storage/remote.yaml`` is not part of the dataset (recommended).
-        -   ``-x`` (``--no-update``) if then needed to prevent ``.shelephant/storage/remote.yaml`` being added to the dataset (recommended).
+    This will copy ``.shelephant/storage/remote.yaml`` from ``here`` to ``remote``.
 
 2.  **On the storage location:**
 
-    a.  Run
+    a.  Run (just the first time)
 
         .. code-block:: bash
 
@@ -563,8 +560,12 @@ The simplest you can do is:
 
     .. code-block:: bash
 
-        shelephant cp remote here -ex .shelephant/storage/remote.yaml
+        shelephant get_storage remote
         shelephant update
+
+    The first command will copy ``.shelephant/storage/remote.yaml`` from ``remote`` to ``here``.
+    The second command will update the symbolic links if needed.
+    Note that ``shelephant update`` without arguments will not perform any search for updates, it will just assume that the database is correct.
 
 Updates with git
 ----------------
@@ -625,7 +626,7 @@ To propagate this to the central storage we do:
     shelephant git commit -m "Update state of usb-drive"
     shelephant git push
 
-Now you can get the updates on your laptop (even if the two systems would not have any direct connection):
+Now you can get the updates on your laptop (even if the two systems did not have any direct connection):
 
 .. code-block:: bash
 
