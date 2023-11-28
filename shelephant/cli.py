@@ -782,23 +782,26 @@ def _shelephant_main_parser():
         """
         Available commands:
 
-        =========== ======================================================================
-        command     description
-        =========== ======================================================================
-        init        Initialize a new dataset.
-        add         Add storage location to dataset.
-        remove      Remove storage location from dataset.
-        update      Update dataset.
-        status      Show status of files.
-        info        Show global information about dataset.
-        lock        Lock as storage location.
-        cp          Copy files from one location to another.
-        mv          Move files from one location to another (both local).
-        rm          Remove files from one location.
-        pwd         Print equivalent directory in the storage location.
-        git         Run git command on the database directory (``.shelephant``).
-        gitignore   Add all symbolic links at ``.shelephant`` to dataset's ``.gitignore``.
-        =========== ======================================================================
+==        =========== ======================================================================
+        command       description
+        ============= ======================================================================
+        init          Initialize a new dataset.
+        add           Add storage location to dataset.
+        remove        Remove storage location from dataset.
+        update        Update dataset.
+        status        Show status of files.
+        info          Show global information about dataset.
+        diff          Show difference between two storage locations.
+        lock          Lock as storage location.
+        send_storage  Send f"/shelephant/storage/{name}.yaml" to storage location.
+        get_storage   Get f"/shelephant/storage/{name}.yaml" from storage location.
+        cp            Copy files from one location to another.
+        mv            Move files from one location to another (both local).
+        rm            Remove files from one location.
+        pwd           Print equivalent directory in the storage location.
+        git           Run git command on the database directory (``.shelephant``).
+        gitignore     Add all symbolic links at ``.shelephant`` to dataset's ``.gitignore``.
+        ============= ======================================================================
         """
     )
 
