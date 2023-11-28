@@ -1198,6 +1198,61 @@ def remove(args: list[str]):
     update([])
 
 
+def _rename_parser():
+    """
+    Return parser for :py:func:`shelephant rm`.
+    """
+
+    desc = textwrap.dedent(
+        """
+        Rename a storage location.
+        The database in ``.shelephant`` is updated as follows:
+
+        -   The ``name`` is changed in ``.shelephant/storage.yaml``.
+        -   ``.shelephant/storage/<name>.yaml`` is renamed.
+        -   The symlink ``.shelephant/data/<name>`` is renamed.
+        """
+    )
+
+    class MyFmt(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter,
+        argparse.MetavarTypeHelpFormatter,
+    ):
+        pass
+
+    parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
+
+    parser.add_argument("old", type=str, help="Current name of the storage location.")
+    parser.add_argument("new", type=str, help="New name of the storage location.")
+    parser.add_argument("--version", action="version", version=version)
+    return parser
+
+
+def rename(args: list[str]):
+    """
+    Command-line tool, see ``--help``.
+
+    :param args: Command-line arguments (should be all strings).
+    """
+
+    parser = _rename_parser()
+    args = parser.parse_args(args)
+    sdir = _search_upwards_dir(".shelephant")
+    assert sdir is not None, "Not in a shelephant dataset"
+    assert not (sdir / "lock.txt").exists(), "cannot rename location from storage location"
+
+    storage = yaml.read(sdir / "storage.yaml")
+    assert args.old in storage, f"storage location '{args.old}' does not exist"
+    assert args.new not in storage, f"storage location '{args.new}' exist"
+    i = storage.index(args.old)
+    storage[i] = args.new
+    yaml.overwrite(sdir / "storage.yaml", storage)
+    os.rename(sdir / "storage" / f"{args.old}.yaml", sdir / "storage" / f"{args.new}.yaml")
+    os.rename(sdir / "data" / args.old, sdir / "data" / args.new)
+    update([])
+
+
 def _update_parser():
     """
     Return parser for :py:func:`shelephant update`.

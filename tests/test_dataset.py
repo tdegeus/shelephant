@@ -577,6 +577,64 @@ class Test_dataset(unittest.TestCase):
                 for f in ["e.txt", "f.txt"]:
                     self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
 
+    def test_rename(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("foo")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../foo", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.rename(["source2", "foo"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt foo x ==",
+                "f.txt foo x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.diff(["--colors", "none", "source1", "foo"])
+
+            expect = [
+                "e.txt <- e.txt",
+                "f.txt <- f.txt",
+                "c.txt -> c.txt",
+                "d.txt -> d.txt",
+                "a.txt == a.txt",
+                "b.txt == b.txt",
+            ]
+            ret = _plain(sio.getvalue())
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "foo")
+
     def test_cp(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

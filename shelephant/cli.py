@@ -782,12 +782,13 @@ def _shelephant_main_parser():
         """
         Available commands:
 
-==        =========== ======================================================================
+        ============= ======================================================================
         command       description
         ============= ======================================================================
         init          Initialize a new dataset.
         add           Add storage location to dataset.
         remove        Remove storage location from dataset.
+        rename        Rename storage location.
         update        Update dataset.
         status        Show status of files.
         info          Show global information about dataset.
@@ -826,6 +827,7 @@ def _shelephant_main_parser():
         "get_storage",
         "add",
         "remove",
+        "rename",
         "lock",
         "git",
         "init",
@@ -867,6 +869,8 @@ def _shelephant_main():
         dataset.add(sys.argv[2:])
     elif args.command == "remove":
         dataset.remove(sys.argv[2:])
+    elif args.command == "rename":
+        dataset.rename(sys.argv[2:])
     elif args.command == "lock":
         dataset.lock(sys.argv[2:])
     elif args.command == "git":
