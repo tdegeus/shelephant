@@ -589,11 +589,11 @@ class Test_dataset(unittest.TestCase):
 
             with cwd(source1):
                 files = ["a.txt", "b.txt", "c.txt", "d.txt"]
-                s1 = create_dummy_files(files)
+                create_dummy_files(files)
 
             with cwd(source2):
-                s2 = create_dummy_files(["a.txt", "b.txt"])
-                s2 += create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
 
             with cwd(dataset):
                 shelephant.dataset.init([])
