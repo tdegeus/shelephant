@@ -928,7 +928,7 @@ def _get_send_storage_parser():
 
     desc = textwrap.dedent(
         """
-        Copy storage YAML file.
+        Copy f"/shelephant/storage/{name}.yaml".
         """
     )
 
