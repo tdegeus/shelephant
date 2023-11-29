@@ -1250,6 +1250,10 @@ def rename(args: list[str]):
     yaml.overwrite(sdir / "storage.yaml", storage)
     os.rename(sdir / "storage" / f"{args.old}.yaml", sdir / "storage" / f"{args.new}.yaml")
     os.rename(sdir / "data" / args.old, sdir / "data" / args.new)
+    if (sdir / "lock.txt").exists():
+        myname = (sdir / "lock.txt").read_text().strip()
+        if myname == args.old:
+            (sdir / "lock.txt").write_text(args.new)
     update([])
 
 
