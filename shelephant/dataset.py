@@ -1674,7 +1674,8 @@ def _rm_parser():
 
         .. warning::
 
-            This remove the actual data (and the link, if there is no alternative source left).
+            This removes the actual data.
+            The link is also if there is no alternative source left.
         """
     )
 
