@@ -1536,22 +1536,22 @@ def _cp_parser():
     parser = argparse.ArgumentParser(formatter_class=MyFmt, description=desc)
 
     parser.add_argument("--version", action="version", version=version)
-    parser.add_argument("--colors", type=str, default="dark", help="Color scheme [none, dark].")
-    parser.add_argument("-f", "--force", action="store_true", help="Overwrite without prompt.")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Do not print progress.")
-    parser.add_argument("-n", "--dry-run", action="store_true", help="Print copy-plan and exit.")
-    parser.add_argument("-x", "--no-update", action="store_true", help="No database update.")
-    parser.add_argument("-e", "--exists", action="store_true", help="All paths exists on source.")
-    parser.add_argument("-s", "--shallow", action="store_true", help="Do not compute checksums.")
+    parser.add_argument("--colors", type=str, default="dark", help="color scheme [none, dark]")
+    parser.add_argument("-f", "--force", action="store_true", help="overwrite without prompt")
+    parser.add_argument("-q", "--quiet", action="store_true", help="do not print progress")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="print copy-plan and exit")
+    parser.add_argument("-x", "--no-update", action="store_true", help="no database update")
+    parser.add_argument("-e", "--exists", action="store_true", help="all paths exists on source")
+    parser.add_argument("-s", "--shallow", action="store_true", help="do not compute checksums")
     parser.add_argument(
         "--mode",
         type=str,
-        help="Use 'sha256', 'rsync', and/or 'basic' to compare files.",
+        help="use 'sha256', 'rsync', and/or 'basic' to compare files",
         default="sha256,rsync" if shutil.which("rsync") is not None else "sha256,basic",
     )
-    parser.add_argument("source", type=str, help="name of the source.")
-    parser.add_argument("destination", type=str, help="name of the destination.")
-    parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to copy.")
+    parser.add_argument("source", type=str, help="name of the source")
+    parser.add_argument("destination", type=str, help="name of the destination")
+    parser.add_argument("path", type=pathlib.Path, nargs="+", help="path(s) to copy")
     return parser
 
 
