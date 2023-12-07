@@ -1503,17 +1503,17 @@ def _cp_parser():
     desc = textwrap.dedent(
         """
         Copy files between storage locations and update the database.
-        To ensure database integrity, the database is updated with the checksums of the copied files
-        on the destination. Use:
+        After copying, the checksums on the destination are recomputed and the database updated.
+        Use:
 
-            -   ``-s``, ``--shallow`` to add only the paths to the database.
-            -   ``-x``, ``--no-update`` to skip the database update.
+            -   ``-s``, ``--shallow`` to skip the checksum computation (store only path/size/mtime).
+            -   ``-x``, ``--no-update`` to skip the database update all together.
 
         .. note::
 
             The paths that you specify are reduced to only the paths known to exist on the source.
             If you know that the paths exist, but they are not part of the database
-            (or it is outdated), you can use ``-e``, ``--exists`` to avoid the filter.
+            (or it is outdated), use ``-e``, ``--exists`` to avoid the filter.
 
         .. tip::
 
