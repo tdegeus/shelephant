@@ -95,6 +95,46 @@ class Test_shelephant_dump(unittest.TestCase):
             data = shelephant.dataset.Location.from_yaml(f_dump)
             self.assertTrue(check == data)
 
+    def test_all(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            nested = [os.path.join("src", i) for i in ["f.txt", "g.txt"]]
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"] + nested
+            check = create_dummy_files(files)
+            shelephant_dump(["-i", "--all"])
+            data = shelephant.dataset.Location.from_yaml(f_dump)
+            check.remove(nested)
+            self.assertTrue(check == data)
+
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            nested = [os.path.join("src", i) for i in ["f.txt", "g.txt"]]
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"] + nested
+            check = create_dummy_files(files)
+            shelephant_dump(["-i", "--all", "--recursive"])
+            data = shelephant.dataset.Location.from_yaml(f_dump)
+            self.assertTrue(check == data)
+
+    def test_raw(self):
+        with tempdir():
+            names = ["./a.txt", "../foo/../b.txt"]
+            shelephant_dump(["--raw"] + names)
+            data = shelephant.yaml.read(f_dump)
+            self.assertEqual(data, names)
+
+            shelephant_dump(["-f"] + names)
+            data = shelephant.yaml.read(f_dump)
+            self.assertEqual(data, ["a.txt", os.path.join("..", "b.txt")])
+
+    def test_abspath(self):
+        with tempdir():
+            root = pathlib.Path(".").absolute()
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt"]
+            shelephant_dump(["--abspath"] + files)
+            data = shelephant.yaml.read(f_dump)
+            check = [str(root / i) for i in files]
+            self.assertEqual(data, check)
+
 
 class Test_shelephant_hostinfo(unittest.TestCase):
     def test_search(self):
