@@ -113,6 +113,17 @@ class Test_shelephant_dump(unittest.TestCase):
             data = shelephant.dataset.Location.from_yaml(f_dump)
             self.assertTrue(check == data)
 
+    def test_raw(self):
+        with tempdir():
+            names = ["./a.txt", "../foo/../b.txt"]
+            shelephant_dump(["--raw"] + names)
+            data = shelephant.yaml.read(f_dump)
+            self.assertEqual(data, names)
+
+            shelephant_dump(["-f"] + names)
+            data = shelephant.yaml.read(f_dump)
+            self.assertEqual(data, ["a.txt", "../b.txt"])
+
 
 class Test_shelephant_hostinfo(unittest.TestCase):
     def test_search(self):
