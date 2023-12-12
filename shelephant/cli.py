@@ -77,6 +77,14 @@ def _shelephant_dump_parser():
 
     .. note::
 
+        One has to choose how to store the filenames in the YAML-file:
+
+        *   Default: filenames are made relative to the ``--root`` and normalised.
+        *   ``--abspath``: make all paths absolute.
+        *   ``--raw``: turn off normalisation.
+
+    .. note::
+
         If you have too many arguments you can hit the pipe-limit. In that case, use ``xargs``:
 
         .. code-block:: bash
@@ -88,6 +96,22 @@ def _shelephant_dump_parser():
         .. code-block:: bash
 
             shelephant_dump -o dump.yaml --command find . -name '*.py'
+
+    .. note::
+
+        If you have search pattern you can store it in a YAML-file::
+
+            # search.yaml
+            search:
+            - rglob: '*.h5'
+            - rglob: '*.yaml'
+
+        and use it as follows::
+
+            shelephant_dump -o dump.yaml --search search.yaml
+
+        Note that the search pattern is executed in the directory of the YAML-file and all paths
+        are stored relative to the YAML-file.
     """
     )
 
@@ -96,11 +120,11 @@ def _shelephant_dump_parser():
     parser.add_argument(
         "-o", "--output", type=pathlib.Path, default=f_dump, help="Output YAML-file."
     )
-    parser.add_argument("--search", type=pathlib.Path, help='Run "search" in "root".')
-    parser.add_argument("-a", "--append", action="store_true", help="Append existing file.")
-    parser.add_argument("-i", "--info", action="store_true", help="Add information (sha256, size).")
+    parser.add_argument("--search", type=pathlib.Path, help="Read search-patterns from YAML-file")
+    parser.add_argument("-a", "--append", action="store_true", help="Append existing file")
+    parser.add_argument("-i", "--info", action="store_true", help="Add information (sha256, size)")
     parser.add_argument(
-        "-e", "--exclude", type=str, action="append", help="Exclude input matching this pattern."
+        "-e", "--exclude", type=str, action="append", help="Exclude input matching this pattern"
     )
     parser.add_argument(
         "-E",
@@ -108,29 +132,36 @@ def _shelephant_dump_parser():
         type=str,
         action="append",
         default=[],
-        help='Exclude input with this extension (e.g. ".bak").',
+        help='Exclude input with this extension (e.g. ".bak")',
     )
     parser.add_argument(
-        "-k", "--keep", type=str, action="append", help="Keep only input matching this regex."
+        "-k", "--keep", type=str, action="append", help="Keep only input matching this regex"
     )
-    parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``.')
+    parser.add_argument("--fmt", type=str, help='Formatter of each line, e.g. ``"mycmd {}"``')
     parser.add_argument(
         "-c",
         "--command",
         action="store_true",
-        help="Interpret arguments as a command (instead of as filenames) an run it.",
+        help="Interpret arguments as a command (instead of as filenames) an run it",
     )
-    parser.add_argument("--cwd", type=str, help="Directory to run ``--command``.")
+    parser.add_argument("--cwd", type=str, help="Directory to run ``--command``")
+    parser.add_argument("--raw", action="store_true", help="No path-normalisation of input")
+    parser.add_argument("--abspath", action="store_true", help="Store as absolute paths")
     parser.add_argument(
-        "--root", type=str, help="Root for relative paths (default: directory of output file)."
+        "--root", type=str, help="Root for relative paths (default: directory of output file)"
     )
-    parser.add_argument("--abspath", action="store_true", help="Store as absolute paths.")
-    parser.add_argument("-s", "--sort", action="store_true", help="Sort filenames.")
+    parser.add_argument("-s", "--sort", action="store_true", help="Sort output")
     parser.add_argument(
-        "-f", "--force", action="store_true", help="Overwrite output file without prompt."
+        "-f", "--force", action="store_true", help="Overwrite output file without prompt"
     )
     parser.add_argument("-v", "--version", action="version", version=version, help="")
-    parser.add_argument("files", type=str, nargs="*", help="Filenames.")
+    parser.add_argument(
+        "--all", action="store_true", help="Dump all files in the working directory"
+    )
+    parser.add_argument(
+        "-r", "--recursive", action="store_true", help="Recursively dump files (implies --all)"
+    )
+    parser.add_argument("files", type=str, nargs="*", help="Filenames")
 
     return parser
 
@@ -147,16 +178,29 @@ def shelephant_dump(args: list[str]):
     files = args.files
     assert not (args.command and args.cwd is not None), "Cannot use --cwd without --command."
 
-    if args.search:
+    if args.all:
+        assert len(files) == 0, "Cannot use both --all and filenames."
+        assert not args.command, "Cannot use both --all and --command."
+        assert args.search is None, "Cannot use both --all and --search."
+        cwd = "." if args.cwd is None else args.cwd
+        root = cwd if args.root is None else args.root
+        if args.recursive:
+            files = [str(path) for path in pathlib.Path(cwd).rglob("*") if path.is_file()]
+        else:
+            files = [str(path) for path in pathlib.Path(cwd).glob("*") if path.is_file()]
+    elif args.search:
         assert len(files) == 0, "Cannot use both --search and filenames."
         assert args.root is None, "Root inferred from --search."
         assert not args.command, "Cannot use both --search and --command."
+        assert not args.all, "Cannot use both --search and --all."
+        assert not args.recursive, "--recursive only supported with --all."
         loc = dataset.Location.from_yaml(args.search)
         loc.read(getinfo=args.info)
         root = loc.root
         files = loc.files(info=args.info)
     else:
         assert len(files) > 0, "Nothing to dump."
+        assert not args.recursive, "--recursive only supported with --all."
         if args.root:
             root = args.root
         else:
@@ -171,7 +215,7 @@ def shelephant_dump(args: list[str]):
 
     if args.abspath:
         files = [os.path.abspath(file) for file in files]
-    elif args.search is None:
+    elif args.search is None and not args.raw:
         files = [os.path.relpath(file, root) for file in files]
 
     if args.keep:

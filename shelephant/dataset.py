@@ -492,6 +492,8 @@ class Location:
 
         :param paths: List of paths to remove.
         """
+        if isinstance(paths, str):
+            paths = [paths]
         _, i, _ = np.intersect1d(
             self._files, np.unique(list(map(str, paths))), return_indices=True, assume_unique=True
         )

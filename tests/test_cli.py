@@ -95,6 +95,24 @@ class Test_shelephant_dump(unittest.TestCase):
             data = shelephant.dataset.Location.from_yaml(f_dump)
             self.assertTrue(check == data)
 
+    def test_all(self):
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt", "src/e.txt"]
+            check = create_dummy_files(files)
+            shelephant_dump(["-i", "--all"])
+            data = shelephant.dataset.Location.from_yaml(f_dump)
+            check.remove("src/e.txt")
+            self.assertTrue(check == data)
+
+        with tempdir():
+            pathlib.Path("src").mkdir()
+            files = ["foo.txt", "bar.txt", "a.txt", "b.txt", "c.txt", "d.txt", "src/e.txt"]
+            check = create_dummy_files(files)
+            shelephant_dump(["-i", "--all", "--recursive"])
+            data = shelephant.dataset.Location.from_yaml(f_dump)
+            self.assertTrue(check == data)
+
 
 class Test_shelephant_hostinfo(unittest.TestCase):
     def test_search(self):
