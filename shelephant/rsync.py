@@ -3,6 +3,7 @@ Copy & query using *rsync*.
 
 (c) Tom de Geus, 2021, MIT
 """
+
 import os
 import re
 import subprocess

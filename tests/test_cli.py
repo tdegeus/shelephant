@@ -380,9 +380,11 @@ class Test_shelephant_cp(unittest.TestCase):
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
-        with tempdir(), shelephant.ssh.tempdir("localhost") as remote, contextlib.redirect_stdout(
-            io.StringIO()
-        ) as sio:
+        with (
+            tempdir(),
+            shelephant.ssh.tempdir("localhost") as remote,
+            contextlib.redirect_stdout(io.StringIO()) as sio,
+        ):
             files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
             check = create_dummy_files(files)
             shelephant_dump(files)
@@ -410,9 +412,11 @@ class Test_shelephant_cp(unittest.TestCase):
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
-        with tempdir(), shelephant.ssh.tempdir("localhost") as remote, contextlib.redirect_stdout(
-            io.StringIO()
-        ) as sio:
+        with (
+            tempdir(),
+            shelephant.ssh.tempdir("localhost") as remote,
+            contextlib.redirect_stdout(io.StringIO()) as sio,
+        ):
             files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
             check = create_dummy_files(files)
             shelephant_dump(files)
@@ -441,9 +445,11 @@ class Test_shelephant_cp(unittest.TestCase):
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
-        with tempdir(), shelephant.ssh.tempdir("localhost") as remote, contextlib.redirect_stdout(
-            io.StringIO()
-        ) as sio:
+        with (
+            tempdir(),
+            shelephant.ssh.tempdir("localhost") as remote,
+            contextlib.redirect_stdout(io.StringIO()) as sio,
+        ):
             with cwd(remote):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 check = create_dummy_files(files)
@@ -534,9 +540,11 @@ class Test_shelephant_rm(unittest.TestCase):
         if not has_ssh:
             raise unittest.SkipTest("'ssh localhost' does not work")
 
-        with tempdir(), shelephant.ssh.tempdir("localhost") as remote, contextlib.redirect_stdout(
-            io.StringIO()
-        ) as sio:
+        with (
+            tempdir(),
+            shelephant.ssh.tempdir("localhost") as remote,
+            contextlib.redirect_stdout(io.StringIO()) as sio,
+        ):
             with cwd(remote):
                 files = ["foo.txt", "bar.txt", "more.txt", "even_more.txt"]
                 create_dummy_files(files)

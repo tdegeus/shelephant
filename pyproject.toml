@@ -5,12 +5,12 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 authors = [{name = "Tom de Geus", email = "tom@geus.me"}]
 classifiers = ["License :: OSI Approved :: MIT License"]
 dependencies = [
-  "click",
-  "numpy>=1.15.0",
-  "platformdirs",
-  "prettytable",
-  "pyyaml",
-  "tqdm"
+    "click",
+    "numpy >=1.15.0",
+    "platformdirs",
+    "prettytable",
+    "pyyaml",
+    "tqdm",
 ]
 description = "Simple dataset management"
 dynamic = ["version"]
