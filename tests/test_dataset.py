@@ -1428,6 +1428,38 @@ class Test_dataset(unittest.TestCase):
             ret = _plain(sio.getvalue())[1:]
             self.assertEqual(ret, expect)
 
+    def test_status_not_on(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                create_dummy_files(["a.txt", "b.txt", "c.txt", "d.txt"])
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(4, None, None))
+
+            with cwd(dataset):
+                shelephant.dataset.init([])
+                shelephant.dataset.add(["source1", "../source1", "--rglob", "*.txt", "-q"])
+                shelephant.dataset.add(["source2", "../source2", "--rglob", "*.txt", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS", "--not-on", "source1"])
+
+            expect = [
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
     def test_removed(self):
         with tempdir():
             dataset = pathlib.Path("dataset")

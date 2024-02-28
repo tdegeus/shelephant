@@ -1905,6 +1905,11 @@ def _status_parser():
         "--in-use", type=str, help="Select storage location in use (use 'none' for unavailable)."
     )
     parser.add_argument(
+        "--not-on",
+        type=str,
+        help="List files that are not on a storage location.",
+    )
+    parser.add_argument(
         "--on",
         type=str,
         action="append",
@@ -2003,6 +2008,12 @@ def status(args: list[str]):
     e[:, 0] = extra
     e[:, 1] = "here"
     data = np.vstack((data, e))
+
+    if args.not_on is not None:
+        name = args.not_on
+        iname = -(len(storage) - np.argmax(np.equal(storage, name)))
+        keep = np.equal(data[:, iname], "x")
+        data = data[keep, :]
 
     if len(args.on) > 0:
         keep = np.zeros((len(data)), dtype=bool)
