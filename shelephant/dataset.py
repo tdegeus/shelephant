@@ -4,9 +4,11 @@ import os
 import pathlib
 import re
 import shutil
+import sys
 import textwrap
 from copy import deepcopy
 
+import click
 import numpy as np
 import prettytable
 import tqdm
@@ -1283,6 +1285,9 @@ def _update_parser():
 
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument(
+        "--sync-search", action="store_true", help="Set the same search settings for all locations."
+    )
+    parser.add_argument(
         "--base-link",
         action="store_true",
         help="Update link .shelephant/data/{name} based on .shelephant/storage/{name}.yaml.",
@@ -1320,7 +1325,28 @@ def update(args: list[str]):
     paths = [os.path.relpath(path, base) for path in args.path]
     paths = np.unique(paths) if len(paths) > 0 else None
     lock = None if not (sdir / "lock.txt").exists() else (sdir / "lock.txt").read_text().strip()
-    if args.force:
+
+    if args.sync_search:
+        names = yaml.read(sdir / "storage.yaml")
+        search = []
+        for name in names:
+            data = yaml.read(sdir / "storage" / f"{name}.yaml")
+            search += data.get("search", [])
+        # todo: merge search settings
+        search = list(np.unique(np.array(search)))
+
+        if not args.force:
+            print("Common search settings:")
+            yaml.dump(search, sys.stdout)
+            if not click.confirm("Apply to all locations?"):
+                raise OSError("Cancelled")
+
+        for name in names:
+            data = yaml.read(sdir / "storage" / f"{name}.yaml")
+            data["search"] = search
+            yaml.overwrite(sdir / "storage" / f"{name}.yaml", data)
+
+    if args.force and not args.sync_search:
         assert paths is not None, "--force can only be used with path(s)"
 
     if args.name is None:
