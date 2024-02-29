@@ -1284,7 +1284,9 @@ def _update_parser():
 
     parser.add_argument("--version", action="version", version=version)
     parser.add_argument(
-        "--sync-search", action="store_true", help="Set the same search settings for all locations."
+        "--sync-search",
+        action="store_true",
+        help="Set the same search settings for all locations (except 'here').",
     )
     parser.add_argument(
         "--base-link",
@@ -1327,6 +1329,8 @@ def update(args: list[str]):
 
     if args.sync_search:
         names = yaml.read(sdir / "storage.yaml")
+        if "here" in names:
+            names.remove("here")
         search = []
         for name in names:
             data = yaml.read(sdir / "storage" / f"{name}.yaml")
