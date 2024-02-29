@@ -54,6 +54,26 @@ def read_item(filename: str | pathlib.Path, key: str | list[str] = []) -> list |
     raise OSError(f'"{"/".join(key)}" not in "{filename}"')
 
 
+def dumps(data: list | dict) -> str:
+    """
+    Return data formatted as YAML.
+
+    :param data: The data to dump.
+    :return: The data formatted as YAML.
+    """
+    return yaml.dump(data)
+
+
+def loads(data: str) -> list | dict:
+    """
+    Read data from a string formatted as YAML.
+
+    :param data: The data to read.
+    :return: The content of the YAML file.
+    """
+    return yaml.load(data, Loader=yaml.FullLoader)
+
+
 def dump(
     filename: str | pathlib.Path, data: list | dict, force: bool = False, width: int = float("inf")
 ):

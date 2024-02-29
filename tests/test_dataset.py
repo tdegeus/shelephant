@@ -553,7 +553,63 @@ class Test_dataset(unittest.TestCase):
                     ".shelephant/storage/source2.yaml",
                     {"root": "../../../source2", "search": [{"rglob": "*.txt"}]},
                 )
-                f = ".shelephant/storage.yaml"
+                shelephant.dataset.update(["--base-link", "source1", "-q"])
+                shelephant.dataset.update(["--base-link", "source2", "-q"])
+
+            with cwd(dataset), contextlib.redirect_stdout(io.StringIO()) as sio:
+                shelephant.dataset.status(["--table", "PLAIN_COLUMNS"])
+
+            expect = [
+                "a.txt source1 == ==",
+                "b.txt source1 == ==",
+                "c.txt source1 == x",
+                "d.txt source1 == x",
+                "e.txt source2 x ==",
+                "f.txt source2 x ==",
+            ]
+            ret = _plain(sio.getvalue())[1:]
+            self.assertEqual(ret, expect)
+
+            with cwd(dataset):
+                for f in ["a.txt", "b.txt", "c.txt", "d.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source1")
+                for f in ["e.txt", "f.txt"]:
+                    self.assertEqual(pathlib.Path(f).readlink().parent.name, "source2")
+
+    def test_basic_manual_sync_search(self):
+        with tempdir():
+            dataset = pathlib.Path("dataset")
+            source1 = pathlib.Path("source1")
+            source2 = pathlib.Path("source2")
+
+            dataset.mkdir()
+            source1.mkdir()
+            source2.mkdir()
+
+            with cwd(source1):
+                files = ["a.txt", "b.txt", "c.txt", "d.txt"]
+                create_dummy_files(files)
+
+            with cwd(source2):
+                create_dummy_files(["a.txt", "b.txt"])
+                create_dummy_files(["e.txt", "f.txt"], slice(6, None, None))
+
+            with cwd(dataset):
+                search = [{"rglob": "*.txt"}]
+                shelephant.dataset.init([])
+                shelephant.yaml.dump(
+                    ".shelephant/storage/source1.yaml",
+                    {"root": "../../../source1", "search": search},
+                )
+                shelephant.yaml.dump(
+                    ".shelephant/storage/source2.yaml",
+                    {"root": "../../../source2"},
+                )
+                shelephant.yaml.overwrite(
+                    ".shelephant/storage.yaml", ["here", "source1", "source2"]
+                )
+                shelephant.dataset.update(["--sync-search", "--force"])
+                assert shelephant.yaml.read(".shelephant/storage/source2.yaml")["search"] == search
                 shelephant.dataset.update(["--base-link", "source1", "-q"])
                 shelephant.dataset.update(["--base-link", "source2", "-q"])
 
