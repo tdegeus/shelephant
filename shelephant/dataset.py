@@ -1515,6 +1515,8 @@ def update(args: list[str]):
 
             # remove directories that are empty after removing old links
             for d in {i.parent for i in rm_links}:
+                if not d.exists():
+                    continue
                 if not os.listdir(d):
                     d.rmdir()
 
