@@ -1336,7 +1336,7 @@ def update(args: list[str]):
             data = yaml.read(sdir / "storage" / f"{name}.yaml")
             search += data.get("search", [])
         # todo: merge search settings
-        search = list({yaml.dumps(i) for i in search})
+        search = sorted(list({yaml.dumps(i) for i in search}))
         search = [yaml.loads(i) for i in search]
 
         if not args.force:
