@@ -1337,7 +1337,7 @@ def update(args: list[str]):
 
         if not args.force:
             print("Common search settings:")
-            print(yaml.dump(search))
+            print(yaml.dumps(search))
             if not click.confirm("Apply to all locations?"):
                 raise OSError("Cancelled")
 
